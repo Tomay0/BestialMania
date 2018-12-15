@@ -1,6 +1,7 @@
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 import rendering.Shader;
+import rendering.Texture;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -72,6 +73,8 @@ public class Main {
 
         //load some shader
         Shader shader = new Shader("res/shaders/test_vertex.glsl","res/shaders/test_fragment.glsl");
+        Texture texture = new Texture("res/textures/sexy.png");
+        Rect2D obj = new Rect2D(-0.5f,-0.5f,0.5f,0.5f,texture);
 
         // Run the rendering loop until the user has attempted to close
         // the window or has pressed the ESCAPE key.
@@ -79,6 +82,10 @@ public class Main {
 
             //clear screen
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            shader.bind();
+            obj.draw();
+
 
             //swap buffers to show new frame
             glfwSwapBuffers(window);

@@ -1,4 +1,4 @@
-package rendering;
+package rendering.rendering.model;
 
 import org.joml.*;
 import org.lwjgl.BufferUtils;
