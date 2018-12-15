@@ -1,5 +1,6 @@
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
+import rendering.Shader;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -68,6 +69,9 @@ public class Main {
     private void loop() {
         //background colour
         glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
+
+        //load some shader
+        Shader shader = new Shader("res/shaders/test_vertex.glsl","res/shaders/test_fragment.glsl");
 
         // Run the rendering loop until the user has attempted to close
         // the window or has pressed the ESCAPE key.
