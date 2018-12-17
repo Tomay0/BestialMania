@@ -1,4 +1,5 @@
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 import rendering.shader.Shader;
@@ -7,6 +8,7 @@ import rendering.model.Model;
 import rendering.model.OBJLoader;
 import rendering.shader.Uniform;
 import rendering.shader.UniformMatrix4;
+import rendering.shader.UniformTexture;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -79,6 +81,9 @@ public class Main {
         glEnable(GL_CULL_FACE);
         glCullFace(GL_FRONT);//TODO change to GL_BACK after implementing the projection matrix
 
+        //TODO some basic lighting
+        //Vector3f lightDir = new Vector3f(-1,2,1);
+
         //load some shader
         Shader shader = new Shader("res/shaders/test_vertex.glsl","res/shaders/test_fragment.glsl");
 
@@ -101,6 +106,7 @@ public class Main {
         m2.scale(0.1f,0.1f,0.1f);
 
         UniformMatrix4 uniform2 = new UniformMatrix4(shader,"modelMatrix",m2);
+        UniformTexture texture1 = new UniformTexture(shader,"textureSampler",0,t2);//more flexible way of binding textures
 
         //Run until you click X or press ESC
         while ( !glfwWindowShouldClose(window) && glfwGetKey(window,GLFW_KEY_ESCAPE) != GLFW_PRESS) {
@@ -120,7 +126,7 @@ public class Main {
 
             //draw jimmy
             uniform2.bindUniform();
-            t2.bind(0);
+            texture1.bindUniform();
             m1.draw();
 
             //swap buffers to show new frame
