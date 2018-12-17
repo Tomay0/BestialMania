@@ -1,7 +1,12 @@
+import org.joml.Matrix4f;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
-import rendering.Shader;
+import rendering.shader.Shader;
 import rendering.Texture;
+import rendering.model.Model;
+import rendering.model.OBJLoader;
+import rendering.shader.Uniform;
+import rendering.shader.UniformMatrix4;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -69,23 +74,54 @@ public class Main {
      */
     private void loop() {
         //background colour
-        glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
+        glClearColor(0.1f, 0.75f, 1.0f, 1.0f);
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_FRONT);//TODO change to GL_BACK after implementing the projection matrix
 
         //load some shader
         Shader shader = new Shader("res/shaders/test_vertex.glsl","res/shaders/test_fragment.glsl");
+
+        //daddy
         Texture texture = new Texture("res/textures/sexy.png");
         Rect2D obj = new Rect2D(-0.5f,-0.5f,0.5f,0.5f,texture);
 
-        // Run the rendering loop until the user has attempted to close
-        // the window or has pressed the ESCAPE key.
+        //daddy matrix
+        //Matrix4f m = new Matrix4f();
+        //m.identity();
+        //UniformMatrix4 uniform1 = new UniformMatrix4(shader,"modelMatrix",m);
+
+        //jimmy
+        Texture t2 = new Texture("res/textures/jimmy_tex.png");
+        Model m1 = OBJLoader.loadOBJ("res/models/jimmy.obj");
+
+        //jimmy matrix
+        Matrix4f m2 = new Matrix4f();
+        m2.translate(0,-0.5f,0.0f);
+        m2.scale(0.1f,0.1f,0.1f);
+
+        UniformMatrix4 uniform2 = new UniformMatrix4(shader,"modelMatrix",m2);
+
+        //Run until you click X or press ESC
         while ( !glfwWindowShouldClose(window) && glfwGetKey(window,GLFW_KEY_ESCAPE) != GLFW_PRESS) {
 
             //clear screen
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+            //bind the shader
             shader.bind();
-            obj.draw();
 
+            //draw daddy
+            //uniform1.bindUniform();
+            //obj.draw();
+
+            //update jimmy
+            m2.rotateY(0.01f);
+
+            //draw jimmy
+            uniform2.bindUniform();
+            t2.bind(0);
+            m1.draw();
 
             //swap buffers to show new frame
             glfwSwapBuffers(window);

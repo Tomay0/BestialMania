@@ -33,9 +33,9 @@ public class Texture {
             //convert to byte buffer
             ByteBuffer buffer = BufferUtils.createByteBuffer(width*height*4);
 
-            for(int i = 0; i < width;i++) {
-                for(int j = 0; j < height;j++) {
-                    int px = pixels[i*width+j];
+            for(int y = height-1;y>=0;y--) {
+                for(int x = 0;x<width;x++) {
+                    int px = pixels[y*width+x];
                     buffer.put((byte) ((px >> 16) & 0xFF));//R
                     buffer.put((byte) ((px >> 8) & 0xFF));//G
                     buffer.put((byte) (px & 0xFF));//B

@@ -8,5 +8,4 @@ uniform sampler2D textureSampler;
 
 void main() {
     color = texture(textureSampler,frag_uv);
-
 }

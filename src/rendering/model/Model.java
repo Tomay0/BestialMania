@@ -1,8 +1,7 @@
-package rendering.rendering.model;
+package rendering.model;
 
 import org.joml.*;
 import org.lwjgl.BufferUtils;
-import org.lwjgl.system.CallbackI;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;

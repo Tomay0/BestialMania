@@ -1,4 +1,4 @@
-package rendering;
+package rendering.shader;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -35,6 +35,11 @@ public class Shader {
     public void bind() {
         glUseProgram(program);
     }
+
+    /**
+     * Gets the program ID
+     */
+    public int getProgram() {return program;}
 
     /**
      * Loads a shader from a file and return the ID
