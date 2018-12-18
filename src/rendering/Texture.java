@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import static org.lwjgl.opengl.GL30.*;
+import static org.lwjgl.system.MemoryUtil.NULL;
 
 public class Texture {
     private int texture;
@@ -50,10 +51,7 @@ public class Texture {
             glBindTexture(type,texture);
 
             //TODO make filters adjustable
-            glTexParameterf(type,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-            glTexParameterf(type,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-            glTexParameterf(type,GL_TEXTURE_WRAP_S,GL_REPEAT);
-            glTexParameterf(type,GL_TEXTURE_WRAP_T,GL_REPEAT);
+            applyFilters();
 
             glTexImage2D(type,0,GL_RGBA,width,height,0,GL_RGBA,GL_UNSIGNED_BYTE,buffer);
 
@@ -61,6 +59,46 @@ public class Texture {
             System.err.println("Could not load image: " + file);
             System.exit(-1);
         }
+    }
+
+    /**
+     * Initialize a texture of specified width and height
+     */
+    public Texture(int width, int height) {
+        type = GL_TEXTURE_2D;
+        this.width = width;
+        this.height = height;
+        texture = glGenTextures();
+        glBindTexture(type,texture);
+    }
+
+    /**
+     * Generate a framebuffer texture
+     * TODO allow different formats
+     */
+    public void genFramebufferTexture(int target) {
+        glTexImage2D(type,0,GL_RGB,width,height,0,GL_RGB,GL_UNSIGNED_BYTE, NULL);
+        glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0 + target,type,texture,0);
+        applyFilters();
+    }
+
+    /**
+     * Generate a framebuffer depth texture
+     */
+    public void genFramebufferDepthTexture() {
+        glTexImage2D(type,0,GL_DEPTH_COMPONENT32,width,height,0,GL_DEPTH_COMPONENT,GL_FLOAT, NULL);
+        glFramebufferTexture2D(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,type,texture,0);
+        applyFilters();
+    }
+
+    /**
+     * Apply filters to the texture
+     */
+    public void applyFilters() {
+        glTexParameterf(type,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+        glTexParameterf(type,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+        glTexParameterf(type,GL_TEXTURE_WRAP_S,GL_REPEAT);
+        glTexParameterf(type,GL_TEXTURE_WRAP_T,GL_REPEAT);
     }
 
     /**
