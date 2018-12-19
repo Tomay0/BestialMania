@@ -7,7 +7,7 @@ public class UniformVector3f extends Uniform{
     private Vector3f value;
 
     public UniformVector3f(Shader shader, String uniform, Vector3f value) {
-        super(shader.getProgram(), uniform);
+        super(shader, uniform);
         this.value = value;
     }
 
@@ -15,6 +15,6 @@ public class UniformVector3f extends Uniform{
     public Vector3f getValue() {return value;}
 
      public void bindUniform() {
-         glUniform3f(location,value.x,value.y,value.z);
+         shader.setUniformVector3f(location,value);
     }
 }

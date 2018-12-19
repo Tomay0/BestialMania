@@ -8,12 +8,14 @@ import static org.lwjgl.opengl.GL30.*;
 public abstract class Uniform {
     protected int location;//integer location of the uniform
     protected String uniform;//the uniform as a string
+    protected Shader shader;
 
     /**
      * Constructs a uniform variable from the shader program ID and the uniform string
      */
-    public Uniform(int shader, String uniform) {
-        location = glGetUniformLocation(shader,uniform);
+    public Uniform(Shader shader, String uniform) {
+        location = shader.getUniformLocation(uniform);
+        this.shader = shader;
         this.uniform = uniform;
     }
 

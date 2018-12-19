@@ -6,7 +6,7 @@ public class UniformFloat extends Uniform{
     private float value;
 
     public UniformFloat(Shader shader, String uniform, float value) {
-        super(shader.getProgram(), uniform);
+        super(shader, uniform);
         this.value = value;
     }
 
@@ -14,6 +14,6 @@ public class UniformFloat extends Uniform{
     public float getValue() {return value;}
 
      public void bindUniform() {
-         glUniform1f(location,value);
+         shader.setUniformFloat(location,value);
     }
 }

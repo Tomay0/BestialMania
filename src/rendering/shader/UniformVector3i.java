@@ -8,7 +8,7 @@ public class UniformVector3i extends Uniform{
     private Vector3i value;
 
     public UniformVector3i(Shader shader, String uniform, Vector3i value) {
-        super(shader.getProgram(), uniform);
+        super(shader, uniform);
         this.value = value;
     }
 
@@ -16,6 +16,6 @@ public class UniformVector3i extends Uniform{
     public Vector3i getValue() {return value;}
 
      public void bindUniform() {
-         glUniform3i(location,value.x,value.y,value.z);
+         shader.setUniformVector3i(location,value);
     }
 }

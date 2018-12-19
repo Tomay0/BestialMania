@@ -11,7 +11,7 @@ public class UniformMatrix4 extends Uniform{
     private Matrix4f value;
 
     public UniformMatrix4(Shader shader, String uniform, Matrix4f value) {
-        super(shader.getProgram(), uniform);
+        super(shader, uniform);
         this.value = value;
     }
 
@@ -19,8 +19,6 @@ public class UniformMatrix4 extends Uniform{
     public Matrix4f getValue() {return value;}
 
      public void bindUniform() {
-        FloatBuffer buffer = BufferUtils.createFloatBuffer(16);
-        value.get(buffer);
-        glUniformMatrix4fv(location,false, buffer);
+        shader.setUniformMatrix4(location,value);
     }
 }

@@ -6,7 +6,7 @@ public class UniformInt extends Uniform{
     private int value;
 
     public UniformInt(Shader shader, String uniform, int value) {
-        super(shader.getProgram(), uniform);
+        super(shader, uniform);
         this.value = value;
     }
 
@@ -14,6 +14,6 @@ public class UniformInt extends Uniform{
     public int getValue() {return value;}
 
      public void bindUniform() {
-         glUniform1i(location,value);
+         shader.setUniformInt(location,value);
     }
 }

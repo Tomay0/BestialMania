@@ -9,9 +9,9 @@ public class UniformTexture extends Uniform{
     private Texture texture;
 
     public UniformTexture(Shader shader, String uniform, int slot, Texture texture) {
-        super(shader.getProgram(), uniform);
+        super(shader, uniform);
         shader.bind();
-        glUniform1i(location,slot);
+        shader.setUniformInt(location,slot);
         this.slot = slot;
         this.texture = texture;
     }
