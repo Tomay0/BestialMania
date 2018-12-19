@@ -1,11 +1,6 @@
 package rendering.shader;
 
 import org.joml.Matrix4f;
-import org.lwjgl.BufferUtils;
-
-import java.nio.FloatBuffer;
-
-import static org.lwjgl.opengl.GL30.*;
 
 public class UniformMatrix4 extends Uniform{
     private Matrix4f value;

@@ -10,9 +10,9 @@ import rendering.shader.Shader;
 import rendering.Texture;
 import rendering.model.Model;
 import rendering.model.OBJLoader;
-import rendering.shader.Uniform;
 import rendering.shader.UniformMatrix4;
-import rendering.shader.UniformTexture;
+
+import java.util.Arrays;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -95,6 +95,7 @@ public class Main {
 
         //load some shader
         Shader shader = new Shader("res/shaders/test_vertex.glsl","res/shaders/test_fragment.glsl");
+        shader.bindTextureUnits(Arrays.asList("textureSampler"));
 
         //jimmy
         Texture jimmyTexture = new Texture("res/textures/jimmy_tex.png");
@@ -116,12 +117,12 @@ public class Main {
 
         //an object
         ShaderObject object = renderer.createObject(jimmyModel);
-        object.addUniform(new UniformTexture(shader,"textureSampler",0,jimmyTexture));
+        object.addTexture(0,jimmyTexture);
         object.addUniform(new UniformMatrix4(shader,"modelMatrix",jimmyMatrix));
 
         //another object
         ShaderObject object2 = renderer.createObject(rect);
-        object2.addUniform(new UniformTexture(shader,"textureSampler",0,daddyTexture));
+        object2.addTexture(0,daddyTexture);
         object2.addUniform(new UniformMatrix4(shader,"modelMatrix",new Matrix4f()));
 
         //Run until you click X or press ESC

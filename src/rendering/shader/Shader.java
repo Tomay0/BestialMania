@@ -6,6 +6,7 @@ import org.lwjgl.BufferUtils;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.nio.FloatBuffer;
+import java.util.List;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL20.*;
@@ -151,4 +152,17 @@ public class Shader {
         glUniformMatrix4fv(location, false, matrixBuffer);
     }
 
+    /**
+     * Assign texture units by their uniform name.
+     * eg if 0 = textureSampler
+     * 1 = normalSampler
+     * then the list would be {"textureSampler", "normalSampler"}
+     */
+    public void bindTextureUnits(List<String> uniforms) {
+        bind();
+        for(int i = 0;i<uniforms.size();i++) {
+            int location = getUniformLocation(uniforms.get(i));
+            setUniformInt(location,i);
+        }
+    }
 }
