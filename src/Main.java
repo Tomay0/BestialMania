@@ -2,10 +2,6 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
-import rendering.MasterRenderer;
-import rendering.Renderer;
-import rendering.ShaderObject;
-import rendering.model.Rect2D;
 import rendering.shader.Shader;
 import rendering.Texture;
 import rendering.model.Model;
@@ -22,9 +18,15 @@ public class Main {
 
     // The window handle
     private long window;
+    //
+    private InputHandler inputHandler;
 
     public void run() {
         init();
+
+        //create the input handler for the window
+        inputHandler = new InputHandler(window);
+
         loop();
         terminate();
     }
@@ -91,49 +93,50 @@ public class Main {
         //load some shader
         Shader shader = new Shader("res/shaders/test_vertex.glsl","res/shaders/test_fragment.glsl");
 
+        //daddy
+        Texture texture = new Texture("res/textures/sexy.png");
+        Rect2D obj = new Rect2D(-0.5f,-0.5f,0.5f,0.5f,texture);
 
-
+        //daddy matrix
+        //Matrix4f m = new Matrix4f();
+        //m.identity();
+        //UniformMatrix4 uniform1 = new UniformMatrix4(shader,"modelMatrix",m);
 
         //jimmy
-        Texture jimmyTexture = new Texture("res/textures/jimmy_tex.png");
-        Model jimmyModel = OBJLoader.loadOBJ("res/models/jimmy.obj");
+        Texture t2 = new Texture("res/textures/jimmy_tex.png");
+        Model m1 = OBJLoader.loadOBJ("res/models/jimmy.obj");
+
         //jimmy matrix
-        Matrix4f jimmyMatrix = new Matrix4f();
-        jimmyMatrix.translate(0,-0.5f,0.0f);
-        jimmyMatrix.scale(0.1f,0.1f,0.1f);
+        Matrix4f m2 = new Matrix4f();
+        m2.translate(0,-0.5f,0.0f);
+        m2.scale(0.1f,0.1f,0.1f);
 
-
-
-        //some 2d rectangle
-        Model rect = new Rect2D(-1,-1,0,0);
-        Texture daddyTexture = new Texture("res/textures/sexy.png");
-
-
-        //Master renderer, does all the scene rendering
-        MasterRenderer masterRenderer = new MasterRenderer();
-
-        //create renderer which will render within the window with the shader created above
-        Renderer renderer = masterRenderer.getWindowFramebuffer().createRenderer(shader);
-
-        //an object
-        ShaderObject object = renderer.createObject(jimmyModel);
-        object.addUniform(new UniformTexture(shader,"textureSampler",0,jimmyTexture));
-        object.addUniform(new UniformMatrix4(shader,"modelMatrix",jimmyMatrix));
-
-        //another object
-        ShaderObject object2 = renderer.createObject(rect);
-        object2.addUniform(new UniformTexture(shader,"textureSampler",0,daddyTexture));
-        object2.addUniform(new UniformMatrix4(shader,"modelMatrix",new Matrix4f()));
-
+        UniformMatrix4 uniform2 = new UniformMatrix4(shader,"modelMatrix",m2);
+        UniformTexture texture1 = new UniformTexture(shader,"textureSampler",0,t2);//more flexible way of binding textures
 
         //Run until you click X or press ESC
-        while ( !glfwWindowShouldClose(window) && glfwGetKey(window,GLFW_KEY_ESCAPE) != GLFW_PRESS) {
+        while ( !glfwWindowShouldClose(window) && !inputHandler.isKeyPressed(GLFW_KEY_ESCAPE)) {
+
+            //print mouse position
+            System.out.println(inputHandler.getMousePosition());
+
+            //clear screen
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            //bind the shader
+            shader.bind();
+
+            //draw daddy
+            //uniform1.bindUniform();
+            //obj.draw();
 
             //update jimmy
-            jimmyMatrix.rotateY(0.01f);
+            m2.rotateY(0.01f);
 
-            //render the scene
-            masterRenderer.render();
+            //draw jimmy
+            uniform2.bindUniform();
+            texture1.bindUniform();
+            m1.draw();
 
             //swap buffers to show new frame
             glfwSwapBuffers(window);
