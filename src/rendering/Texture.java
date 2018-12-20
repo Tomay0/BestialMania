@@ -17,15 +17,85 @@ public class Texture {
     private int width,height;
 
     /**
-     * Load a texture from a file
+     * Initialize a texture of specified width and height
      */
-    public Texture(String file) {
-        type = GL_TEXTURE_2D;
+    public Texture(int type, int width, int height) {
+        this.type = type;
+        this.width = width;
+        this.height = height;
+        texture = glGenTextures();
+        glBindTexture(type,texture);
+    }
+
+    /**
+     * Generate a texture from a buffer (for images)
+     */
+    public void genBufferedTexture(int format, ByteBuffer buffer) {
+        glTexImage2D(type,0,format,width,height,0,format,GL_UNSIGNED_BYTE,buffer);
+    }
+
+    /**
+     * Generate a framebuffer texture
+     */
+    public void genFramebufferTexture(int target, int internalFormat, int format, int formatType) {
+        glTexImage2D(type,0,internalFormat,width,height,0,format,formatType, NULL);
+        glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0 + target,type,texture,0);
+    }
+
+    /**
+     * Generate a framebuffer depth texture
+     */
+    public void genFramebufferDepthTexture() {
+        glTexImage2D(type,0,GL_DEPTH_COMPONENT32,width,height,0,GL_DEPTH_COMPONENT,GL_FLOAT, NULL);
+        glFramebufferTexture2D(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,type,texture,0);
+    }
+
+    /**
+     * Apply filters to the texture
+     * TODO mipmapping and anisotropic filtering
+     */
+    public void applyFilters(int filter, int wrap, boolean mipmap) {
+        glTexParameterf(type,GL_TEXTURE_MIN_FILTER,filter);
+        glTexParameterf(type,GL_TEXTURE_MAG_FILTER,filter);
+        glTexParameterf(type,GL_TEXTURE_WRAP_S,wrap);
+        glTexParameterf(type,GL_TEXTURE_WRAP_T,wrap);
+    }
+
+    /**
+     * Bind the texture to the given position
+     */
+    public void bind(int position) {
+        glActiveTexture(GL_TEXTURE0 + position);
+        glBindTexture(type,texture);
+    }
+
+
+    /**
+     * Removes the texture from memory
+     */
+    public void cleanUp() {
+        glDeleteTextures(texture);
+    }
+
+    /**
+     * Load a texture from a file with default settings for 3D textures
+     */
+    public static Texture loadImageTexture3D(String fileName) {return loadImageTexture(fileName,GL_RGBA,GL_LINEAR,GL_REPEAT,true);}
+
+    /**
+     * Load a texture from a file with default settings for 2D textures
+     */
+    public static Texture loadImageTexture2D(String fileName) {return loadImageTexture(fileName,GL_RGBA,GL_LINEAR,GL_CLAMP_TO_EDGE,false);}
+
+    /**
+     * Load a texture from a file and return the texture
+     */
+    public static Texture loadImageTexture(String fileName, int format, int filter, int wrap, boolean mipmap) {
         try {
             //load image
-            BufferedImage image = ImageIO.read(new File(file));
-            width = image.getWidth();
-            height = image.getHeight();
+            BufferedImage image = ImageIO.read(new File(fileName));
+            int width = image.getWidth();
+            int height = image.getHeight();
 
             //convert to pixel array
             int[] pixels = new int[width*height*4];
@@ -47,73 +117,15 @@ public class Texture {
             buffer.flip();
 
             //generate the texture
-            texture = glGenTextures();
-            glBindTexture(type,texture);
+            Texture texture = new Texture(GL_TEXTURE_2D, width,height);
+            texture.genBufferedTexture(format, buffer);
+            texture.applyFilters(filter,wrap,mipmap);
 
-            //TODO make filters adjustable
-            applyFilters();
-
-            glTexImage2D(type,0,GL_RGBA,width,height,0,GL_RGBA,GL_UNSIGNED_BYTE,buffer);
-
+            return texture;
         }catch(IOException e) {
-            System.err.println("Could not load image: " + file);
+            System.err.println("Could not load image: " + fileName);
             System.exit(-1);
         }
-    }
-
-    /**
-     * Initialize a texture of specified width and height
-     */
-    public Texture(int width, int height) {
-        type = GL_TEXTURE_2D;
-        this.width = width;
-        this.height = height;
-        texture = glGenTextures();
-        glBindTexture(type,texture);
-    }
-
-    /**
-     * Generate a framebuffer texture
-     * TODO allow different formats
-     */
-    public void genFramebufferTexture(int target) {
-        glTexImage2D(type,0,GL_RGB,width,height,0,GL_RGB,GL_UNSIGNED_BYTE, NULL);
-        glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0 + target,type,texture,0);
-        applyFilters();
-    }
-
-    /**
-     * Generate a framebuffer depth texture
-     */
-    public void genFramebufferDepthTexture() {
-        glTexImage2D(type,0,GL_DEPTH_COMPONENT32,width,height,0,GL_DEPTH_COMPONENT,GL_FLOAT, NULL);
-        glFramebufferTexture2D(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,type,texture,0);
-        applyFilters();
-    }
-
-    /**
-     * Apply filters to the texture
-     */
-    public void applyFilters() {
-        glTexParameterf(type,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-        glTexParameterf(type,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-        glTexParameterf(type,GL_TEXTURE_WRAP_S,GL_REPEAT);
-        glTexParameterf(type,GL_TEXTURE_WRAP_T,GL_REPEAT);
-    }
-
-    /**
-     * Bind the texture to the given position
-     */
-    public void bind(int position) {
-        glActiveTexture(GL_TEXTURE0 + position);
-        glBindTexture(type,texture);
-    }
-
-
-    /**
-     * Removes the texture from memory
-     */
-    public void cleanUp() {
-        glDeleteTextures(texture);
+        return null;
     }
 }

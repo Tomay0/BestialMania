@@ -97,7 +97,7 @@ public class Main {
         shader.bindTextureUnits(Arrays.asList("textureSampler"));
 
         //jimmy
-        Texture jimmyTexture = new Texture("res/textures/jimmy_tex.png");
+        Texture jimmyTexture = Texture.loadImageTexture3D("res/textures/jimmy_tex.png");
         Model jimmyModel = OBJLoader.loadOBJ("res/models/jimmy.obj");
         //jimmy matrix
         Matrix4f jimmyMatrix = new Matrix4f();
@@ -106,7 +106,7 @@ public class Main {
 
         //some 2d rectangle
         Model rect = new Rect2D(-1,-1,0,0);
-        Texture daddyTexture = new Texture("res/textures/sexy.png");
+        Texture daddyTexture = Texture.loadImageTexture3D("res/textures/sexy.png");
 
         //Master renderer, does all the scene rendering
         MasterRenderer masterRenderer = new MasterRenderer();

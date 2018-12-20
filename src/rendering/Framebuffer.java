@@ -42,8 +42,9 @@ public class Framebuffer {
 
         //textures
         for(int i = 0;i<nTextures;i++) {
-            Texture texture = new Texture(width,height);
-            texture.genFramebufferTexture(i);
+            Texture texture = new Texture(GL_TEXTURE_2D,width,height);
+            texture.genFramebufferTexture(i,GL_RGB,GL_RGB,GL_UNSIGNED_INT);
+            texture.applyFilters(GL_LINEAR,GL_CLAMP_TO_EDGE,false);
             textures.add(texture);
         }
 
