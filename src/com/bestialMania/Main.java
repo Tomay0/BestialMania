@@ -1,19 +1,11 @@
 package com.bestialMania;
 
-import com.bestialMania.DisplaySettings;
-import com.bestialMania.InputHandler;
 import org.joml.Matrix4f;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
-import com.bestialMania.rendering.MasterRenderer;
-import com.bestialMania.rendering.Renderer;
-import com.bestialMania.rendering.ShaderObject;
-import com.bestialMania.rendering.model.Rect2D;
-import com.bestialMania.rendering.shader.Shader;
-import com.bestialMania.rendering.Texture;
-import com.bestialMania.rendering.model.Model;
-import com.bestialMania.rendering.model.OBJLoader;
-import com.bestialMania.rendering.shader.UniformMatrix4;
+import com.bestialMania.rendering.*;
+import com.bestialMania.rendering.shader.*;
+import com.bestialMania.rendering.model.*;
 
 import java.util.Arrays;
 
@@ -59,7 +51,7 @@ public class Main {
         glfwWindowHint(GLFW_RESIZABLE,GLFW_FALSE);
 
         // Create the window
-        window = glfwCreateWindow(DisplaySettings.WIDTH, DisplaySettings.HEIGHT, "Happiness is an illusion", glfwGetPrimaryMonitor(), NULL);
+        window = glfwCreateWindow(DisplaySettings.WIDTH, DisplaySettings.HEIGHT, "Happiness is an illusion", DisplaySettings.FULLSCREEN ? monitor : NULL, NULL);
         if ( window == NULL )
             throw new RuntimeException("Failed to create the GLFW window");
 
