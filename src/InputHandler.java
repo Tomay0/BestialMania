@@ -21,6 +21,11 @@ public class InputHandler{
      */
     public InputHandler(long windowID){
         window = windowID;
+        //intialize gamepad state buffers
+        gamepadStates[0] = new GLFWGamepadState(BufferUtils.createByteBuffer(40));
+        gamepadStates[1] = new GLFWGamepadState(BufferUtils.createByteBuffer(40));
+        gamepadStates[2] = new GLFWGamepadState(BufferUtils.createByteBuffer(40));
+        gamepadStates[3] = new GLFWGamepadState(BufferUtils.createByteBuffer(40));
     }
 
     /*
@@ -63,22 +68,12 @@ public class InputHandler{
      */
     //add a present controller to list of active controllers. (to check for accidental disconnect)(only 4 player)
     private void addControllersAndPlayers(){
-        if(glfwJoystickIsGamepad(GLFW_JOYSTICK_1)){
-            activeControllers.add(GLFW_JOYSTICK_1);
-            gamepadStates[0] = new GLFWGamepadState(BufferUtils.createByteBuffer(40));
-        }
-        if(glfwJoystickIsGamepad(GLFW_JOYSTICK_2)){
-            activeControllers.add(GLFW_JOYSTICK_2);
-            gamepadStates[1] = new GLFWGamepadState(BufferUtils.createByteBuffer(40));
-        }
-        if(glfwJoystickIsGamepad(GLFW_JOYSTICK_3)){
-            activeControllers.add(GLFW_JOYSTICK_3);
-            gamepadStates[2] = new GLFWGamepadState(BufferUtils.createByteBuffer(40));
-        }
-        if(glfwJoystickIsGamepad(GLFW_JOYSTICK_4)){
-            activeControllers.add(GLFW_JOYSTICK_4);
-            gamepadStates[3] = new GLFWGamepadState(BufferUtils.createByteBuffer(40));
-        }
+        activeControllers.clear();//clear current list so you can readd
+
+        if(glfwJoystickIsGamepad(GLFW_JOYSTICK_1)) activeControllers.add(GLFW_JOYSTICK_1);
+        if(glfwJoystickIsGamepad(GLFW_JOYSTICK_2)) activeControllers.add(GLFW_JOYSTICK_2);
+        if(glfwJoystickIsGamepad(GLFW_JOYSTICK_3)) activeControllers.add(GLFW_JOYSTICK_3);
+        if(glfwJoystickIsGamepad(GLFW_JOYSTICK_4))  activeControllers.add(GLFW_JOYSTICK_4);
     }
 
     // remove a joystick from list of active controllers (for if player quit) and clear the controller's states
@@ -89,7 +84,6 @@ public class InputHandler{
 
     // returns an array of booleans based on buttons pressed or released
     public void updateControllerState(){
-
         //add any new players if new controllers connected
         addControllersAndPlayers();
 
@@ -97,9 +91,11 @@ public class InputHandler{
         for(int joystickId : activeControllers) {
 
             //throw exception if joystick was being used but ungracefully disconnected
+            /*
+            //don't need this bit because the "active controllers" only applies to
             if (!glfwJoystickPresent(joystickId)) {
                 throw new RuntimeException("Joystick id: " + joystickId + " Is disconnected!");
-            }
+            }*/
 
             //update the gamepad state
             glfwGetGamepadState(joystickId, gamepadStates[joystickId]);
@@ -155,4 +151,6 @@ public class InputHandler{
     }
 
     public HashSet<Integer> getActiveControllers() { return activeControllers; }
+
+    public boolean isControllerActive(int joystickId) {return activeControllers.contains(joystickId);}
 }

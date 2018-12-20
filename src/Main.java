@@ -19,7 +19,6 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
 public class Main {
-
     // The window handle
     private long window;
     //Input handler
@@ -130,8 +129,15 @@ public class Main {
 
             System.out.println(inputHandler.getMousePosition());
 
+            inputHandler.updateControllerState();
+
             //update jimmy
-            jimmyMatrix.rotateY(0.01f);
+            if(inputHandler.isControllerActive(GLFW_JOYSTICK_1)) {
+                System.out.println("controller 1 active");
+                jimmyMatrix.rotateY(inputHandler.gamepadLeftJoystickPosition(GLFW_JOYSTICK_1).x/100.0f);
+            }else{
+                jimmyMatrix.rotateY(0.01f);
+            }
 
             //render the scene
             masterRenderer.render();
