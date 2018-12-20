@@ -62,7 +62,7 @@ public class InputHandler{
         GAMEPAD STUFF (controllers)
      */
     //add a present controller to list of active controllers. (to check for accidental disconnect)(only 4 player)
-    public void addControllersAndPlayers(){
+    private void addControllersAndPlayers(){
         if(glfwJoystickIsGamepad(GLFW_JOYSTICK_1)){
             activeControllers.add(GLFW_JOYSTICK_1);
             gamepadStates[0] = new GLFWGamepadState(BufferUtils.createByteBuffer(40));
@@ -89,6 +89,9 @@ public class InputHandler{
 
     // returns an array of booleans based on buttons pressed or released
     public void updateControllerState(){
+
+        //add any new players if new controllers connected
+        addControllersAndPlayers();
 
         //update all active GamePad states
         for(int joystickId : activeControllers) {
