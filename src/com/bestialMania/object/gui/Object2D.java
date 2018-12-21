@@ -11,6 +11,7 @@ import org.joml.Matrix4f;
 public class Object2D {
     private Rect2D model;
     private Texture texture;
+    private ShaderObject shaderObject;
     protected Matrix4f matrix;
     protected float x, y, width, height;
 
@@ -93,10 +94,15 @@ public class Object2D {
      * Binds this object to a renderer
      */
     public void addToRenderer(Renderer renderer) {
-        ShaderObject obj = renderer.createObject(model);
-        obj.addTexture(0,texture);
-        obj.addUniform(new UniformMatrix4(renderer.getShader(),"modelMatrix",matrix));
+        //ShaderObject obj = renderer.createObject(model);
+        shaderObject  = renderer.createObject(model);
+        shaderObject.addTexture(0,texture);
+        shaderObject.addUniform(new UniformMatrix4(renderer.getShader(),"modelMatrix",matrix));
     }
+
+    public Texture getObject2DTexture(){return texture;}
+    public Rect2D getObject2DModel(){return model;}
+    public Matrix4f getMatrix(){return matrix;}
 
 
 }

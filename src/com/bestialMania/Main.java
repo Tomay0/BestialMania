@@ -1,7 +1,9 @@
 package com.bestialMania;
 
+import com.bestialMania.object.gui.Button;
 import com.bestialMania.object.gui.Object2D;
 import org.joml.Matrix4f;
+import org.joml.Vector2f;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 import com.bestialMania.rendering.*;
@@ -9,6 +11,8 @@ import com.bestialMania.rendering.shader.*;
 import com.bestialMania.rendering.model.*;
 
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -19,6 +23,12 @@ public class Main {
     private long window;
     //Input handler
     private InputHandler inputHandler;
+    public static Main main;
+
+    private Set<Button> buttons = new HashSet<>();
+
+    /*Enum that controls the different states the game can take*/
+    private enum State{MAIN_MENU, IN_GAME, OPTIONS, CHARACTER_SELECTION} //There might be more states in the options screen
 
     public void run() {
         init();
@@ -130,18 +140,32 @@ public class Main {
 
         //#############################
         //some 2d rectangle
-        Object2D object2D = new Object2D(0,100,"res/textures/sexy.png");
-        object2D.addToRenderer(renderer2D);
+        //Object2D object2D = new Object2D(0,100,"res/textures/sexy.png");
+        //object2D.addToRenderer(renderer2D);
         //#############################
 
+        /*---- Button Examples ----*/
+        /*Button with size relative to texture dimensions*/
+        Button buttonOne =  new Button(0, 100, "res/textures/sexy.png", "Quit", "Quit");
+        buttonOne.addToRenderer(renderer2D);
 
+        /*Button with size independent from texture dimensions*/
+        Button buttonTwo = new Button(500, 100, 100, 50, "res/textures/sexy.png", "Quit", "Quit");
+        buttonTwo.addToRenderer(renderer2D);
+        buttons.add(buttonOne);
+        buttons.add(buttonTwo);
 
         //Run until you click X or press ESC
         while ( !glfwWindowShouldClose(window) && glfwGetKey(window,GLFW_KEY_ESCAPE) != GLFW_PRESS) {
-
-            System.out.println(inputHandler.getMousePosition());
+            Vector2f mousePos = inputHandler.getMousePosition();
+            System.out.println(mousePos);
 
             inputHandler.updateControllerState();
+
+            /*Looping through buttons and seeing if they were clicked*/
+            for(Button button : buttons){
+               if(inputHandler.mouseOn(button) && inputHandler.isMouseLeftPressed()) button.doAction();
+            }
 
             //update jimmy
             if(inputHandler.isControllerActive(GLFW_JOYSTICK_1)) {
@@ -165,14 +189,14 @@ public class Main {
     /**
      * Runs when the window is closed
      */
-    private void terminate() {
+    public void terminate() {
         //glfwFreeCallbacks(window);
         glfwDestroyWindow(window);
         glfwTerminate();
     }
 
     public static void main(String[] args) {
-        new Main().run();
+        main = new Main();
+        main.run();
     }
-
 }
