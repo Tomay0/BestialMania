@@ -26,8 +26,8 @@ public class MasterRenderer {
     /**
      * Adds a framebuffer to the list at the end
      */
-    public void addFramebufferEnd(Framebuffer framebuffer) {
-        framebuffers.add(framebuffer);
+    public void addFramebuffer(Framebuffer framebuffer) {
+        framebuffers.add(framebuffers.size()-1,framebuffer);
     }
 
     /**

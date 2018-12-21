@@ -25,7 +25,7 @@ public class Framebuffer {
         //TODO get the width and height of the window
         width = DisplaySettings.WIDTH;
         height =  DisplaySettings.HEIGHT;
-        depthEnabled = true;
+        depthEnabled = false;
     }
 
     /**
@@ -115,6 +115,13 @@ public class Framebuffer {
         glDeleteFramebuffers(fbo);
         for(int buffer : buffers) glDeleteRenderbuffers(buffer);
         for(Texture texture : textures) texture.cleanUp();
+    }
+
+    /**
+     * Gets the texture at the given slot
+     */
+    public Texture getTexture(int slot) {
+        return textures.get(slot);
     }
 
     /**

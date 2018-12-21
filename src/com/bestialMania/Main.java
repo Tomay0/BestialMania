@@ -98,6 +98,10 @@ public class Main {
         shader.bindTextureUnits(Arrays.asList("textureSampler"));
         Shader shader2D = new Shader("res/shaders/gui_vertex.glsl","res/shaders/gui_fragment.glsl");
 
+        //Framebuffer for the 3D scene
+        Framebuffer sceneFbo = new Framebuffer(DisplaySettings.WIDTH,DisplaySettings.HEIGHT,1,true);
+
+
         //jimmy
         Texture jimmyTexture = Texture.loadImageTexture3D("res/textures/jimmy_tex.png");
         Model jimmyModel = OBJLoader.loadOBJ("res/models/jimmy.obj");
@@ -109,8 +113,10 @@ public class Main {
         //Master renderer, does all the scene rendering
         MasterRenderer masterRenderer = new MasterRenderer();
 
+        masterRenderer.addFramebuffer(sceneFbo);
+
         //create renderer which will render within the window with the shader created above
-        Renderer renderer = masterRenderer.getWindowFramebuffer().createRenderer(shader);
+        Renderer renderer = sceneFbo.createRenderer(shader);
         Renderer renderer2D = masterRenderer.getWindowFramebuffer().createRenderer(shader2D);
 
         //an object
@@ -118,12 +124,16 @@ public class Main {
         object.addTexture(0,jimmyTexture);
         object.addUniform(new UniformMatrix4(shader,"modelMatrix",jimmyMatrix));
 
+        //The scene renderered as a quad
+        Object2D sceneObject = new Object2D(0,0,sceneFbo.getTexture(0));
+        sceneObject.addToRenderer(renderer2D);
 
         //#############################
         //some 2d rectangle
         Object2D object2D = new Object2D(0,100,"res/textures/sexy.png");
         object2D.addToRenderer(renderer2D);
         //#############################
+
 
 
         //Run until you click X or press ESC

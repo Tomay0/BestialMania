@@ -62,6 +62,34 @@ public class Object2D {
     }
 
     /**
+     * Creates a 2D object at position x,y with the given texture
+     */
+    public Object2D(float x, float y, Texture texture) {
+        this.x = x;
+        this.y = y;
+        //load texture
+        this.texture = texture;
+        this.width = texture.getWidth();
+        this.height = texture.getHeight();
+
+        generateModel();
+    }
+
+    /**
+     * Creates a 2D object at position x,y,width,height with the given texture
+     */
+    public Object2D(float x, float y, float width, float height, Texture texture) {
+        this.x = x;
+        this.y = y;
+        //load texture
+        this.texture = texture;
+        this.width = width;
+        this.height = height;
+
+        generateModel();
+    }
+
+    /**
      * Binds this object to a renderer
      */
     public void addToRenderer(Renderer renderer) {
