@@ -47,6 +47,10 @@ public class Button{
      */
     public void doAction(){
         if(actionOnClick.equals("Quit")) main.terminate();
+        else if(actionOnClick.equals("Play")) {
+            System.out.println("Play state");
+            main.setCurrentState(Main.State.IN_GAME);
+        }
 
     }
 

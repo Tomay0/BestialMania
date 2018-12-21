@@ -4,6 +4,7 @@ import com.bestialMania.object.gui.Button;
 import com.bestialMania.object.gui.Object2D;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
+import org.joml.Vector4f;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 import com.bestialMania.rendering.*;
@@ -28,7 +29,8 @@ public class Main {
     private Set<Button> buttons = new HashSet<>();
 
     /*Enum that controls the different states the game can take*/
-    private enum State{MAIN_MENU, IN_GAME, OPTIONS, CHARACTER_SELECTION} //There might be more states in the options screen
+    public enum State{MAIN_MENU, IN_GAME, OPTIONS, CHARACTER_SELECTION} //There might be more states in the options screen
+    private State currentState = State.MAIN_MENU;
 
     public void run() {
         init();
@@ -111,28 +113,18 @@ public class Main {
         //Framebuffer for the 3D scene
         Framebuffer sceneFbo = new Framebuffer(DisplaySettings.WIDTH,DisplaySettings.HEIGHT,1,true);
 
+        //Master renderer, does all the scene rendering
+        MasterRenderer masterRenderer = new MasterRenderer();
+        masterRenderer.addFramebuffer(sceneFbo);
 
-        //jimmy
-        Texture jimmyTexture = Texture.loadImageTexture3D("res/textures/jimmy_tex.png");
-        Model jimmyModel = OBJLoader.loadOBJ("res/models/jimmy.obj");
         //jimmy matrix
         Matrix4f jimmyMatrix = new Matrix4f();
         jimmyMatrix.translate(0,-0.5f,0.0f);
         jimmyMatrix.scale(0.1f,0.1f,0.1f);
 
-        //Master renderer, does all the scene rendering
-        MasterRenderer masterRenderer = new MasterRenderer();
-
-        masterRenderer.addFramebuffer(sceneFbo);
-
         //create renderer which will render within the window with the shader created above
         Renderer renderer = sceneFbo.createRenderer(shader);
         Renderer renderer2D = masterRenderer.getWindowFramebuffer().createRenderer(shader2D);
-
-        //an object
-        ShaderObject object = renderer.createObject(jimmyModel);
-        object.addTexture(0,jimmyTexture);
-        object.addUniform(new UniformMatrix4(shader,"modelMatrix",jimmyMatrix));
 
         //The scene renderered as a quad
         Object2D sceneObject = new Object2D(0,0,sceneFbo.getTexture(0));
@@ -146,7 +138,7 @@ public class Main {
 
         /*---- Button Examples ----*/
         /*Button with size relative to texture dimensions*/
-        Button buttonOne =  new Button(0, 100, "res/textures/sexy.png", "Quit", "Quit");
+        Button buttonOne =  new Button(0, 100, "res/textures/sexy.png", "Play", "Play");
         buttonOne.addToRenderer(renderer2D);
 
         /*Button with size independent from texture dimensions*/
@@ -157,22 +149,27 @@ public class Main {
 
         //Run until you click X or press ESC
         while ( !glfwWindowShouldClose(window) && glfwGetKey(window,GLFW_KEY_ESCAPE) != GLFW_PRESS) {
-            Vector2f mousePos = inputHandler.getMousePosition();
-            System.out.println(mousePos);
-
             inputHandler.updateControllerState();
 
-            /*Looping through buttons and seeing if they were clicked*/
-            for(Button button : buttons){
-               if(inputHandler.mouseOn(button) && inputHandler.isMouseLeftPressed()) button.doAction();
+            /*If at main menu*/
+            if(currentState == State.MAIN_MENU) {
+
+                /*Looping through buttons and seeing if they were clicked*/
+                for (Button button : buttons) {
+                    if (inputHandler.mouseOn(button) && inputHandler.isMouseLeftPressed()) button.doAction();
+                }
             }
 
-            //update jimmy
-            if(inputHandler.isControllerActive(GLFW_JOYSTICK_1)) {
-                System.out.println("controller 1 active");
-                jimmyMatrix.rotateY(inputHandler.gamepadLeftJoystickPosition(GLFW_JOYSTICK_1).x/100.0f);
-            }else{
-                jimmyMatrix.rotateY(0.01f);
+            /*If in game*/
+            else if(currentState == State.IN_GAME) {
+                //update jimmy
+                setupGameState(renderer, shader, jimmyMatrix);
+                if (inputHandler.isControllerActive(GLFW_JOYSTICK_1)) {
+                    System.out.println("controller 1 active");
+                    jimmyMatrix.rotateY(inputHandler.gamepadLeftJoystickPosition(GLFW_JOYSTICK_1).x / 100.0f);
+                } else {
+                    jimmyMatrix.rotateY(0.01f);
+                }
             }
 
             //render the scene
@@ -185,6 +182,21 @@ public class Main {
             glfwPollEvents();
         }
     }
+    private void mainMenuState(){
+
+    }
+
+    /**/
+    private void setupGameState(Renderer renderer, Shader shader, Matrix4f jimmyMatrix){
+        //jimmy
+        Texture jimmyTexture = Texture.loadImageTexture3D("res/textures/jimmy_tex.png");
+        Model jimmyModel = OBJLoader.loadOBJ("res/models/jimmy.obj");
+
+        //an object
+        ShaderObject object = renderer.createObject(jimmyModel);
+        object.addTexture(0,jimmyTexture);
+        object.addUniform(new UniformMatrix4(shader,"modelMatrix",jimmyMatrix));
+    }
 
     /**
      * Runs when the window is closed
@@ -193,6 +205,14 @@ public class Main {
         //glfwFreeCallbacks(window);
         glfwDestroyWindow(window);
         glfwTerminate();
+    }
+
+    public State getCurrentState(){
+        return currentState;
+    }
+
+    public void setCurrentState(State newState){
+        currentState = newState;
     }
 
     public static void main(String[] args) {
