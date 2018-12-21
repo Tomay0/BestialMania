@@ -1,5 +1,6 @@
 package com.bestialMania;
 
+import com.bestialMania.object.gui.Object2D;
 import org.joml.Matrix4f;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
@@ -86,8 +87,8 @@ public class Main {
         //background colour
         glClearColor(0.1f, 0.75f, 1.0f, 1.0f);
         glEnable(GL_DEPTH_TEST);
-        glEnable(GL_CULL_FACE);
-        glCullFace(GL_FRONT);//TODO change to GL_BACK after implementing the projection matrix
+        //glEnable(GL_CULL_FACE);
+        //glCullFace(GL_FRONT);//TODO change to GL_BACK after implementing the projection matrix
 
         //TODO some basic lighting
         //Vector3f lightDir = new Vector3f(-1,2,1);
@@ -95,6 +96,7 @@ public class Main {
         //load some shader
         Shader shader = new Shader("res/shaders/test_vertex.glsl","res/shaders/test_fragment.glsl");
         shader.bindTextureUnits(Arrays.asList("textureSampler"));
+        Shader shader2D = new Shader("res/shaders/gui_vertex.glsl","res/shaders/gui_fragment.glsl");
 
         //jimmy
         Texture jimmyTexture = Texture.loadImageTexture3D("res/textures/jimmy_tex.png");
@@ -104,25 +106,25 @@ public class Main {
         jimmyMatrix.translate(0,-0.5f,0.0f);
         jimmyMatrix.scale(0.1f,0.1f,0.1f);
 
-        //some 2d rectangle
-        Model rect = new Rect2D(-1,-1,0,0);
-        Texture daddyTexture = Texture.loadImageTexture3D("res/textures/sexy.png");
-
         //Master renderer, does all the scene rendering
         MasterRenderer masterRenderer = new MasterRenderer();
 
         //create renderer which will render within the window with the shader created above
         Renderer renderer = masterRenderer.getWindowFramebuffer().createRenderer(shader);
+        Renderer renderer2D = masterRenderer.getWindowFramebuffer().createRenderer(shader2D);
 
         //an object
         ShaderObject object = renderer.createObject(jimmyModel);
         object.addTexture(0,jimmyTexture);
         object.addUniform(new UniformMatrix4(shader,"modelMatrix",jimmyMatrix));
 
-        //another object
-        ShaderObject object2 = renderer.createObject(rect);
-        object2.addTexture(0,daddyTexture);
-        object2.addUniform(new UniformMatrix4(shader,"modelMatrix",new Matrix4f()));
+
+        //#############################
+        //some 2d rectangle
+        Object2D object2D = new Object2D(0,100,"res/textures/sexy.png");
+        object2D.addToRenderer(renderer2D);
+        //#############################
+
 
         //Run until you click X or press ESC
         while ( !glfwWindowShouldClose(window) && glfwGetKey(window,GLFW_KEY_ESCAPE) != GLFW_PRESS) {

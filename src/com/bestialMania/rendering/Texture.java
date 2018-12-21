@@ -137,4 +137,14 @@ public class Texture {
         }
         return null;
     }
+
+    /**
+     * Width
+     */
+    public int getWidth() {return width;}
+
+    /**
+     * Height
+     */
+    public int getHeight() {return height;}
 }

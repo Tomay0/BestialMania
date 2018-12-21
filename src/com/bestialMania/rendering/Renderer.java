@@ -69,4 +69,9 @@ public class Renderer {
             object.render();
         }
     }
+
+    /**
+     * Get the shader
+     */
+    public Shader getShader() {return shader;}
 }
