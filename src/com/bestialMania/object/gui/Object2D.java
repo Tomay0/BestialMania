@@ -8,12 +8,16 @@ import com.bestialMania.rendering.model.Rect2D;
 import com.bestialMania.rendering.shader.UniformMatrix4;
 import org.joml.Matrix4f;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class Object2D {
     private Rect2D model;
     private Texture texture;
     private ShaderObject shaderObject;
     protected Matrix4f matrix;
     protected float x, y, width, height;
+    private Map<Renderer,ShaderObject> objects = new HashMap<>();
 
     /**
      * Creates a 2D object at position x,y with the texture as the file name given
@@ -90,14 +94,24 @@ public class Object2D {
         generateModel();
     }
 
+
     /**
      * Binds this object to a renderer
      */
     public void addToRenderer(Renderer renderer) {
-        //ShaderObject obj = renderer.createObject(model);
-        shaderObject  = renderer.createObject(model);
-        shaderObject.addTexture(0,texture);
-        shaderObject.addUniform(new UniformMatrix4(renderer.getShader(),"modelMatrix",matrix));
+        ShaderObject shaderObject  = renderer.createObject(model);
+        shaderObject.addTexture(0, texture);
+        shaderObject.addUniform(new UniformMatrix4(renderer.getShader(),"modelMatrix", matrix));
+        objects.put(renderer,shaderObject);
+    }
+
+    /**
+     * Removes this object from a renderer
+     */
+    public void removeFromRenderer(Renderer renderer) {
+        if(objects.containsKey(renderer)) {
+            renderer.removeObject(objects.get(renderer));
+        }
     }
 
     public Texture getObject2DTexture(){return texture;}

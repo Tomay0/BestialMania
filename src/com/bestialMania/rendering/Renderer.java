@@ -59,6 +59,13 @@ public class Renderer {
     }
 
     /**
+     * Remove an object
+     */
+    public void removeObject(ShaderObject obj) {
+        objects.remove(obj);
+    }
+
+    /**
      * Render
      */
     public void render() {

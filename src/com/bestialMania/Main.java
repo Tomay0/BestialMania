@@ -31,6 +31,10 @@ public class Main {
     /*Enum that controls the different states the game can take*/
     public enum State{MAIN_MENU, IN_GAME, OPTIONS, CHARACTER_SELECTION} //There might be more states in the options screen
     private State currentState = State.MAIN_MENU;
+    private Shader testShader;
+    private Renderer testRenderer, renderer2D;
+    private Matrix4f jimmyMatrix;
+    private boolean running = true;
 
     public void run() {
         init();
@@ -99,15 +103,15 @@ public class Main {
         //background colour
         glClearColor(0.1f, 0.75f, 1.0f, 1.0f);
         glEnable(GL_DEPTH_TEST);
-        //glEnable(GL_CULL_FACE);
-        //glCullFace(GL_FRONT);//TODO change to GL_BACK after implementing the projection matrix
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_FRONT);//TODO change to GL_BACK after implementing the projection matrix
 
         //TODO some basic lighting
         //Vector3f lightDir = new Vector3f(-1,2,1);
 
         //load some shader
-        Shader shader = new Shader("res/shaders/test_vertex.glsl","res/shaders/test_fragment.glsl");
-        shader.bindTextureUnits(Arrays.asList("textureSampler"));
+        testShader = new Shader("res/shaders/test_vertex.glsl","res/shaders/test_fragment.glsl");
+        testShader.bindTextureUnits(Arrays.asList("textureSampler"));
         Shader shader2D = new Shader("res/shaders/gui_vertex.glsl","res/shaders/gui_fragment.glsl");
 
         //Framebuffer for the 3D scene
@@ -118,13 +122,13 @@ public class Main {
         masterRenderer.addFramebuffer(sceneFbo);
 
         //jimmy matrix
-        Matrix4f jimmyMatrix = new Matrix4f();
+        jimmyMatrix = new Matrix4f();
         jimmyMatrix.translate(0,-0.5f,0.0f);
         jimmyMatrix.scale(0.1f,0.1f,0.1f);
 
         //create renderer which will render within the window with the shader created above
-        Renderer renderer = sceneFbo.createRenderer(shader);
-        Renderer renderer2D = masterRenderer.getWindowFramebuffer().createRenderer(shader2D);
+        testRenderer = sceneFbo.createRenderer(testShader);
+        renderer2D = masterRenderer.getWindowFramebuffer().createRenderer(shader2D);
 
         //The scene renderered as a quad
         Object2D sceneObject = new Object2D(0,0,sceneFbo.getTexture(0));
@@ -148,7 +152,7 @@ public class Main {
         buttons.add(buttonTwo);
 
         //Run until you click X or press ESC
-        while ( !glfwWindowShouldClose(window) && glfwGetKey(window,GLFW_KEY_ESCAPE) != GLFW_PRESS) {
+        while ( !glfwWindowShouldClose(window) && glfwGetKey(window,GLFW_KEY_ESCAPE) != GLFW_PRESS && running) {
             inputHandler.updateControllerState();
 
             /*If at main menu*/
@@ -156,16 +160,15 @@ public class Main {
 
                 /*Looping through buttons and seeing if they were clicked*/
                 for (Button button : buttons) {
-                    if (inputHandler.mouseOn(button) && inputHandler.isMouseLeftPressed()) button.doAction();
+                    if (button.mouseOn(inputHandler.getMousePosition()) && inputHandler.isMouseLeftPressed()) {
+                        button.doAction();
+                    }
                 }
             }
 
             /*If in game*/
             else if(currentState == State.IN_GAME) {
-                //update jimmy
-                setupGameState(renderer, shader, jimmyMatrix);
                 if (inputHandler.isControllerActive(GLFW_JOYSTICK_1)) {
-                    System.out.println("controller 1 active");
                     jimmyMatrix.rotateY(inputHandler.gamepadLeftJoystickPosition(GLFW_JOYSTICK_1).x / 100.0f);
                 } else {
                     jimmyMatrix.rotateY(0.01f);
@@ -186,22 +189,36 @@ public class Main {
 
     }
 
-    /**/
-    private void setupGameState(Renderer renderer, Shader shader, Matrix4f jimmyMatrix){
+    /**Switch to the game state*/
+    public void setupGameState(){
+        setCurrentState(Main.State.IN_GAME);
         //jimmy
         Texture jimmyTexture = Texture.loadImageTexture3D("res/textures/jimmy_tex.png");
         Model jimmyModel = OBJLoader.loadOBJ("res/models/jimmy.obj");
 
+
         //an object
-        ShaderObject object = renderer.createObject(jimmyModel);
+        ShaderObject object = testRenderer.createObject(jimmyModel);
         object.addTexture(0,jimmyTexture);
-        object.addUniform(new UniformMatrix4(shader,"modelMatrix",jimmyMatrix));
+        object.addUniform(new UniformMatrix4(testShader,"modelMatrix",jimmyMatrix));
+
+
+        for(Button b : buttons) {
+            b.removeFromRenderer(renderer2D);
+        }
+    }
+
+    /**
+     * Exit the game
+     */
+    public void quit() {
+        running = false;
     }
 
     /**
      * Runs when the window is closed
      */
-    public void terminate() {
+    private void terminate() {
         //glfwFreeCallbacks(window);
         glfwDestroyWindow(window);
         glfwTerminate();

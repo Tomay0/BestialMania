@@ -48,17 +48,6 @@ public class InputHandler{
         return new Vector2f( (float)mouseXPos.get(), (float)mouseYPos.get() );
     }
 
-    /**
-     * Method that checks if the mouse position is on a button
-     */
-    public boolean mouseOn(Button button){
-        //TODO: Make this work for an arbitrary object
-        Vector2f mousePos = getMousePosition();
-        if(mousePos.x >= button.getX() && mousePos.x <= button.getX() + button.getWidth()  &&
-                mousePos.y >= button.getY() && mousePos.y <= button.getY() + button.getHeight() ) return true;
-        return false;
-    }
-
     //set the mouse position to unbounded (for camera movement) and hides the cursor
     public void setCursorDisabled(){ glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); }
 
