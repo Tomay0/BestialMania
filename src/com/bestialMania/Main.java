@@ -2,8 +2,11 @@ package com.bestialMania;
 
 import com.bestialMania.object.gui.Button;
 import com.bestialMania.object.gui.Object2D;
+import com.bestialMania.object.gui.text.Font;
+import com.bestialMania.object.gui.text.Text;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
+import org.joml.Vector3f;
 import org.joml.Vector4f;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
@@ -105,6 +108,8 @@ public class Main {
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
         glCullFace(GL_FRONT);//TODO change to GL_BACK after implementing the projection matrix
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         //TODO some basic lighting
         //Vector3f lightDir = new Vector3f(-1,2,1);
@@ -113,6 +118,10 @@ public class Main {
         testShader = new Shader("res/shaders/test_vertex.glsl","res/shaders/test_fragment.glsl");
         testShader.bindTextureUnits(Arrays.asList("textureSampler"));
         Shader shader2D = new Shader("res/shaders/gui_vertex.glsl","res/shaders/gui_fragment.glsl");
+
+        //some text stuff TODO
+        Font font = new Font("res/fonts/test.fnt","res/fonts/test.png");
+        Shader textShader = new Shader("res/shaders/gui_vertex.glsl", "res/shaders/text_fragment.glsl");
 
         //Framebuffer for the 3D scene
         Framebuffer sceneFbo = Framebuffer.createMultisampledFramebuffer3Dto2D(DisplaySettings.WIDTH,DisplaySettings.HEIGHT);//TODO only make multisampled if antialiasing turned on
@@ -129,6 +138,7 @@ public class Main {
         //create renderer which will render within the window with the shader created above
         testRenderer = sceneFbo.createRenderer(testShader);
         renderer2D = masterRenderer.getWindowFramebuffer().createRenderer(shader2D);
+        Renderer textRenderer = masterRenderer.getWindowFramebuffer().createRenderer(textShader);
 
         //The scene renderered as a quad
         Object2D sceneObject = new Object2D(0,0,sceneFbo.getTexture(0));
@@ -150,6 +160,9 @@ public class Main {
         buttonTwo.addToRenderer(renderer2D);
         buttons.add(buttonOne);
         buttons.add(buttonTwo);
+
+        Text text = new Text("Happiness is an illusion",font,48,30,30,new Vector3f(255,255, 0));
+        text.addToRenderer(textRenderer);
 
         //Run until you click X or press ESC
         while ( !glfwWindowShouldClose(window) && glfwGetKey(window,GLFW_KEY_ESCAPE) != GLFW_PRESS && running) {
