@@ -78,6 +78,14 @@ public class Texture {
         glBindTexture(type,texture);
     }
 
+    /**
+     * Generate a mipmap
+     */
+    public void genMipmap() {
+        bind(0);
+        glGenerateMipmap(type);
+    }
+
 
     /**
      * Removes the texture from memory

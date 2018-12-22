@@ -115,7 +115,7 @@ public class Main {
         Shader shader2D = new Shader("res/shaders/gui_vertex.glsl","res/shaders/gui_fragment.glsl");
 
         //Framebuffer for the 3D scene
-        Framebuffer sceneFbo = new Framebuffer(DisplaySettings.WIDTH,DisplaySettings.HEIGHT,1,true);
+        Framebuffer sceneFbo = Framebuffer.createMultisampledFramebuffer3Dto2D(DisplaySettings.WIDTH,DisplaySettings.HEIGHT);//TODO only make multisampled if antialiasing turned on
 
         //Master renderer, does all the scene rendering
         MasterRenderer masterRenderer = new MasterRenderer();
