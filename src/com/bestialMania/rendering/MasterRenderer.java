@@ -1,12 +1,19 @@
 package com.bestialMania.rendering;
 
+import com.bestialMania.rendering.model.Model;
+import org.lwjgl.system.CallbackI;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Class for rendering everything to the screen and keeping track of everything stored to memory
+ *
+ */
 public class MasterRenderer {
-    private List<Framebuffer> framebuffers;
+    private List<Framebuffer> framebuffers = new ArrayList<>();
     private Framebuffer window;
 
     /**
@@ -15,13 +22,11 @@ public class MasterRenderer {
      * each framebuffer contains their own renderers which contain the objects
      */
     public MasterRenderer() {
-        framebuffers = new ArrayList<>();
         window = new Framebuffer();
         framebuffers.add(window);
     }
 
     public Framebuffer getWindowFramebuffer() {return window;}
-
 
     /**
      * Adds a framebuffer to the list at the end

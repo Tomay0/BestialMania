@@ -47,17 +47,17 @@ public class Framebuffer {
      * @param wrap texture wrapping eg: GL_CLAMP_TO_EDGE
      * @param mipmap if mipmapping/anisotropic filtering should be used
      */
-    private void genTextures(int nTextures, int internalFormat, int format, int formatType, int filter, int wrap, boolean mipmap) {
+    private void genTextures(MemoryManager mm, int nTextures, int internalFormat, int format, int formatType, int filter, int wrap, boolean mipmap) {
         for(int i = 0;i<nTextures;i++) {
-            Texture texture = new Texture(GL_TEXTURE_2D,width,height);
+            Texture texture = new Texture(mm,GL_TEXTURE_2D,width,height);
             texture.genFramebufferTexture(i,internalFormat,format,formatType);
             texture.applyFilters(filter,wrap,mipmap);
             textures.add(texture);
         }
 
     }
-    private void genDepthTexture(int filter, int wrap, boolean mipmap) {
-        Texture texture = new Texture(GL_TEXTURE_2D,width,height);
+    private void genDepthTexture(MemoryManager mm, int filter, int wrap, boolean mipmap) {
+        Texture texture = new Texture(mm,GL_TEXTURE_2D,width,height);
         texture.genFramebufferDepthTexture();
         texture.applyFilters(filter,wrap,mipmap);
         textures.add(texture);
@@ -101,11 +101,11 @@ public class Framebuffer {
     /**
      * Generate some framebuffers with a single texture for
      */
-    private void genMultisampledFboTextures(int nTextures, int internalFormat, int format, int formatType, int filter, int wrap, boolean mipmap) {
+    private void genMultisampledFboTextures(MemoryManager mm, int nTextures, int internalFormat, int format, int formatType, int filter, int wrap, boolean mipmap) {
         for(int i = 0; i < nTextures;i++) {
             int blitFbo = glGenFramebuffers();
             glBindFramebuffer(GL_FRAMEBUFFER,blitFbo);
-            Texture texture = new Texture(GL_TEXTURE_2D,width,height);
+            Texture texture = new Texture(mm,GL_TEXTURE_2D,width,height);
             texture.genFramebufferTexture(0,internalFormat,format,formatType);
             texture.applyFilters(filter,wrap,mipmap);
             textures.add(texture);
@@ -197,7 +197,6 @@ public class Framebuffer {
     public void cleanUp() {
         glDeleteFramebuffers(fbo);
         for(int buffer : buffers) glDeleteRenderbuffers(buffer);
-        for(Texture texture : textures) texture.cleanUp();
         for(int blitFbo : blitFbos) glDeleteFramebuffers(blitFbo);
     }
 
@@ -228,11 +227,11 @@ public class Framebuffer {
     /**
      * Create a normal framebuffer and return it
      */
-    public static Framebuffer createFramebuffer(int width, int height, boolean depthEnabled, int nTextures, int internalFormat, int format, int formatType, int filter, int wrap, boolean mipmap) {
+    public static Framebuffer createFramebuffer(MemoryManager mm, int width, int height, boolean depthEnabled, int nTextures, int internalFormat, int format, int formatType, int filter, int wrap, boolean mipmap) {
         Framebuffer framebuffer = new Framebuffer(width,height);
         framebuffer.depthEnabled = depthEnabled;
         framebuffer.mipmapping = mipmap;
-        framebuffer.genTextures(nTextures,internalFormat,format,formatType,filter,wrap,mipmap);
+        framebuffer.genTextures(mm,nTextures,internalFormat,format,formatType,filter,wrap,mipmap);
         if(depthEnabled) framebuffer.genDepthRenderbuffers();
         framebuffer.genDrawBuffers(nTextures);
 
@@ -247,11 +246,11 @@ public class Framebuffer {
     /**
      * Create a depth framebuffer and return it
      */
-    public static Framebuffer createDepthFramebuffer(int width, int height, int filter, int wrap, boolean mipmap) {
+    public static Framebuffer createDepthFramebuffer(MemoryManager mm,int width, int height, int filter, int wrap, boolean mipmap) {
         Framebuffer framebuffer = new Framebuffer(width,height);
         framebuffer.depthEnabled = true;
         framebuffer.mipmapping = mipmap;
-        framebuffer.genDepthTexture(filter,wrap,mipmap);
+        framebuffer.genDepthTexture(mm, filter,wrap,mipmap);
         glDrawBuffers(GL_NONE);
 
         if(!framebuffer.checkStatus()) {
@@ -264,14 +263,14 @@ public class Framebuffer {
     /**
      * Create a multisampled framebuffer and return it
      */
-    public static Framebuffer createMultisampledFramebuffer(int width, int height, boolean depthEnabled, int nTextures, int internalFormat, int format, int formatType, int filter, int wrap, boolean mipmap) {
+    public static Framebuffer createMultisampledFramebuffer(MemoryManager mm, int width, int height, boolean depthEnabled, int nTextures, int internalFormat, int format, int formatType, int filter, int wrap, boolean mipmap) {
         Framebuffer framebuffer = new Framebuffer(width,height);
         framebuffer.depthEnabled = depthEnabled;
         framebuffer.mipmapping = mipmap;
         framebuffer.genMultisampleRenderbuffers(nTextures);
         if(depthEnabled) framebuffer.genMultisampledDepthRenderbuffers();
         framebuffer.genDrawBuffers(nTextures);
-        framebuffer.genMultisampledFboTextures(nTextures,internalFormat,format,formatType,filter,wrap,mipmap);
+        framebuffer.genMultisampledFboTextures(mm,nTextures,internalFormat,format,formatType,filter,wrap,mipmap);
 
         if(!framebuffer.checkStatus()) {
             System.out.println("Error: Could not create framebuffer.");
@@ -290,8 +289,8 @@ public class Framebuffer {
      * - Clamp to edge
      * - No mipmap
      */
-    public static Framebuffer createFramebuffer3Dto2D(int width, int height) {
-        return createFramebuffer(width,height,true,1,GL_RGBA,GL_RGBA,GL_UNSIGNED_INT,GL_LINEAR,GL_CLAMP_TO_EDGE,false);
+    public static Framebuffer createFramebuffer3Dto2D(MemoryManager mm, int width, int height) {
+        return createFramebuffer(mm,width,height,true,1,GL_RGBA,GL_RGBA,GL_UNSIGNED_INT,GL_LINEAR,GL_CLAMP_TO_EDGE,false);
     }
 
     /**
@@ -303,8 +302,8 @@ public class Framebuffer {
      * - Clamp to edge
      * - No mipmap
      */
-    public static Framebuffer createMultisampledFramebuffer3Dto2D(int width, int height) {
-        return createMultisampledFramebuffer(width,height,true,1,GL_RGBA,GL_RGBA,GL_UNSIGNED_INT,GL_LINEAR,GL_CLAMP_TO_EDGE,false);
+    public static Framebuffer createMultisampledFramebuffer3Dto2D(MemoryManager mm, int width, int height) {
+        return createMultisampledFramebuffer(mm, width,height,true,1,GL_RGBA,GL_RGBA,GL_UNSIGNED_INT,GL_LINEAR,GL_CLAMP_TO_EDGE,false);
     }
 
     /**
@@ -313,7 +312,7 @@ public class Framebuffer {
      * - clamp to edge
      * - No mipmap
      */
-    public static Framebuffer createDepthFramebuffer2D(int width, int height) {
-        return createDepthFramebuffer(width,height,GL_LINEAR,GL_CLAMP_TO_EDGE,false);
+    public static Framebuffer createDepthFramebuffer2D(MemoryManager mm, int width, int height) {
+        return createDepthFramebuffer(mm,width,height,GL_LINEAR,GL_CLAMP_TO_EDGE,false);
     }
 }

@@ -22,7 +22,8 @@ public class Texture {
     /**
      * Initialize a texture of specified width and height
      */
-    public Texture(int type, int width, int height) {
+    public Texture(MemoryManager mm, int type, int width, int height) {
+        mm.addTexture(this);
         this.type = type;
         this.width = width;
         this.height = height;
@@ -97,17 +98,17 @@ public class Texture {
     /**
      * Load a texture from a file with default settings for 3D textures
      */
-    public static Texture loadImageTexture3D(String fileName) {return loadImageTexture(fileName,GL_RGBA,GL_LINEAR,GL_REPEAT,true);}
+    public static Texture loadImageTexture3D(MemoryManager mm, String fileName) {return loadImageTexture(mm,fileName,GL_RGBA,GL_LINEAR,GL_REPEAT,true);}
 
     /**
      * Load a texture from a file with default settings for 2D textures
      */
-    public static Texture loadImageTexture2D(String fileName) {return loadImageTexture(fileName,GL_RGBA,GL_LINEAR,GL_CLAMP_TO_EDGE,false);}
+    public static Texture loadImageTexture2D(MemoryManager mm, String fileName) {return loadImageTexture(mm,fileName,GL_RGBA,GL_LINEAR,GL_CLAMP_TO_EDGE,false);}
 
     /**
      * Load a texture from a file and return the texture
      */
-    public static Texture loadImageTexture(String fileName, int format, int filter, int wrap, boolean mipmap) {
+    public static Texture loadImageTexture(MemoryManager mm, String fileName, int format, int filter, int wrap, boolean mipmap) {
         try {
             //load image
             BufferedImage image = ImageIO.read(new File(fileName));
@@ -134,7 +135,7 @@ public class Texture {
             buffer.flip();
 
             //generate the texture
-            Texture texture = new Texture(GL_TEXTURE_2D, width,height);
+            Texture texture = new Texture(mm,GL_TEXTURE_2D, width,height);
             texture.genBufferedTexture(format, buffer);
             texture.applyFilters(filter,wrap,mipmap);
 

@@ -1,5 +1,7 @@
 package com.bestialMania.object.gui.text;
 
+import com.bestialMania.rendering.MasterRenderer;
+import com.bestialMania.rendering.MemoryManager;
 import com.bestialMania.rendering.Texture;
 
 import java.io.File;
@@ -13,9 +15,9 @@ public class Font {
     private Map<Character,FontCharacter> characters = new HashMap<>();
     private int lineHeight;
 
-    public Font(String fontFile, String fontTexture) {
+    public Font(MemoryManager mm, String fontFile, String fontTexture) {
         //the texture atlas
-        texture = Texture.loadImageTexture2D(fontTexture);
+        texture = Texture.loadImageTexture2D(mm,fontTexture);
 
         //load all characters from font file
         try {

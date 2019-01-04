@@ -1,6 +1,8 @@
 package com.bestialMania.object.gui;
 //TODO: Implement text on button
 
+import com.bestialMania.rendering.MasterRenderer;
+import com.bestialMania.rendering.MemoryManager;
 import com.bestialMania.rendering.Renderer;
 import com.bestialMania.rendering.ShaderObject;
 import com.bestialMania.rendering.shader.UniformMatrix4;
@@ -13,13 +15,12 @@ import java.util.Map;
 public class Button extends Object2D{
     private String textOnButton;
     private String actionOnClick;
-    private Main main = Main.main;
 
     /**
      *  Constructor for width and height being relative to texture
      */
-    public Button(int x, int y, String textureFileName, String textOnButton, String actionOnClick) {
-        super(x,y,textureFileName);
+    public Button(MemoryManager mm, int x, int y, String textureFileName, String textOnButton, String actionOnClick) {
+        super(mm,x,y,textureFileName);
         this.textOnButton = textOnButton;
         this.actionOnClick = actionOnClick;
     }
@@ -27,22 +28,10 @@ public class Button extends Object2D{
     /**
      *  Constructor for set width and height
      */
-    public Button(int x, int y, int width, int height, String textureFileName, String textOnButton, String actionOnClick){
-        super(x,y,width,height,textureFileName);
+    public Button(MemoryManager mm, int x, int y, int width, int height, String textureFileName, String textOnButton, String actionOnClick){
+        super(mm,x,y,width,height,textureFileName);
         this.textOnButton = textOnButton;
         this.actionOnClick = actionOnClick;
-    }
-
-    /**
-     * Method that controls the action that each button will undertake upon being clicked
-     */
-    public void doAction(){
-        if(actionOnClick.equals("Quit")) main.quit();
-        else if(actionOnClick.equals("Play")) {
-            System.out.println("Play state");
-            main.setupGameState();
-        }
-
     }
 
     /**

@@ -1,5 +1,7 @@
 package com.bestialMania.rendering.model;
 
+import com.bestialMania.rendering.MasterRenderer;
+import com.bestialMania.rendering.MemoryManager;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
@@ -12,7 +14,7 @@ public class OBJLoader {
     /**
      * Loads a model from an OBJ file format
      */
-    public static Model loadOBJ(String file) {
+    public static Model loadOBJ(MemoryManager mm, String file) {
         try {
             Scanner scan = new Scanner(new File(file));
 
@@ -62,7 +64,7 @@ public class OBJLoader {
             }
 
             //build the model
-            Model model = new Model();
+            Model model = new Model(mm);
 
             //build indices
             int[] newIndices = new int[indices.size()*3];

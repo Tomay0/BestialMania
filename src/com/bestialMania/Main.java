@@ -4,6 +4,8 @@ import com.bestialMania.object.gui.Button;
 import com.bestialMania.object.gui.Object2D;
 import com.bestialMania.object.gui.text.Font;
 import com.bestialMania.object.gui.text.Text;
+import com.bestialMania.state.State;
+import com.bestialMania.state.menu.Menu;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
@@ -27,16 +29,16 @@ public class Main {
     private long window;
     //Input handler
     private InputHandler inputHandler;
-    public static Main main;
+    //public static Main main;
 
-    private Set<Button> buttons = new HashSet<>();
+    //private Set<Button> buttons = new HashSet<>();
 
     /*Enum that controls the different states the game can take*/
-    public enum State{MAIN_MENU, IN_GAME, OPTIONS, CHARACTER_SELECTION} //There might be more states in the options screen
-    private State currentState = State.MAIN_MENU;
-    private Shader testShader;
-    private Renderer testRenderer, renderer2D;
-    private Matrix4f jimmyMatrix;
+    //public enum State{MAIN_MENU, IN_GAME, OPTIONS, CHARACTER_SELECTION} //There might be more states in the options screen
+    private State currentState;// = State.MAIN_MENU;
+    //private Shader testShader;
+    //private Renderer testRenderer, renderer2D;
+    //private Matrix4f jimmyMatrix;
     private boolean running = true;
 
     public void run() {
@@ -87,9 +89,6 @@ public class Main {
                 glfwSetWindowShouldClose(window, true); // We will detect this in the rendering loop
         });*/
 
-        //create the input handler for the window
-        inputHandler = new InputHandler(window);
-
         //CONTEXT CURRENT
         glfwMakeContextCurrent(window);
 
@@ -97,25 +96,32 @@ public class Main {
 
         glfwShowWindow(window);
         GL.createCapabilities();
-    }
 
-    /**
-     * Main run loop
-     */
-    private void loop() {
-        //background colour
+        //create the input handler for the window
+        inputHandler = new InputHandler(window);
+
+        //initial game state
+        Menu menu = new Menu(this,inputHandler);
+        menu.setCurrentState(Menu.MenuState.PLAYER_SELECT);
+
+        //some OpenGL settings
         glClearColor(0.1f, 0.75f, 1.0f, 1.0f);
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
         glCullFace(GL_FRONT);//TODO change to GL_BACK after implementing the projection matrix
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
 
+    /**
+     * Main run loop
+     */
+    private void loop() {
         //TODO some basic lighting
         //Vector3f lightDir = new Vector3f(-1,2,1);
 
         //load some shader
-        testShader = new Shader("res/shaders/test_vertex.glsl","res/shaders/test_fragment.glsl");
+        /*testShader = new Shader("res/shaders/test_vertex.glsl","res/shaders/test_fragment.glsl");
         testShader.bindTextureUnits(Arrays.asList("textureSampler"));
         Shader shader2D = new Shader("res/shaders/gui_vertex.glsl","res/shaders/gui_fragment.glsl");
 
@@ -150,28 +156,30 @@ public class Main {
         //object2D.addToRenderer(renderer2D);
         //#############################
 
-        /*---- Button Examples ----*/
-        /*Button with size relative to texture dimensions*/
+        //---- Button Examples ----
+        //Button with size relative to texture dimensions
         Button buttonOne =  new Button(0, 100, "res/textures/sexy.png", "Play", "Play");
         buttonOne.addToRenderer(renderer2D);
 
-        /*Button with size independent from texture dimensions*/
+        //Button with size independent from texture dimensions
         Button buttonTwo = new Button(500, 100, 100, 50, "res/textures/sexy.png", "Quit", "Quit");
         buttonTwo.addToRenderer(renderer2D);
         buttons.add(buttonOne);
         buttons.add(buttonTwo);
 
-        Text text = new Text("Happiness is an illusion",font,48,30,30,new Vector3f(255,255, 0));
-        text.addToRenderer(textRenderer);
+        Text text = new Text("Happiness is an illusion",font,80,30,30,new Vector3f(255,255, 0));
+        text.addToRenderer(textRenderer);*/
 
         //Run until you click X or press ESC
         while ( !glfwWindowShouldClose(window) && glfwGetKey(window,GLFW_KEY_ESCAPE) != GLFW_PRESS && running) {
             inputHandler.updateControllerState();
+            currentState.update();
+            currentState.render();
 
             /*If at main menu*/
-            if(currentState == State.MAIN_MENU) {
+            /*if(currentState == State.MAIN_MENU) {
 
-                /*Looping through buttons and seeing if they were clicked*/
+                //Looping through buttons and seeing if they were clicked
                 for (Button button : buttons) {
                     if (button.mouseOn(inputHandler.getMousePosition()) && inputHandler.isMouseLeftPressed()) {
                         button.doAction();
@@ -179,17 +187,17 @@ public class Main {
                 }
             }
 
-            /*If in game*/
+            //If in game
             else if(currentState == State.IN_GAME) {
                 if (inputHandler.isControllerActive(GLFW_JOYSTICK_1)) {
                     jimmyMatrix.rotateY(inputHandler.gamepadLeftJoystickPosition(GLFW_JOYSTICK_1).x / 100.0f);
                 } else {
                     jimmyMatrix.rotateY(0.01f);
                 }
-            }
+            }*/
 
             //render the scene
-            masterRenderer.render();
+            //masterRenderer.render();
 
             //swap buffers to show new frame
             glfwSwapBuffers(window);
@@ -198,12 +206,8 @@ public class Main {
             glfwPollEvents();
         }
     }
-    private void mainMenuState(){
-
-    }
-
     /**Switch to the game state*/
-    public void setupGameState(){
+    /*public void setupGameState(){
         setCurrentState(Main.State.IN_GAME);
         //jimmy
         Texture jimmyTexture = Texture.loadImageTexture3D("res/textures/jimmy_tex.png");
@@ -219,7 +223,7 @@ public class Main {
         for(Button b : buttons) {
             b.removeFromRenderer(renderer2D);
         }
-    }
+    }*/
 
     /**
      * Exit the game
@@ -232,6 +236,7 @@ public class Main {
      * Runs when the window is closed
      */
     private void terminate() {
+        currentState.cleanUp();//delete things from the current state
         //glfwFreeCallbacks(window);
         glfwDestroyWindow(window);
         glfwTerminate();
@@ -246,7 +251,7 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        main = new Main();
+        Main main = new Main();
         main.run();
     }
 }

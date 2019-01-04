@@ -1,5 +1,7 @@
 package com.bestialMania.rendering.model;
 
+import com.bestialMania.rendering.MasterRenderer;
+import com.bestialMania.rendering.MemoryManager;
 import org.joml.*;
 import org.lwjgl.BufferUtils;
 
@@ -21,7 +23,8 @@ public class Model {
     /**
      * Initializes the model's VAO and binds to it
      */
-    public Model() {
+    public Model(MemoryManager mm) {
+        mm.addModel(this);
         vao = glGenVertexArrays();
         glBindVertexArray(vao);
         vbos = new ArrayList<>();
