@@ -1,37 +1,42 @@
 package com.bestialMania.object.gui;
-//TODO: Implement text on button
 
-import com.bestialMania.rendering.MasterRenderer;
+import com.bestialMania.InputHandler;
+import com.bestialMania.InputListener;
 import com.bestialMania.rendering.MemoryManager;
-import com.bestialMania.rendering.Renderer;
-import com.bestialMania.rendering.ShaderObject;
-import com.bestialMania.rendering.shader.UniformMatrix4;
-import com.bestialMania.Main;
 import org.joml.Vector2f;
 
-import java.util.HashMap;
-import java.util.Map;
+import static org.lwjgl.glfw.GLFW.*;
 
-public class Button extends Object2D{
+//TODO: Implement text on button
+public class Button extends Object2D implements InputListener {
     private String textOnButton;
-    private String actionOnClick;
+    private String actionOnClick;//multiple buttons could be onscreen and could use the same listener, so use an action to distinguish different buttons
+    private ButtonListener listener;//something to catch the button's click event
+    private InputHandler inputHandler;//to get the mouse position
+
 
     /**
      *  Constructor for width and height being relative to texture
      */
-    public Button(MemoryManager mm, int x, int y, String textureFileName, String textOnButton, String actionOnClick) {
+    public Button(MemoryManager mm, InputHandler inputHandler, ButtonListener listener, int x, int y, String textureFileName, String textOnButton, String actionOnClick) {
         super(mm,x,y,textureFileName);
         this.textOnButton = textOnButton;
         this.actionOnClick = actionOnClick;
+        this.inputHandler = inputHandler;
+        this.listener = listener;
+        inputHandler.addListener(this);
     }
 
     /**
      *  Constructor for set width and height
      */
-    public Button(MemoryManager mm, int x, int y, int width, int height, String textureFileName, String textOnButton, String actionOnClick){
+    public Button(MemoryManager mm, InputHandler inputHandler, ButtonListener listener, int x, int y, int width, int height, String textureFileName, String textOnButton, String actionOnClick){
         super(mm,x,y,width,height,textureFileName);
         this.textOnButton = textOnButton;
         this.actionOnClick = actionOnClick;
+        this.inputHandler = inputHandler;
+        this.listener = listener;
+        inputHandler.addListener(this);
     }
 
     /**
@@ -40,4 +45,27 @@ public class Button extends Object2D{
     public boolean mouseOn(Vector2f mousePos){
         return (mousePos.x >= x && mousePos.x <= x + width  && mousePos.y >= y && mousePos.y <= y + height );
     }
+
+    /**
+     * Remove the listener when this button is no longer in use
+     */
+    public void removeListener() {
+        inputHandler.removeListener(this);
+    }
+
+    //Mouse selection
+    @Override
+    public void mouseEvent(boolean pressed, int button) {
+        if(!pressed && button==GLFW_MOUSE_BUTTON_LEFT) {
+            if(mouseOn(inputHandler.getMousePosition())) {
+                listener.press(actionOnClick);
+            }
+        }
+    }
+
+    //TODO allow selecting with keyboard/controller?
+    @Override
+    public void keyEvent(boolean pressed, int key) {}
+    @Override
+    public void controllerEvent(int controller, boolean pressed, int button) {}
 }

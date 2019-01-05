@@ -1,44 +1,20 @@
 package com.bestialMania;
 
-import com.bestialMania.object.gui.Button;
-import com.bestialMania.object.gui.Object2D;
-import com.bestialMania.object.gui.text.Font;
-import com.bestialMania.object.gui.text.Text;
 import com.bestialMania.state.State;
 import com.bestialMania.state.menu.Menu;
-import org.joml.Matrix4f;
-import org.joml.Vector2f;
-import org.joml.Vector3f;
-import org.joml.Vector4f;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
-import com.bestialMania.rendering.*;
-import com.bestialMania.rendering.shader.*;
-import com.bestialMania.rendering.model.*;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
+import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
 public class Main {
-    // The window handle
-    private long window;
-    //Input handler
-    private InputHandler inputHandler;
-    //public static Main main;
+    private long window;// The window handle
 
-    //private Set<Button> buttons = new HashSet<>();
-
-    /*Enum that controls the different states the game can take*/
-    //public enum State{MAIN_MENU, IN_GAME, OPTIONS, CHARACTER_SELECTION} //There might be more states in the options screen
-    private State currentState;// = State.MAIN_MENU;
-    //private Shader testShader;
-    //private Renderer testRenderer, renderer2D;
-    //private Matrix4f jimmyMatrix;
+    private InputHandler inputHandler;//Input handler
+    private State currentState;
     private boolean running = true;
 
     public void run() {
@@ -83,12 +59,6 @@ public class Main {
                 (vidmode.width() - DisplaySettings.WIDTH) / 2,
                 (vidmode.height() - DisplaySettings.HEIGHT) / 2);
 
-        // Setup a key callback. It will be called every time a key is pressed, repeated or released.
-        /*glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
-            if ( key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE )
-                glfwSetWindowShouldClose(window, true); // We will detect this in the rendering loop
-        });*/
-
         //CONTEXT CURRENT
         glfwMakeContextCurrent(window);
 
@@ -117,87 +87,12 @@ public class Main {
      * Main run loop
      */
     private void loop() {
-        //TODO some basic lighting
-        //Vector3f lightDir = new Vector3f(-1,2,1);
-
-        //load some shader
-        /*testShader = new Shader("res/shaders/test_vertex.glsl","res/shaders/test_fragment.glsl");
-        testShader.bindTextureUnits(Arrays.asList("textureSampler"));
-        Shader shader2D = new Shader("res/shaders/gui_vertex.glsl","res/shaders/gui_fragment.glsl");
-
-        //some text stuff TODO
-        Font font = new Font("res/fonts/test.fnt","res/fonts/test.png");
-        Shader textShader = new Shader("res/shaders/gui_vertex.glsl", "res/shaders/text_fragment.glsl");
-
-        //Framebuffer for the 3D scene
-        Framebuffer sceneFbo = Framebuffer.createMultisampledFramebuffer3Dto2D(DisplaySettings.WIDTH,DisplaySettings.HEIGHT);//TODO only make multisampled if antialiasing turned on
-
-        //Master renderer, does all the scene rendering
-        MasterRenderer masterRenderer = new MasterRenderer();
-        masterRenderer.addFramebuffer(sceneFbo);
-
-        //jimmy matrix
-        jimmyMatrix = new Matrix4f();
-        jimmyMatrix.translate(0,-0.5f,0.0f);
-        jimmyMatrix.scale(0.1f,0.1f,0.1f);
-
-        //create renderer which will render within the window with the shader created above
-        testRenderer = sceneFbo.createRenderer(testShader);
-        renderer2D = masterRenderer.getWindowFramebuffer().createRenderer(shader2D);
-        Renderer textRenderer = masterRenderer.getWindowFramebuffer().createRenderer(textShader);
-
-        //The scene renderered as a quad
-        Object2D sceneObject = new Object2D(0,0,sceneFbo.getTexture(0));
-        sceneObject.addToRenderer(renderer2D);
-
-        //#############################
-        //some 2d rectangle
-        //Object2D object2D = new Object2D(0,100,"res/textures/sexy.png");
-        //object2D.addToRenderer(renderer2D);
-        //#############################
-
-        //---- Button Examples ----
-        //Button with size relative to texture dimensions
-        Button buttonOne =  new Button(0, 100, "res/textures/sexy.png", "Play", "Play");
-        buttonOne.addToRenderer(renderer2D);
-
-        //Button with size independent from texture dimensions
-        Button buttonTwo = new Button(500, 100, 100, 50, "res/textures/sexy.png", "Quit", "Quit");
-        buttonTwo.addToRenderer(renderer2D);
-        buttons.add(buttonOne);
-        buttons.add(buttonTwo);
-
-        Text text = new Text("Happiness is an illusion",font,80,30,30,new Vector3f(255,255, 0));
-        text.addToRenderer(textRenderer);*/
 
         //Run until you click X or press ESC
         while ( !glfwWindowShouldClose(window) && glfwGetKey(window,GLFW_KEY_ESCAPE) != GLFW_PRESS && running) {
-            inputHandler.updateControllerState();
+            inputHandler.update();
             currentState.update();
             currentState.render();
-
-            /*If at main menu*/
-            /*if(currentState == State.MAIN_MENU) {
-
-                //Looping through buttons and seeing if they were clicked
-                for (Button button : buttons) {
-                    if (button.mouseOn(inputHandler.getMousePosition()) && inputHandler.isMouseLeftPressed()) {
-                        button.doAction();
-                    }
-                }
-            }
-
-            //If in game
-            else if(currentState == State.IN_GAME) {
-                if (inputHandler.isControllerActive(GLFW_JOYSTICK_1)) {
-                    jimmyMatrix.rotateY(inputHandler.gamepadLeftJoystickPosition(GLFW_JOYSTICK_1).x / 100.0f);
-                } else {
-                    jimmyMatrix.rotateY(0.01f);
-                }
-            }*/
-
-            //render the scene
-            //masterRenderer.render();
 
             //swap buffers to show new frame
             glfwSwapBuffers(window);
@@ -206,24 +101,6 @@ public class Main {
             glfwPollEvents();
         }
     }
-    /**Switch to the game state*/
-    /*public void setupGameState(){
-        setCurrentState(Main.State.IN_GAME);
-        //jimmy
-        Texture jimmyTexture = Texture.loadImageTexture3D("res/textures/jimmy_tex.png");
-        Model jimmyModel = OBJLoader.loadOBJ("res/models/jimmy.obj");
-
-
-        //an object
-        ShaderObject object = testRenderer.createObject(jimmyModel);
-        object.addTexture(0,jimmyTexture);
-        object.addUniform(new UniformMatrix4(testShader,"modelMatrix",jimmyMatrix));
-
-
-        for(Button b : buttons) {
-            b.removeFromRenderer(renderer2D);
-        }
-    }*/
 
     /**
      * Exit the game
@@ -237,19 +114,28 @@ public class Main {
      */
     private void terminate() {
         currentState.cleanUp();//delete things from the current state
-        //glfwFreeCallbacks(window);
+        glfwFreeCallbacks(window);
         glfwDestroyWindow(window);
         glfwTerminate();
     }
 
+    /**
+     * Get the current state
+     */
     public State getCurrentState(){
         return currentState;
     }
 
+    /**
+     * Change the current state
+     */
     public void setCurrentState(State newState){
         currentState = newState;
     }
 
+    /**
+     * Main method
+     */
     public static void main(String[] args) {
         Main main = new Main();
         main.run();

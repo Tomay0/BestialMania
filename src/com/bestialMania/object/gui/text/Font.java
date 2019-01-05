@@ -1,11 +1,9 @@
 package com.bestialMania.object.gui.text;
 
-import com.bestialMania.rendering.MasterRenderer;
 import com.bestialMania.rendering.MemoryManager;
 import com.bestialMania.rendering.Texture;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;

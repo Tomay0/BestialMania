@@ -3,13 +3,10 @@ package com.bestialMania.state.menu;
 import com.bestialMania.InputHandler;
 import com.bestialMania.Main;
 import com.bestialMania.object.gui.text.Font;
-import com.bestialMania.object.gui.text.Text;
 import com.bestialMania.rendering.MasterRenderer;
 import com.bestialMania.rendering.MemoryManager;
 import com.bestialMania.rendering.Renderer;
 import com.bestialMania.rendering.shader.Shader;
-import org.lwjgl.system.CallbackI;
-
 /**
  * Not a state itself but handles everything in the menu and switching between each individual menu state.
  * 1 master renderer is shared between all states

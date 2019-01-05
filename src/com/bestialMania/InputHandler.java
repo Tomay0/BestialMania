@@ -6,37 +6,99 @@ import com.bestialMania.object.gui.Button;
 import org.joml.Vector2f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFWGamepadState;
-import java.nio.DoubleBuffer;
-import java.util.HashSet;
+import org.lwjgl.glfw.GLFWJoystickCallback;
+import org.lwjgl.glfw.GLFWKeyCallback;
+import org.lwjgl.glfw.GLFWMouseButtonCallback;
 
-/**
- *
- */
+import java.awt.event.ActionListener;
+import java.nio.DoubleBuffer;
+import java.util.*;
+
 public class InputHandler{
+    private static final int N_BUTTONS = 14;//number of buttons on a controller to check
+    private static final int N_CONTROLLERS = 4;//number of controller slots available
 
     //fields
     private long window;
-    private HashSet<Integer> activeControllers = new HashSet<>();
-    private GLFWGamepadState[] gamepadStates = new GLFWGamepadState[4];
+    private Set<Integer> activeControllers = new HashSet<>();
+    private GLFWGamepadState[] gamepadStates = new GLFWGamepadState[N_CONTROLLERS];
+    private boolean[][] gamepadButtonStates = new boolean[N_CONTROLLERS][N_BUTTONS];//button states. true = pressed (Only have this because controller events aren't a thing in GLFW
 
-    /*
+    //mouse
+    private DoubleBuffer mouseXPos = BufferUtils.createDoubleBuffer(1);
+    private DoubleBuffer mouseYPos = BufferUtils.createDoubleBuffer(1);
+
+    //listeners for the inputs
+    private Set<InputListener> listeners = new HashSet<>();
+
+
+    /**
     Constructor
     Sets up the window
      */
     public InputHandler(long windowID){
         window = windowID;
         //intialize gamepad state buffers
-        gamepadStates[0] = new GLFWGamepadState(BufferUtils.createByteBuffer(40));
-        gamepadStates[1] = new GLFWGamepadState(BufferUtils.createByteBuffer(40));
-        gamepadStates[2] = new GLFWGamepadState(BufferUtils.createByteBuffer(40));
-        gamepadStates[3] = new GLFWGamepadState(BufferUtils.createByteBuffer(40));
+        for(int i = 0;i<N_CONTROLLERS;i++) {
+            gamepadStates[i] = new GLFWGamepadState(BufferUtils.createByteBuffer(40));
+        }
+
+
+        //apply key events
+        glfwSetKeyCallback(window, new GLFWKeyCallback() {
+            @Override
+            public void invoke(long window, int key, int scancode, int action, int mods) {
+                if(action==GLFW_PRESS || action==GLFW_RELEASE) {
+                    for(InputListener listener : listeners) {
+                        listener.keyEvent(action==GLFW_PRESS,key);
+                    }
+                }
+            }
+        });
+
+        //apply mouse events
+        glfwSetMouseButtonCallback(window, new GLFWMouseButtonCallback() {
+            @Override
+            public void invoke(long window, int button, int action, int mods) {
+                if(action==GLFW_PRESS || action==GLFW_RELEASE) {
+                    for(InputListener listener : listeners) {
+                        listener.mouseEvent(action==GLFW_PRESS,button);
+                    }
+                }
+            }
+        });
+
+        //controller events had to be done manually :(
     }
 
     /*
-        MOUSE STUFF
+
+
+        LISTENERS
+
+
      */
-    private DoubleBuffer mouseXPos = BufferUtils.createDoubleBuffer(1);
-    private DoubleBuffer mouseYPos = BufferUtils.createDoubleBuffer(1);
+
+    /**
+     * Adds an input listener
+     */
+    public void addListener(InputListener listener) {
+        listeners.add(listener);
+    }
+
+    /**
+     * Removes an input listener
+     */
+    public void removeListener(InputListener listener) {
+        listeners.remove(listener);
+    }
+    /*
+
+
+        MOUSE
+
+
+     */
 
     //get current mouse position
     public Vector2f getMousePosition(){
@@ -54,55 +116,72 @@ public class InputHandler{
     //set the mouse position to bounded (for menus etc) and shows the cursor
     public void setCursorEnabled(){ glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL); }
 
-    // return bool if left mouse button pressed
-    public boolean isMouseLeftPressed(){ return(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT)==GLFW_PRESS); }
+    // return bool if left mouse button held
+    public boolean isMouseLeftPressed(){ return(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT)==GLFW_PRESS);}
 
-    // return bool if right mouse button pressed
+
+    // return bool if right mouse button held
     public boolean isMouseRightPressed(){ return(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT)==GLFW_PRESS); }
 
     /*
-        KEYBOARD STUFF
+
+
+        KEYBOARD
+
+
      */
+
+
     //return bool if key pressed
     public boolean isKeyPressed(int key){ return(glfwGetKey(window,key)==GLFW_PRESS); }
 
 
     /*
-        GAMEPAD STUFF (controllers)
+
+
+        GAMEPAD (controllers)
+
+
      */
-    //add a present controller to list of active controllers. (to check for accidental disconnect)(only 4 player)
-    private void addControllersAndPlayers(){
-        activeControllers.clear();//clear current list so you can readd
 
-        if(glfwJoystickIsGamepad(GLFW_JOYSTICK_1)) activeControllers.add(GLFW_JOYSTICK_1);
-        if(glfwJoystickIsGamepad(GLFW_JOYSTICK_2)) activeControllers.add(GLFW_JOYSTICK_2);
-        if(glfwJoystickIsGamepad(GLFW_JOYSTICK_3)) activeControllers.add(GLFW_JOYSTICK_3);
-        if(glfwJoystickIsGamepad(GLFW_JOYSTICK_4))  activeControllers.add(GLFW_JOYSTICK_4);
-    }
+    /** updates controllers
+     *
+      */
+    public void update(){
+        activeControllers.clear();
+        //update button states
+        for(int controller = 0;controller<N_CONTROLLERS;controller++) {
+            if(glfwJoystickIsGamepad(controller)) {
+                activeControllers.add(controller);
 
-    // remove a joystick from list of active controllers (for if player quit) and clear the controller's states
-    public void removeController(int joystickId){
-        activeControllers.remove(joystickId);
-        gamepadStates[joystickId] = null;
-    }
+                //update the gamepad state
+                glfwGetGamepadState(controller, gamepadStates[controller]);
 
-    // returns an array of booleans based on buttons pressed or released
-    public void updateControllerState(){
-        //add any new players if new controllers connected
-        addControllersAndPlayers();
+                //check for button press/release events
+                for(int button = 0;button<N_BUTTONS;button++) {
+                    //press
+                    if(isGamepadButtonPressed(controller,button)) {
+                        if(!gamepadButtonStates[controller][button]) {
+                            gamepadButtonStates[controller][button] = true;
+                            //call event
+                            for(InputListener listener : listeners) {
+                                listener.controllerEvent(controller,true,button);
+                            }
+                        }
+                    }
+                    //release
+                    else {
+                        if(gamepadButtonStates[controller][button]) {
+                            gamepadButtonStates[controller][button] = false;
+                            //call event
+                            for(InputListener listener : listeners) {
+                                listener.controllerEvent(controller,false,button);
+                            }
 
-        //update all active GamePad states
-        for(int joystickId : activeControllers) {
-
-            //throw exception if joystick was being used but ungracefully disconnected
-            /*
-            //don't need this bit because the "active controllers" only applies to
-            if (!glfwJoystickPresent(joystickId)) {
-                throw new RuntimeException("Joystick id: " + joystickId + " Is disconnected!");
-            }*/
-
-            //update the gamepad state
-            glfwGetGamepadState(joystickId, gamepadStates[joystickId]);
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -111,7 +190,7 @@ public class InputHandler{
         if(!activeControllers.contains(joystickId)){
             throw new RuntimeException("joystickID is not in activeControllers!");
         }
-        if(button < 0 || button > 14){
+        if(button < 0 || button > N_BUTTONS){
             throw new RuntimeException("Button to check is not recognised!");
         }
         //return gamepadButtonStates[joystickId].get(button)==GLFW_PRESS;
@@ -154,7 +233,7 @@ public class InputHandler{
         return gamepadStates[joystickId].axes().get(5);
     }
 
-    public HashSet<Integer> getActiveControllers() { return activeControllers; }
+    public Set<Integer> getActiveControllers() { return activeControllers; }
 
     public boolean isControllerActive(int joystickId) {return activeControllers.contains(joystickId);}
 }
