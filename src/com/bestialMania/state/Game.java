@@ -4,6 +4,8 @@ import com.bestialMania.DisplaySettings;
 import com.bestialMania.InputHandler;
 import com.bestialMania.InputListener;
 import com.bestialMania.Main;
+import com.bestialMania.object.beast.Beast;
+import com.bestialMania.object.beast.Player;
 import com.bestialMania.object.gui.Object2D;
 import com.bestialMania.rendering.*;
 import com.bestialMania.rendering.model.Model;
@@ -12,9 +14,11 @@ import com.bestialMania.rendering.shader.Shader;
 import com.bestialMania.rendering.shader.UniformMatrix4;
 import com.bestialMania.state.menu.Menu;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 import java.util.Arrays;
 
+import static org.lwjgl.glfw.GLFW.GLFW_JOYSTICK_1;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE;
 
 /**
@@ -30,13 +34,13 @@ public class Game implements State, InputListener {
     private MemoryManager memoryManager;
 
     //Renderers
-    Renderer testRenderer, renderer2D;
-
-    //jimmy matrix
-    Matrix4f jimmyMatrix;
+    private Renderer testRenderer, renderer2D;
 
 
-    public Game(Main main, InputHandler inputHandler) {
+    //players in the game
+    private Player player;
+
+    public Game(Main main, InputHandler inputHandler, int player1controller) {
         this.main = main;
         this.inputHandler = inputHandler;
         masterRenderer = new MasterRenderer();
@@ -44,10 +48,17 @@ public class Game implements State, InputListener {
 
         //add this class as a listener
         inputHandler.addListener(this);
+        inputHandler.setCursorDisabled();
 
         //set up shaders
         Shader testShader = new Shader("res/shaders/test_vertex.glsl","res/shaders/test_fragment.glsl");
         testShader.bindTextureUnits(Arrays.asList("textureSampler"));
+
+        //projection matrix
+        Matrix4f projection = new Matrix4f();
+        projection.perspective(70,(float)DisplaySettings.WIDTH/(float)DisplaySettings.HEIGHT,0.1f,100);
+        testShader.setUniformMatrix4(testShader.getUniformLocation("projectionMatrix"),projection);
+
         Shader shader2D = new Shader("res/shaders/gui_vertex.glsl","res/shaders/gui_fragment.glsl");
         shader2D.bindTextureUnits(Arrays.asList("textureSampler"));
 
@@ -69,19 +80,23 @@ public class Game implements State, InputListener {
         Object2D sceneObject = new Object2D(memoryManager,0,0,sceneFbo.getTexture(0));
         sceneObject.addToRenderer(renderer2D);
 
-        //JIMMY
+        /*
+
+
+            THE PLAYER
+
+
+         */
+
+        //create the beast you play as (JIMMY)
         Texture jimmyTexture = Texture.loadImageTexture3D(memoryManager,"res/textures/jimmy_tex.png");
         Model jimmyModel = OBJLoader.loadOBJ(memoryManager,"res/models/jimmy.obj");
+        Beast beast = new Beast(jimmyModel,jimmyTexture);
+        beast.linkToRenderer(testRenderer);
 
-        //jimmy matrix
-        jimmyMatrix = new Matrix4f();
-        jimmyMatrix.translate(0,-0.5f,0.0f);
-        jimmyMatrix.scale(0.1f,0.1f,0.1f);
-
-        //add jimmy to renderer
-        ShaderObject object = testRenderer.createObject(jimmyModel);
-        object.addTexture(0,jimmyTexture);
-        object.addUniform(new UniformMatrix4(testShader,"modelMatrix",jimmyMatrix));
+        //link beast to a player object
+        player = new Player(inputHandler,1,player1controller,beast);
+        player.linkToRenderer(testRenderer);
     }
 
     /**
@@ -103,7 +118,7 @@ public class Game implements State, InputListener {
      */
     @Override
     public void update() {
-        jimmyMatrix.rotateY(0.01f);
+        player.update();
     }
 
     /**
@@ -119,6 +134,7 @@ public class Game implements State, InputListener {
      */
     @Override
     public void cleanUp() {
+        inputHandler.setCursorEnabled();
         inputHandler.removeListener(this);
         memoryManager.cleanUp();
     }

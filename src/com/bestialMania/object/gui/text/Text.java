@@ -57,19 +57,19 @@ public class Text {
 
             //vertices
             vertices.add(new Vector2f(tr.x+cursor.x,tr.y+cursor.y));
-            vertices.add(new Vector2f(bl.x+cursor.x,bl.y+cursor.y));
             vertices.add(new Vector2f(tl.x+cursor.x,tl.y+cursor.y));
-            vertices.add(new Vector2f(tr.x+cursor.x,tr.y+cursor.y));
-            vertices.add(new Vector2f(br.x+cursor.x,br.y+cursor.y));
             vertices.add(new Vector2f(bl.x+cursor.x,bl.y+cursor.y));
+            vertices.add(new Vector2f(tr.x+cursor.x,tr.y+cursor.y));
+            vertices.add(new Vector2f(bl.x+cursor.x,bl.y+cursor.y));
+            vertices.add(new Vector2f(br.x+cursor.x,br.y+cursor.y));
 
             //uvs
             uvs.add(character.getUVTopRight());
-            uvs.add(character.getUVBottomLeft());
             uvs.add(character.getUVTopLeft());
-            uvs.add(character.getUVTopRight());
-            uvs.add(character.getUVBottomRight());
             uvs.add(character.getUVBottomLeft());
+            uvs.add(character.getUVTopRight());
+            uvs.add(character.getUVBottomLeft());
+            uvs.add(character.getUVBottomRight());
 
             cursor.x+=character.getXAdvance();
         }

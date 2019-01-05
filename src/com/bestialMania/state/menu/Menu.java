@@ -65,7 +65,7 @@ public class Menu {
             System.out.println("Cannot start now, need at least one player");
         }else{
             main.getCurrentState().cleanUp();//delete all memories associated with the menu
-            main.setCurrentState(new Game(main,inputHandler));
+            main.setCurrentState(new Game(main,inputHandler,connectedPlayers.get(0)));
         }
     }
 

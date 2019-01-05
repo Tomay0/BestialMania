@@ -78,7 +78,7 @@ public class Main {
         glClearColor(0.1f, 0.75f, 1.0f, 1.0f);
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
-        glCullFace(GL_FRONT);//TODO change to GL_BACK after implementing the projection matrix
+        glCullFace(GL_BACK);//TODO change to GL_BACK after implementing the projection matrix
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
