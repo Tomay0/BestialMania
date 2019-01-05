@@ -30,13 +30,11 @@ public class PlayerSelect implements State, InputListener, ButtonListener {
     private MasterRenderer renderer;
     private MemoryManager memoryManager;
 
-    private List<Integer> connectedPlayers = new ArrayList<>();//list of connected control schemes (4 max). In order of who joined
-
     //text objects
     private Text[] texts = new Text[12];
 
     //button object
-    private Button startButton;
+    private Button startButton,backButton;
 
     /**
      * Initialize the player select screen
@@ -74,8 +72,11 @@ public class PlayerSelect implements State, InputListener, ButtonListener {
             texts[i*3+1].addToRenderer(menu.getTextRender());
         }
 
-        startButton = new Button(memoryManager,inputHandler,this,x*2,y*2,"res/textures/ui/start.png","Start","start");
+        startButton = new Button(memoryManager,inputHandler,this,x*2-60,y*2-50,"res/textures/ui/start.png","Start","start");
+        backButton = new Button(memoryManager,inputHandler,this, x*2-60,y*2+50,"res/textures/ui/quit.png","Back","back");
+
         startButton.addToRenderer(menu.getGuiRender());
+        backButton.addToRenderer(menu.getGuiRender());
     }
 
     /**
@@ -85,7 +86,7 @@ public class PlayerSelect implements State, InputListener, ButtonListener {
     public void update() {
 
         //check if any of the controllers have disconnected randomly
-        for(int controller : connectedPlayers) {
+        for(int controller : menu.getConnectedPlayers()) {
             if(controller!=-1 && !inputHandler.isControllerActive(controller)) {
                 removePlayer(controller);
             }
@@ -97,17 +98,17 @@ public class PlayerSelect implements State, InputListener, ButtonListener {
      */
     private void togglePlayer(int controller) {
         //remove
-        if(connectedPlayers.contains(controller)) {
+        if(menu.getConnectedPlayers().contains(controller)) {
             removePlayer(controller);
         }
         //add if <4 available players
-        else if(connectedPlayers.size()<4){
+        else if(menu.getConnectedPlayers().size()<4){
             addPlayer(controller);
         }
 
         //TEST PRINT
-        for(int playerNum = 1;playerNum<=connectedPlayers.size();playerNum++) {
-            System.out.println("Player " + playerNum + ": " + connectedPlayers.get(playerNum-1));
+        for(int playerNum = 1;playerNum<=menu.getConnectedPlayers().size();playerNum++) {
+            System.out.println("Player " + playerNum + ": " + menu.getConnectedPlayers().get(playerNum-1));
         }
     }
 
@@ -117,24 +118,24 @@ public class PlayerSelect implements State, InputListener, ButtonListener {
      */
     private void addPlayer(int controller) {
 
-        int pID = connectedPlayers.size();
+        int pID = menu.getConnectedPlayers().size();
 
         texts[pID*3+2].addToRenderer(menu.getTextRender());
         texts[pID*3+1].removeFromRenderer(menu.getTextRender());
 
-        connectedPlayers.add(controller);
+        menu.getConnectedPlayers().add(controller);
     }
 
     /**
      * Remove a player from the list if they exist
      */
     private void removePlayer(int controller) {
-        int pID = connectedPlayers.size()-1;
+        int pID = menu.getConnectedPlayers().size()-1;
 
         texts[pID*3+1].addToRenderer(menu.getTextRender());
         texts[pID*3+2].removeFromRenderer(menu.getTextRender());
 
-        connectedPlayers.remove((Object)controller);
+        menu.getConnectedPlayers().remove((Object)controller);
     }
 
     /**
@@ -150,11 +151,22 @@ public class PlayerSelect implements State, InputListener, ButtonListener {
      */
     @Override
     public void removeObjects() {
-        for(int i = 0;i<8;i++) {
+        for(int i = 0;i<12;i++) {
             texts[i].removeFromRenderer(menu.getTextRender());
         }
-        memoryManager.cleanUp();
+
+        //remove buttons
+        startButton.removeFromRenderer(menu.getGuiRender());
+        backButton.removeFromRenderer(menu.getGuiRender());
+
+        //remove button listeners
+        startButton.removeListener();
+        backButton.removeListener();
+
+        //remove this listener
         inputHandler.removeListener(this);
+
+        memoryManager.cleanUp();
     }
 
     /**
@@ -175,7 +187,6 @@ public class PlayerSelect implements State, InputListener, ButtonListener {
 
     @Override
     public void controllerEvent(int controller, boolean pressed, int button) {
-
         if(pressed && button==0) {
             togglePlayer(controller);
         }
@@ -187,7 +198,9 @@ public class PlayerSelect implements State, InputListener, ButtonListener {
     @Override
     public void press(String action) {
         if(action.equals("start")) {
-            System.out.println("TODO: Start the game");
+            menu.startGame();
+        }else if(action.equals("back")) {
+            menu.setCurrentState(Menu.MenuState.MAIN_MENU);
         }
     }
 }

@@ -55,8 +55,6 @@ public class Object2D {
         float absWidth = 2 * width/ DisplaySettings.WIDTH;
         float absHeight = 2 * height/ DisplaySettings.HEIGHT;
 
-        System.out.println(absWidth + "," + absHeight);
-
         model = new Rect2D(mm,-1,1-absHeight,absWidth-1,1);//convert to OpenGL coordinate system
 
         //create the transformation matrix

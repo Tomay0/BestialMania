@@ -72,7 +72,7 @@ public class Main {
 
         //initial game state
         Menu menu = new Menu(this,inputHandler);
-        menu.setCurrentState(Menu.MenuState.PLAYER_SELECT);
+        menu.setCurrentState(Menu.MenuState.MAIN_MENU);
 
         //some OpenGL settings
         glClearColor(0.1f, 0.75f, 1.0f, 1.0f);
@@ -89,7 +89,7 @@ public class Main {
     private void loop() {
 
         //Run until you click X or press ESC
-        while ( !glfwWindowShouldClose(window) && glfwGetKey(window,GLFW_KEY_ESCAPE) != GLFW_PRESS && running) {
+        while ( !glfwWindowShouldClose(window) && running) {
             inputHandler.update();
             currentState.update();
             currentState.render();

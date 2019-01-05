@@ -16,7 +16,7 @@ import java.util.*;
 
 public class InputHandler{
     private static final int N_BUTTONS = 14;//number of buttons on a controller to check
-    private static final int N_CONTROLLERS = 4;//number of controller slots available
+    private static final int N_CONTROLLERS = 16;//number of controller slots available
 
     //fields
     private long window;
@@ -49,7 +49,7 @@ public class InputHandler{
             @Override
             public void invoke(long window, int key, int scancode, int action, int mods) {
                 if(action==GLFW_PRESS || action==GLFW_RELEASE) {
-                    for(InputListener listener : listeners) {
+                    for(InputListener listener : new HashSet<>(listeners)) {
                         listener.keyEvent(action==GLFW_PRESS,key);
                     }
                 }
@@ -61,7 +61,7 @@ public class InputHandler{
             @Override
             public void invoke(long window, int button, int action, int mods) {
                 if(action==GLFW_PRESS || action==GLFW_RELEASE) {
-                    for(InputListener listener : listeners) {
+                    for(InputListener listener : new HashSet<>(listeners)) {
                         listener.mouseEvent(action==GLFW_PRESS,button);
                     }
                 }
@@ -164,7 +164,7 @@ public class InputHandler{
                         if(!gamepadButtonStates[controller][button]) {
                             gamepadButtonStates[controller][button] = true;
                             //call event
-                            for(InputListener listener : listeners) {
+                            for(InputListener listener : new HashSet<>(listeners)) {
                                 listener.controllerEvent(controller,true,button);
                             }
                         }
@@ -174,7 +174,7 @@ public class InputHandler{
                         if(gamepadButtonStates[controller][button]) {
                             gamepadButtonStates[controller][button] = false;
                             //call event
-                            for(InputListener listener : listeners) {
+                            for(InputListener listener : new HashSet<>(listeners)) {
                                 listener.controllerEvent(controller,false,button);
                             }
 
