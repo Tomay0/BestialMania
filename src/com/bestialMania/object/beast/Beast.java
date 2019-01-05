@@ -29,7 +29,7 @@ public class Beast {
      */
     public Beast(Model model, Texture texture){
         position = new Vector3f(0,0,0);//TODO have some sort of spawn point
-        lookDirection = new Vector2f(0,-1);
+        lookDirection = new Vector2f(0,1);
         modelMatrix = new Matrix4f();
         speed = 0;
         this.model = model;
@@ -51,6 +51,11 @@ public class Beast {
     }
 
     /**
+     * Get position
+     */
+    public Vector3f getPosition() {return position;}
+
+    /**
      * Update position and orientation
      */
     public void update() {
@@ -59,9 +64,15 @@ public class Beast {
 
         //recalculate matrix
         modelMatrix.identity();
+
+        //translation
         modelMatrix.translate(position);
+        //rotation
+        float angle = (float)Math.atan2(lookDirection.x,lookDirection.y);
+        modelMatrix.rotateY(angle);
+
+        //scale
         modelMatrix.scale(0.1f,0.1f,0.1f);
-        //TODO add rotation
     }
 
     /**

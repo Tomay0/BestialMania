@@ -40,6 +40,9 @@ public class Game implements State, InputListener {
     //players in the game
     private Player player;
 
+    /**
+     * Initialize a game
+     */
     public Game(Main main, InputHandler inputHandler, int player1controller) {
         this.main = main;
         this.inputHandler = inputHandler;
@@ -84,6 +87,7 @@ public class Game implements State, InputListener {
 
 
             THE PLAYER
+            - only player 1 at the moment
 
 
          */
@@ -97,6 +101,17 @@ public class Game implements State, InputListener {
         //link beast to a player object
         player = new Player(inputHandler,1,player1controller,beast);
         player.linkToRenderer(testRenderer);
+
+
+
+        //test object so you can see movement
+        Matrix4f testObjectMatrix = new Matrix4f();
+        testObjectMatrix.translate(2.0f,0,0.5f);
+        testObjectMatrix.scale(0.1f,0.1f,0.1f);
+
+        ShaderObject testObject = testRenderer.createObject(jimmyModel);
+        testObject.addTexture(0,jimmyTexture);
+        testObject.addUniform(new UniformMatrix4(testShader,"modelMatrix",testObjectMatrix));
     }
 
     /**

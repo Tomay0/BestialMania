@@ -19,7 +19,9 @@ public class Player {
         CAMERA POSITION STUFF
      */
     private float cameraYaw, cameraPitch;//yaw = Y-axis rotation. pitch = X-axis rotation
-    private float cameraDist;//distance from the camera to the beast
+    private float cameraDist, cameraHeight;//distance from the camera to the beast
+
+    private Vector3f cameraLocation,lookLocation,upVector;
     private Matrix4f viewMatrix;
 
     /**
@@ -32,8 +34,12 @@ public class Player {
         this.controller = controller;
         this.beast = beast;
         cameraYaw = 0;
-        cameraPitch = 0;
+        cameraPitch = 0.3f;
         cameraDist = 3;
+        cameraHeight = 0.5f;
+        cameraLocation = new Vector3f();
+        lookLocation = new Vector3f();
+        upVector = new Vector3f(0,1,0);
         //test view matrix TODO
         viewMatrix = new Matrix4f();
         viewMatrix.lookAt(new Vector3f(0,0.5f,2),new Vector3f(0,0,0),new Vector3f(0,1,0));
@@ -51,7 +57,9 @@ public class Player {
      */
     public void update() {
         /*
+
             BEAST MOVEMENT
+
          */
 
         float speed;//"speed" of the controller (Eg: smaller if you lightly push the left analog stick up
@@ -76,5 +84,30 @@ public class Player {
             beast.setDirection(dir);
         }else beast.setSpeed(0);
         beast.update();
+
+        /*
+
+            CAMERA MOVEMENT
+
+         */
+
+        //calculate camera's position
+        float yawSinus = (float)Math.sin(cameraYaw);
+        float yawCosinus = (float)Math.cos(cameraYaw);
+        float pitchSinus = (float)Math.sin(cameraPitch);
+        float pitchCosinus = (float)Math.cos(cameraPitch);
+
+        Vector3f beastLocation = beast.getPosition();
+        cameraLocation.x = beastLocation.x - cameraDist*yawSinus*pitchCosinus;
+        cameraLocation.z = beastLocation.z + cameraDist*yawCosinus*pitchCosinus;
+        cameraLocation.y = beastLocation.y + cameraDist*pitchSinus + cameraHeight;
+
+        lookLocation.x = beastLocation.x;
+        lookLocation.y = beastLocation.y+cameraHeight;
+        lookLocation.z = beastLocation.z;
+
+        //matrix calculation
+        viewMatrix.identity();
+        viewMatrix.lookAt(cameraLocation,lookLocation,upVector);
     }
 }
