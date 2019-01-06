@@ -1,5 +1,6 @@
 package com.bestialMania.object.beast;
 
+import com.bestialMania.DisplaySettings;
 import com.bestialMania.InputHandler;
 import com.bestialMania.rendering.Renderer;
 import com.bestialMania.rendering.shader.UniformMatrix4;
@@ -10,6 +11,9 @@ import org.joml.Vector3f;
 import static org.lwjgl.glfw.GLFW.*;
 
 public class Player {
+    private static Vector2f SCREEN_CENTER = new Vector2f(DisplaySettings.WIDTH/2,DisplaySettings.HEIGHT/2);
+    private static final float MIN_PITCH = -(float)Math.PI*0.1f;
+    private static final float MAX_PITCH = (float)Math.PI*0.49f;
     private InputHandler inputHandler;
     private int playerNum;//player number from 1-4 showing the location on the screen
     private int controller;//controller id
@@ -20,6 +24,7 @@ public class Player {
      */
     private float cameraYaw, cameraPitch;//yaw = Y-axis rotation. pitch = X-axis rotation
     private float cameraDist, cameraHeight;//distance from the camera to the beast
+
 
     private Vector3f cameraLocation,lookLocation,upVector;
     private Matrix4f viewMatrix;
@@ -36,7 +41,7 @@ public class Player {
         cameraYaw = 0;
         cameraPitch = 0.3f;
         cameraDist = 3;
-        cameraHeight = 0.5f;
+        cameraHeight = 0.7f;
         cameraLocation = new Vector3f();
         lookLocation = new Vector3f();
         upVector = new Vector3f(0,1,0);
@@ -56,9 +61,45 @@ public class Player {
      * Update the beast
      */
     public void update() {
+
         /*
 
-            BEAST MOVEMENT
+            CHANGE CAMERA ANGLES
+
+         */
+
+        Vector2f cameraMoveVec = new Vector2f();
+        //mouse camera controls
+        if(controller==-1) {
+            Vector2f mousePos = inputHandler.getMousePosition();
+            cameraMoveVec.x = (float)(mousePos.x- SCREEN_CENTER.x)*DisplaySettings.HORIZONTAL_MOUSE_SENSITIVITY;
+            cameraMoveVec.y = (float)(mousePos.y- SCREEN_CENTER.y)*DisplaySettings.VERTICAL_MOUSE_SENSITIVITY;
+            inputHandler.setMousePosition(SCREEN_CENTER);
+        }else{
+            //right analog camera controls
+            Vector2f rightAnalog = inputHandler.gamepadRightJoystickPosition(controller);
+            System.out.println(rightAnalog.x + "," + rightAnalog.y);
+            cameraMoveVec.x = rightAnalog.x * DisplaySettings.HORIZONTAL_CONTROLLER_CAMERA_SENSITIVITY;
+            cameraMoveVec.y = rightAnalog.y * DisplaySettings.VERTICAL_CONTROLLER_CAMERA_SENSITIVITY;
+            if(Math.abs(cameraMoveVec.x)<DisplaySettings.HORIZONTAL_CONTROLLER_CAMERA_SENSITIVITY*0.1f) cameraMoveVec.x = 0;
+            if(Math.abs(cameraMoveVec.y)<DisplaySettings.VERTICAL_CONTROLLER_CAMERA_SENSITIVITY*0.1f) cameraMoveVec.y = 0;
+        }
+
+        //adjust yaw/pitch based on vector above
+        cameraYaw+=cameraMoveVec.x;
+        cameraPitch+=cameraMoveVec.y;
+        if(cameraPitch<MIN_PITCH) cameraPitch = MIN_PITCH;
+        if(cameraPitch>MAX_PITCH) cameraPitch = MAX_PITCH;
+
+        //sinus/cosinus for useful calculations
+        float yawSinus = (float)Math.sin(cameraYaw);
+        float yawCosinus = (float)Math.cos(cameraYaw);
+        float pitchSinus = (float)Math.sin(cameraPitch);
+        float pitchCosinus = (float)Math.cos(cameraPitch);
+
+        /*
+
+            MOVE BEAST
 
          */
 
@@ -81,27 +122,28 @@ public class Player {
         if(speed>0.1f) {
             beast.setSpeed(speed*0.1f);
             dir.normalize();
-            beast.setDirection(dir);
+
+            Vector2f rotatedDir = new Vector2f();
+            rotatedDir.x = dir.x*yawCosinus-dir.y*yawSinus;
+            rotatedDir.y = dir.x*yawSinus+dir.y*yawCosinus;
+            beast.setDirection(rotatedDir);
         }else beast.setSpeed(0);
+
+        //update the beast
         beast.update();
 
         /*
 
-            CAMERA MOVEMENT
+            UPDATE CAMERA POSITION AND MATRIX
 
          */
-
-        //calculate camera's position
-        float yawSinus = (float)Math.sin(cameraYaw);
-        float yawCosinus = (float)Math.cos(cameraYaw);
-        float pitchSinus = (float)Math.sin(cameraPitch);
-        float pitchCosinus = (float)Math.cos(cameraPitch);
-
+        //get camera location
         Vector3f beastLocation = beast.getPosition();
         cameraLocation.x = beastLocation.x - cameraDist*yawSinus*pitchCosinus;
         cameraLocation.z = beastLocation.z + cameraDist*yawCosinus*pitchCosinus;
         cameraLocation.y = beastLocation.y + cameraDist*pitchSinus + cameraHeight;
 
+        //get looking location
         lookLocation.x = beastLocation.x;
         lookLocation.y = beastLocation.y+cameraHeight;
         lookLocation.z = beastLocation.z;

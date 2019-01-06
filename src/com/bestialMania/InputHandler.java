@@ -27,6 +27,7 @@ public class InputHandler{
     //mouse
     private DoubleBuffer mouseXPos = BufferUtils.createDoubleBuffer(1);
     private DoubleBuffer mouseYPos = BufferUtils.createDoubleBuffer(1);
+    private Vector2f mousePos = new Vector2f();
 
     //listeners for the inputs
     private Set<InputListener> listeners = new HashSet<>();
@@ -100,23 +101,32 @@ public class InputHandler{
 
      */
 
-    //get current mouse position
+    /**
+     * get current mouse position
+     */
     public Vector2f getMousePosition(){
-        mouseXPos.rewind();
-        mouseYPos.rewind();
-        glfwGetCursorPos(window, mouseXPos, mouseYPos);
-        mouseXPos.clear();
-        mouseYPos.clear();
-        return new Vector2f( (float)mouseXPos.get(), (float)mouseYPos.get() );
+        return mousePos;
     }
 
-    //set the mouse position to unbounded (for camera movement) and hides the cursor
+    /**
+     * Set the current mouse position
+     */
+    public void setMousePosition(Vector2f position) {
+        glfwSetCursorPos(window,position.x,position.y);
+    }
+
+    /**
+     * set the mouse position to unbounded (for camera movement) and hides the cursor
+     */
     public void setCursorDisabled(){ glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); }
 
-    //set the mouse position to bounded (for menus etc) and shows the cursor
+    /**
+     * set the mouse position to bounded (for menus etc) and shows the cursor
+     */
     public void setCursorEnabled(){ glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL); }
 
-    // return bool if left mouse button held
+    /**return bool if left mouse button held
+    */
     public boolean isMouseLeftPressed(){ return(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT)==GLFW_PRESS);}
 
 
@@ -148,8 +158,17 @@ public class InputHandler{
      *
       */
     public void update(){
-        activeControllers.clear();
+        //update mouse pos
+        mouseXPos.rewind();
+        mouseYPos.rewind();
+        glfwGetCursorPos(window, mouseXPos, mouseYPos);
+        //mouseXPos.clear();
+        //mouseYPos.clear();
+        mousePos.x = (float)mouseXPos.get();
+        mousePos.y = (float)mouseYPos.get();
+
         //update button states
+        activeControllers.clear();
         for(int controller = 0;controller<N_CONTROLLERS;controller++) {
             if(glfwJoystickIsGamepad(controller)) {
                 activeControllers.add(controller);
