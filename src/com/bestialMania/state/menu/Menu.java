@@ -8,6 +8,7 @@ import com.bestialMania.rendering.MemoryManager;
 import com.bestialMania.rendering.Renderer;
 import com.bestialMania.rendering.shader.Shader;
 import com.bestialMania.state.Game;
+import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +45,7 @@ public class Menu {
         this.inputHandler = inputHandler;
         //load all menu textures and fonts
         renderer = new MasterRenderer();
+        renderer.getWindowFramebuffer().setBackgroundColor(new Vector3f(0.2f,0.2f,0.2f));
         memoryManager = new MemoryManager();
 
         //shaders

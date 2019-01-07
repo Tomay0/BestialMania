@@ -2,6 +2,8 @@ package com.bestialMania.rendering;
 
 import com.bestialMania.DisplaySettings;
 import com.bestialMania.rendering.shader.Shader;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +15,7 @@ public class Framebuffer {
     private int fbo;
     private int width, height;
     private boolean depthEnabled = false,mipmapping = false;
+    private Vector4f backgroundColor = new Vector4f(0,0,0,0);
     private List<Texture> textures = new ArrayList<>();
     private List<Integer> buffers = new ArrayList<>();
     private List<Renderer> renderers = new ArrayList<>();
@@ -140,6 +143,16 @@ public class Framebuffer {
     }
 
     /**
+     * Set the background colour
+     */
+    public void setBackgroundColor(Vector3f color) {
+        backgroundColor.x = color.x;
+        backgroundColor.y = color.y;
+        backgroundColor.z = color.z;
+        backgroundColor.w = 1;
+    }
+
+    /**
      * Bind the framebuffer
      * Clear the screen
      */
@@ -148,7 +161,8 @@ public class Framebuffer {
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER,fbo);
             glViewport(0,0,width,height);
         }else unbind();
-        
+
+        glClearColor(backgroundColor.x,backgroundColor.y,backgroundColor.z,backgroundColor.w);
         glClear(GL_COLOR_BUFFER_BIT);
         if(!depthEnabled) {
             glDisable(GL_DEPTH_TEST);
