@@ -2,6 +2,7 @@ package com.bestialMania.object.beast;
 
 import com.bestialMania.DisplaySettings;
 import com.bestialMania.InputHandler;
+import com.bestialMania.rendering.Framebuffer;
 import com.bestialMania.rendering.Renderer;
 import com.bestialMania.rendering.shader.UniformMatrix4;
 import org.joml.Matrix4f;
@@ -29,6 +30,13 @@ public class Player {
     private Vector3f cameraLocation,lookLocation,upVector;
     private Matrix4f viewMatrix;
 
+    /*
+     * RENDERING STUFF
+     */
+    //private Framebuffer playerWindow;
+    //private Renderer renderer;
+
+
     /**
      * Handles the controlling of the beast with a controller or keyboard/mouse.
      * Also handles the camera.
@@ -48,6 +56,13 @@ public class Player {
         //test view matrix TODO
         viewMatrix = new Matrix4f();
         viewMatrix.lookAt(new Vector3f(0,0.5f,2),new Vector3f(0,0,0),new Vector3f(0,1,0));
+    }
+
+    /**
+     * Get the beast object
+     */
+    public Beast getBeast() {
+        return beast;
     }
 
     /**
@@ -78,11 +93,11 @@ public class Player {
         }else{
             //right analog camera controls
             Vector2f rightAnalog = inputHandler.gamepadRightJoystickPosition(controller);
-            System.out.println(rightAnalog.x + "," + rightAnalog.y);
+
             cameraMoveVec.x = rightAnalog.x * DisplaySettings.HORIZONTAL_CONTROLLER_CAMERA_SENSITIVITY;
             cameraMoveVec.y = rightAnalog.y * DisplaySettings.VERTICAL_CONTROLLER_CAMERA_SENSITIVITY;
-            if(Math.abs(cameraMoveVec.x)<DisplaySettings.HORIZONTAL_CONTROLLER_CAMERA_SENSITIVITY*0.1f) cameraMoveVec.x = 0;
-            if(Math.abs(cameraMoveVec.y)<DisplaySettings.VERTICAL_CONTROLLER_CAMERA_SENSITIVITY*0.1f) cameraMoveVec.y = 0;
+            if(Math.abs(cameraMoveVec.x)<DisplaySettings.HORIZONTAL_CONTROLLER_CAMERA_SENSITIVITY*0.4f) cameraMoveVec.x = 0;
+            if(Math.abs(cameraMoveVec.y)<DisplaySettings.VERTICAL_CONTROLLER_CAMERA_SENSITIVITY*0.4f) cameraMoveVec.y = 0;
         }
 
         //adjust yaw/pitch based on vector above
@@ -119,7 +134,8 @@ public class Player {
             speed = dir.length();
         }
         //only move if the speed is high enough (as there may be noise in the analog stick)
-        if(speed>0.1f) {
+        if(speed>0.4f) {
+            if(speed>1) speed=1;
             beast.setSpeed(speed*0.1f);
             dir.normalize();
 

@@ -16,10 +16,13 @@ import com.bestialMania.state.menu.Menu;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import static org.lwjgl.glfw.GLFW.GLFW_JOYSTICK_1;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE;
+import static org.lwjgl.glfw.GLFW.glfwSetFramebufferSizeCallback;
 
 /**
  * Test class reflecting the actual game.
@@ -34,20 +37,25 @@ public class Game implements State, InputListener {
     private MemoryManager memoryManager;
 
     //Renderers
-    private Renderer testRenderer, renderer2D;
-
+    private Renderer renderer2D;
 
     //players in the game
-    private Player player;
+    private List<Player> players = new ArrayList<>();
+
+    private List<Renderer> renderers = new ArrayList<>();
+
 
     /**
      * Initialize a game
      */
-    public Game(Main main, InputHandler inputHandler, int player1controller) {
+    public Game(Main main, InputHandler inputHandler, List<Integer> players) {
         this.main = main;
         this.inputHandler = inputHandler;
         masterRenderer = new MasterRenderer();
         memoryManager = new MemoryManager();
+
+        int windowWidth = players.size()<3 ? DisplaySettings.WIDTH : DisplaySettings.WIDTH/2;
+        int windowHeight =  players.size()==1 ? DisplaySettings.HEIGHT : DisplaySettings.HEIGHT/2;
 
         //add this class as a listener
         inputHandler.addListener(this);
@@ -59,59 +67,81 @@ public class Game implements State, InputListener {
 
         //projection matrix
         Matrix4f projection = new Matrix4f();
-        projection.perspective(70,(float)DisplaySettings.WIDTH/(float)DisplaySettings.HEIGHT,0.1f,100);
+        projection.perspective(70,(float)windowWidth/(float)windowHeight,0.1f,100);
         testShader.setUniformMatrix4(testShader.getUniformLocation("projectionMatrix"),projection);
 
         Shader shader2D = new Shader("res/shaders/gui_vertex.glsl","res/shaders/gui_fragment.glsl");
         shader2D.bindTextureUnits(Arrays.asList("textureSampler"));
 
-        //Framebuffer for the 3D scene
-        Framebuffer sceneFbo;
-        if(DisplaySettings.ANTIALIASING) {
-            sceneFbo = Framebuffer.createMultisampledFramebuffer3Dto2D(memoryManager,DisplaySettings.WIDTH, DisplaySettings.HEIGHT);
 
-        }else{
-            sceneFbo = Framebuffer.createFramebuffer3Dto2D(memoryManager,DisplaySettings.WIDTH, DisplaySettings.HEIGHT);
-        }
-        masterRenderer.addFramebuffer(sceneFbo);
-
-        //create renderers
-        testRenderer = sceneFbo.createRenderer(testShader);
+        //2d renderer
         renderer2D = masterRenderer.getWindowFramebuffer().createRenderer(shader2D);
-
-        //The scene renderered as a quad
-        Object2D sceneObject = new Object2D(memoryManager,0,0,sceneFbo.getTexture(0));
-        sceneObject.addToRenderer(renderer2D);
-
-        /*
-
-
-            THE PLAYER
-            - only player 1 at the moment
-
-
-         */
 
         //create the beast you play as (JIMMY)
         Texture jimmyTexture = Texture.loadImageTexture3D(memoryManager,"res/textures/jimmy_tex.png");
         Model jimmyModel = OBJLoader.loadOBJ(memoryManager,"res/models/jimmy.obj");
-        Beast beast = new Beast(jimmyModel,jimmyTexture);
-        beast.linkToRenderer(testRenderer);
-
-        //link beast to a player object
-        player = new Player(inputHandler,1,player1controller,beast);
-        player.linkToRenderer(testRenderer);
 
 
+        //Create a window, renderer and character for each player
+        for(int i = 0;i<players.size();i++) {
+
+            //framebuffer
+            Framebuffer fbo = createPlayerWindow(windowWidth, windowHeight);
+            masterRenderer.addFramebuffer(fbo);
+
+            //renderer
+            Renderer renderer = fbo.createRenderer(testShader);
+            renderers.add(renderer);
+
+            //rectangle on screen as the splitscreen window
+            Object2D sceneObject = new Object2D(memoryManager,
+                    players.size()>2 && i%2==1 ? DisplaySettings.WIDTH/2 : 0,
+                    (players.size()==2 && i==1) || i>1 ? DisplaySettings.HEIGHT/2 : 0,
+                    fbo.getTexture(0));
+            sceneObject.addToRenderer(renderer2D);
+
+            //the player object
+            Beast beast = new Beast(jimmyModel,jimmyTexture);
+            Player player = new Player(inputHandler,i+1,players.get(i),beast);
+            player.linkToRenderer(renderer);
+
+            this.players.add(player);
+        }
+
+        //link all beast's to all renderers
+        for(Player player : this.players) {
+            for(Renderer renderer : renderers) {
+                player.getBeast().linkToRenderer(renderer);
+            }
+        }
 
         //test object so you can see movement
-        Matrix4f testObjectMatrix = new Matrix4f();
-        testObjectMatrix.translate(2.0f,0,0.5f);
-        testObjectMatrix.scale(0.1f,0.1f,0.1f);
+        if(players.size()==1) {
+            Matrix4f testObjectMatrix = new Matrix4f();
+            testObjectMatrix.translate(2.0f,0,0.5f);
+            testObjectMatrix.scale(0.1f,0.1f,0.1f);
 
-        ShaderObject testObject = testRenderer.createObject(jimmyModel);
-        testObject.addTexture(0,jimmyTexture);
-        testObject.addUniform(new UniformMatrix4(testShader,"modelMatrix",testObjectMatrix));
+            for(Renderer renderer : renderers) {
+                ShaderObject testObject = renderer.createObject(jimmyModel);
+                testObject.addTexture(0,jimmyTexture);
+                testObject.addUniform(new UniformMatrix4(testShader,"modelMatrix",testObjectMatrix));
+            }
+        }
+
+    }
+
+    /**
+     * Create a player window framebuffer
+     */
+    private Framebuffer createPlayerWindow(int width, int height) {
+        Framebuffer fbo;
+        if(DisplaySettings.ANTIALIASING) {
+            fbo = Framebuffer.createMultisampledFramebuffer3Dto2D(memoryManager,width, height);
+
+        }else{
+            fbo = Framebuffer.createFramebuffer3Dto2D(memoryManager,width,height);
+        }
+        return fbo;
     }
 
     /**
@@ -133,7 +163,9 @@ public class Game implements State, InputListener {
      */
     @Override
     public void update() {
-        player.update();
+        for(Player player : players) {
+            player.update();
+        }
     }
 
     /**
