@@ -14,8 +14,11 @@ import org.joml.Vector3f;
  * Make movement smoother, so you don't turn instantly in another direction
  */
 public class Beast {
-    private Vector3f position;
-    private Vector2f lookDirection;//direction they are facing
+    private static final float TURN_SPEED = 0.1f;
+
+    private Vector3f position, positionInterpolate;
+    private Vector2f movementDirection;//direction they are facing
+    private float angle, angleTarget;
     private Matrix4f modelMatrix;
     private float speed;//current speed
 
@@ -29,8 +32,12 @@ public class Beast {
      */
     public Beast(Model model, Texture texture){
         position = new Vector3f(0,0,0);//TODO have some sort of spawn point
-        lookDirection = new Vector2f(0,1);
+        angle = 0;
+
+        positionInterpolate = position;
+        movementDirection = new Vector2f((float)Math.sin(angle),(float)Math.cos(angle));
         modelMatrix = new Matrix4f();
+        angleTarget = angle;
         speed = 0;
         this.model = model;
         this.texture = texture;
@@ -40,7 +47,8 @@ public class Beast {
      * Set a new direction
      */
     public void setDirection(Vector2f direction) {
-        this.lookDirection = direction;
+        angleTarget = (float)Math.atan2(direction.x,direction.y);
+        this.movementDirection = direction;
     }
 
     /**
@@ -59,20 +67,61 @@ public class Beast {
      * Update position and orientation
      */
     public void update() {
-        position.x+=lookDirection.x*speed;
-        position.z+=lookDirection.y*speed;
+        position.x+=movementDirection.x*speed;
+        position.z+=movementDirection.y*speed;
+
+        //turn to face direction of movement
+        if(Math.abs(angle-angleTarget)<TURN_SPEED) angle = angleTarget;
+        else if(angle>angleTarget) {
+            if(angle-angleTarget>Math.PI) angle+=TURN_SPEED;
+            else angle-=TURN_SPEED;
+        }
+        else {
+            if(angleTarget-angle>Math.PI) angle-=TURN_SPEED;
+            else angle+=TURN_SPEED;
+        }
+
+        if(angle>Math.PI) angle-=2*Math.PI;
+        if(angle<-Math.PI) angle+=2*Math.PI;
+    }
+
+    /**
+     * Update matrices using the frame interpolation amount
+     *
+     * return the interpolated position
+     */
+    public Vector3f interpolate(float frameInterpolation) {
+
+        //interpolate position
+        positionInterpolate.x = position.x+movementDirection.x*speed*frameInterpolation;
+        positionInterpolate.z = position.z+movementDirection.y*speed*frameInterpolation;
+
+        //interpolate direction
+        float angleInterpolate = angle;
+        float turnAmount = TURN_SPEED*frameInterpolation;
+        if(Math.abs(angle-angleTarget)<turnAmount) angleInterpolate = angleTarget;
+        else if(angle>angleTarget) {
+            if(angle-angleTarget>Math.PI) angleInterpolate+=turnAmount;
+            else angleInterpolate-=turnAmount;
+        }
+        else {
+            if(angleTarget-angle>Math.PI) angleInterpolate-=turnAmount;
+            else angleInterpolate+=turnAmount;
+        }
 
         //recalculate matrix
         modelMatrix.identity();
 
         //translation
-        modelMatrix.translate(position);
+        modelMatrix.translate(positionInterpolate);
         //rotation
-        float angle = (float)Math.atan2(lookDirection.x,lookDirection.y);
-        modelMatrix.rotateY(angle);
+        modelMatrix.rotateY(angleInterpolate);
 
         //scale
         modelMatrix.scale(0.1f,0.1f,0.1f);
+
+
+        return positionInterpolate;
     }
 
     /**

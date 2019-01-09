@@ -50,10 +50,12 @@ public class MenuSkeletonCode implements State {//Implement state so can use the
     }
 
     /**
-     * Nothing else really needs to be added to this method other than renderer.render(); as everything is taken care of within this method call
+     * For the menu you probably don't need to update this as renderer.render(); covers all the rendering,
+     * however if you wish to allow certain things to run at greater frame rate than the tick rate (60),
+     * you will need to implement some form of interpolation to any uniforms.
      */
     @Override
-    public void render() {
+    public void render(float frameInterpolation) {
         renderer.render();
     }
 

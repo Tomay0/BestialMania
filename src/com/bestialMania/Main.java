@@ -11,6 +11,7 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
 public class Main {
+    private static final double TICKS_PER_SECOND = 60;//constant tick rate at which the game updates, independent of the render time.
     private long window;// The window handle
 
     private InputHandler inputHandler;//Input handler
@@ -62,7 +63,7 @@ public class Main {
         //CONTEXT CURRENT
         glfwMakeContextCurrent(window);
 
-        glfwSwapInterval(1);// VSync
+        glfwSwapInterval(DisplaySettings.VSYNC ? 1 : 0);// VSync
 
         glfwShowWindow(window);
         GL.createCapabilities();
@@ -86,18 +87,45 @@ public class Main {
      * Main run loop
      */
     private void loop() {
+        double prevTime = glfwGetTime();
+
+        double delta = 0;
+        double delta2 = 0;
+        double timeInterval = 1.0f/TICKS_PER_SECOND;
+
+        int fps = 0;
 
         //Run until you click X or press ESC
         while ( !glfwWindowShouldClose(window) && running) {
-            inputHandler.update();
-            currentState.update();
-            currentState.render();
+            double currentTime = glfwGetTime();
+            double timeChange = currentTime-prevTime;
+            delta += timeChange;
+            delta2 += timeChange;
+
+            //update game at fixed time interval
+            while(delta > timeInterval) {
+                inputHandler.update();
+                currentState.update();
+                delta-=timeInterval;
+            }
+
+            //render at speed your PC is capable of, for faster machines use a frame interpolation amount.
+            currentState.render((float) (delta/timeInterval));
+            //calculate fps
+            fps++;
+            if(delta2 > 1) {
+                System.out.println(fps + "FPS");
+                fps = 0;
+                delta2--;
+            }
 
             //swap buffers to show new frame
             glfwSwapBuffers(window);
 
             //window events
             glfwPollEvents();
+
+            prevTime = currentTime;
         }
     }
 

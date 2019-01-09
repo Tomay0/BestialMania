@@ -9,7 +9,7 @@ public interface State {
     /**
      * Render everything within the current state
      */
-    void render();
+    void render(float frameInterpolation);
 
     /**
      * Remove necessary objects/memory to change to another state (may not necessarily clear everything)

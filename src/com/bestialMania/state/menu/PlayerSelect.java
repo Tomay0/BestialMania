@@ -142,7 +142,7 @@ public class PlayerSelect implements State, InputListener, ButtonListener {
      * Render to the screen
      */
     @Override
-    public void render() {
+    public void render(float frameInterpolation) {
         renderer.render();
     }
 

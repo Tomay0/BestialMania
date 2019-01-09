@@ -116,7 +116,7 @@ public class Game implements State, InputListener {
             }
         }
 
-        //test object so you can see movement
+        //test object in 1 player mode
         if(players.size()==1) {
             Matrix4f testObjectMatrix = new Matrix4f();
             testObjectMatrix.translate(2.0f,0,0.5f);
@@ -173,7 +173,10 @@ public class Game implements State, InputListener {
      * Render
      */
     @Override
-    public void render() {
+    public void render(float frameInterpolation) {
+        for(Player player : players) {
+            player.interpolate(frameInterpolation);
+        }
         masterRenderer.render();
     }
 

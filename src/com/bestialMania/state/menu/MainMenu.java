@@ -46,7 +46,7 @@ public class MainMenu implements State, ButtonListener {
      * Render
      */
     @Override
-    public void render() {
+    public void render(float frameInterpolation) {
         renderer.render();
     }
 

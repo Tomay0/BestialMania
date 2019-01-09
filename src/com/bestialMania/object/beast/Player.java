@@ -26,6 +26,7 @@ public class Player {
     private float cameraYaw, cameraPitch;//yaw = Y-axis rotation. pitch = X-axis rotation
     private float cameraDist, cameraHeight;//distance from the camera to the beast
 
+    private Vector2f cameraMoveVec;
 
     private Vector3f cameraLocation,lookLocation,upVector;
     private Matrix4f viewMatrix;
@@ -52,6 +53,7 @@ public class Player {
         cameraHeight = 0.7f;
         cameraLocation = new Vector3f();
         lookLocation = new Vector3f();
+        cameraMoveVec = new Vector2f();
         upVector = new Vector3f(0,1,0);
         //test view matrix TODO
         viewMatrix = new Matrix4f();
@@ -76,14 +78,17 @@ public class Player {
      * Update the beast
      */
     public void update() {
+        //update to correct camera direction
+        cameraYaw+=cameraMoveVec.x;
+        cameraPitch+=cameraMoveVec.y;
+        if(cameraPitch<MIN_PITCH) cameraPitch = MIN_PITCH;
+        if(cameraPitch>MAX_PITCH) cameraPitch = MAX_PITCH;
 
         /*
 
             CHANGE CAMERA ANGLES
 
          */
-
-        Vector2f cameraMoveVec = new Vector2f();
         //mouse camera controls
         if(controller==-1) {
             Vector2f mousePos = inputHandler.getMousePosition();
@@ -99,18 +104,6 @@ public class Player {
             if(Math.abs(cameraMoveVec.x)<DisplaySettings.HORIZONTAL_CONTROLLER_CAMERA_SENSITIVITY*0.4f) cameraMoveVec.x = 0;
             if(Math.abs(cameraMoveVec.y)<DisplaySettings.VERTICAL_CONTROLLER_CAMERA_SENSITIVITY*0.4f) cameraMoveVec.y = 0;
         }
-
-        //adjust yaw/pitch based on vector above
-        cameraYaw+=cameraMoveVec.x;
-        cameraPitch+=cameraMoveVec.y;
-        if(cameraPitch<MIN_PITCH) cameraPitch = MIN_PITCH;
-        if(cameraPitch>MAX_PITCH) cameraPitch = MAX_PITCH;
-
-        //sinus/cosinus for useful calculations
-        float yawSinus = (float)Math.sin(cameraYaw);
-        float yawCosinus = (float)Math.cos(cameraYaw);
-        float pitchSinus = (float)Math.sin(cameraPitch);
-        float pitchCosinus = (float)Math.cos(cameraPitch);
 
         /*
 
@@ -140,6 +133,8 @@ public class Player {
             dir.normalize();
 
             Vector2f rotatedDir = new Vector2f();
+            float yawSinus = (float)Math.sin(cameraYaw);
+            float yawCosinus = (float)Math.cos(cameraYaw);
             rotatedDir.x = dir.x*yawCosinus-dir.y*yawSinus;
             rotatedDir.y = dir.x*yawSinus+dir.y*yawCosinus;
             beast.setDirection(rotatedDir);
@@ -147,14 +142,26 @@ public class Player {
 
         //update the beast
         beast.update();
+    }
 
-        /*
+    /**
+     * Update matrices using the frame interpolation amount
+     */
+    public void interpolate(float frameInterpolation) {
+        //calculate interpolated yaw/pitch
+        float yaw = cameraYaw + cameraMoveVec.x*frameInterpolation;
+        float pitch = cameraPitch + cameraMoveVec.y*frameInterpolation;
+        if(pitch<MIN_PITCH) pitch = MIN_PITCH;
+        if(pitch>MAX_PITCH) pitch = MAX_PITCH;
 
-            UPDATE CAMERA POSITION AND MATRIX
+        //sinus/cosinus for useful calculations
+        float yawSinus = (float)Math.sin(yaw);
+        float yawCosinus = (float)Math.cos(yaw);
+        float pitchSinus = (float)Math.sin(pitch);
+        float pitchCosinus = (float)Math.cos(pitch);
 
-         */
         //get camera location
-        Vector3f beastLocation = beast.getPosition();
+        Vector3f beastLocation = beast.interpolate(frameInterpolation);
         cameraLocation.x = beastLocation.x - cameraDist*yawSinus*pitchCosinus;
         cameraLocation.z = beastLocation.z + cameraDist*yawCosinus*pitchCosinus;
         cameraLocation.y = beastLocation.y + cameraDist*pitchSinus + cameraHeight;
