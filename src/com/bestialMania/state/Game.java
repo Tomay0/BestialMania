@@ -64,6 +64,9 @@ public class Game implements State, InputListener {
         //set up shaders
         Shader testShader = new Shader("res/shaders/test_vertex.glsl","res/shaders/test_fragment.glsl");
         testShader.bindTextureUnits(Arrays.asList("textureSampler"));
+        //lighting
+        testShader.setUniformVector3f(testShader.getUniformLocation("lightDirection"),new Vector3f(-0.86f, -0.5f, 0.1f).normalize());
+        testShader.setUniformVector3f(testShader.getUniformLocation("lightColor"),new Vector3f(1.0f, 1.0f, 1.0f));
 
         //projection matrix
         Matrix4f projection = new Matrix4f();

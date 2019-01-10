@@ -4,6 +4,7 @@ import com.bestialMania.rendering.Renderer;
 import com.bestialMania.rendering.ShaderObject;
 import com.bestialMania.rendering.Texture;
 import com.bestialMania.rendering.model.Model;
+import com.bestialMania.rendering.shader.UniformFloat;
 import com.bestialMania.rendering.shader.UniformMatrix4;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
@@ -130,6 +131,7 @@ public class Beast {
     public void linkToRenderer(Renderer renderer) {
         shaderObject = renderer.createObject(model);
         shaderObject.addTexture(0,texture);
+        shaderObject.addUniform(new UniformFloat(renderer.getShader(),"reflectivity",0.2f));
         shaderObject.addUniform(new UniformMatrix4(renderer.getShader(),"modelMatrix",modelMatrix));
     }
 
