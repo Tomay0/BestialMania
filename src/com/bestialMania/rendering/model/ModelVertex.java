@@ -10,6 +10,7 @@ public class ModelVertex {
     private Vector3f vertex;
     private Vector2f uv;
     private Vector3f normal;
+    private Vector3f tangent;
     private int id;
 
     /**
@@ -52,4 +53,12 @@ public class ModelVertex {
     public Vector3f getVertex() {return vertex;}
     public Vector2f getUV() {return uv;}
     public Vector3f getNormal() {return normal;}
+    public Vector3f getTangent() {return tangent;}
+
+    /**
+     * Set the tangent vector
+     */
+    public void setTangent(Vector3f tangent) {
+        this.tangent = tangent;
+    }
 }

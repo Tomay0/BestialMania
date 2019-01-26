@@ -11,6 +11,7 @@ import com.bestialMania.rendering.*;
 import com.bestialMania.rendering.model.Model;
 import com.bestialMania.rendering.model.OBJLoader;
 import com.bestialMania.rendering.shader.Shader;
+import com.bestialMania.rendering.shader.UniformFloat;
 import com.bestialMania.rendering.shader.UniformMatrix4;
 import com.bestialMania.state.menu.Menu;
 import org.joml.Matrix4f;
@@ -42,7 +43,8 @@ public class Game implements State, InputListener {
     //players in the game
     private List<Player> players = new ArrayList<>();
 
-    private List<Renderer> renderers = new ArrayList<>();
+    private List<Renderer> testRenderers = new ArrayList<>();
+    private List<Renderer> normalmapRenderers = new ArrayList<>();
 
 
     /**
@@ -54,6 +56,8 @@ public class Game implements State, InputListener {
         masterRenderer = new MasterRenderer();
         memoryManager = new MemoryManager();
 
+        boolean normalMapping = DisplaySettings.TEXTURE_DETAIL!= DisplaySettings.GraphicsSetting.LOW;
+
         int windowWidth = players.size()<3 ? DisplaySettings.WIDTH : DisplaySettings.WIDTH/2;
         int windowHeight =  players.size()==1 ? DisplaySettings.HEIGHT : DisplaySettings.HEIGHT/2;
 
@@ -61,17 +65,27 @@ public class Game implements State, InputListener {
         inputHandler.addListener(this);
         inputHandler.setCursorDisabled();
 
-        //set up shaders
-        Shader testShader = new Shader("res/shaders/test_vertex.glsl","res/shaders/test_fragment.glsl");
-        testShader.bindTextureUnits(Arrays.asList("textureSampler"));
-        //lighting
-        testShader.setUniformVector3f(testShader.getUniformLocation("lightDirection"),new Vector3f(-0.86f, -0.5f, 0.1f).normalize());
-        testShader.setUniformVector3f(testShader.getUniformLocation("lightColor"),new Vector3f(1.0f, 1.0f, 1.0f));
 
-        //projection matrix
+        Vector3f lightDir = new Vector3f(-0.86f, -0.5f, 0.1f).normalize();
+        Vector3f lightColor = new Vector3f(1.0f, 1.0f, 1.0f);
         Matrix4f projection = new Matrix4f();
         projection.perspective(70,(float)windowWidth/(float)windowHeight,0.1f,100);
+
+        //set up shaders
+        Shader testShader = new Shader("res/shaders/3d/test_vertex.glsl","res/shaders/3d/test_fragment.glsl");
+        testShader.bindTextureUnits(Arrays.asList("textureSampler"));
+        testShader.setUniformVector3f(testShader.getUniformLocation("lightDirection"),lightDir);
+        testShader.setUniformVector3f(testShader.getUniformLocation("lightColor"),lightColor);
         testShader.setUniformMatrix4(testShader.getUniformLocation("projectionMatrix"),projection);
+
+        Shader normalmapShader = null;
+        if(normalMapping) {
+            normalmapShader = new Shader("res/shaders/3d/normalmap_vertex.glsl","res/shaders/3d/normalmap_fragment.glsl");
+            normalmapShader.bindTextureUnits(Arrays.asList("textureSampler","normalSampler"));
+            normalmapShader.setUniformVector3f(normalmapShader.getUniformLocation("lightDirection"),lightDir);
+            normalmapShader.setUniformVector3f(normalmapShader.getUniformLocation("lightColor"),lightColor);
+            normalmapShader.setUniformMatrix4(normalmapShader.getUniformLocation("projectionMatrix"),projection);
+        }
 
         Shader shader2D = new Shader("res/shaders/gui_vertex.glsl","res/shaders/gui_fragment.glsl");
         shader2D.bindTextureUnits(Arrays.asList("textureSampler"));
@@ -95,7 +109,7 @@ public class Game implements State, InputListener {
 
             //renderer
             Renderer renderer = fbo.createRenderer(testShader);
-            renderers.add(renderer);
+            testRenderers.add(renderer);
 
             //rectangle on screen as the splitscreen window
             Object2D sceneObject = new Object2D(memoryManager,
@@ -107,6 +121,13 @@ public class Game implements State, InputListener {
             //the player object
             Beast beast = new Beast(jimmyModel,jimmyTexture);
             Player player = new Player(inputHandler,i+1,players.get(i),beast);
+
+            //normal mapping renderer
+            if(normalMapping) {
+                Renderer nmRenderer = fbo.createRenderer(normalmapShader);
+                normalmapRenderers.add(nmRenderer);
+                player.linkToRenderer(nmRenderer);
+            }
             player.linkToRenderer(renderer);
 
             this.players.add(player);
@@ -114,22 +135,57 @@ public class Game implements State, InputListener {
 
         //link all beast's to all renderers
         for(Player player : this.players) {
-            for(Renderer renderer : renderers) {
+            for(Renderer renderer : testRenderers) {
                 player.getBeast().linkToRenderer(renderer);
             }
         }
 
-        //test object in 1 player mode
-        if(players.size()==1) {
-            Matrix4f testObjectMatrix = new Matrix4f();
-            testObjectMatrix.translate(2.0f,0,0.5f);
-            testObjectMatrix.scale(0.1f,0.1f,0.1f);
+        /*
 
-            for(Renderer renderer : renderers) {
-                ShaderObject testObject = renderer.createObject(jimmyModel);
-                testObject.addTexture(0,jimmyTexture);
-                testObject.addUniform(new UniformMatrix4(testShader,"modelMatrix",testObjectMatrix));
-            }
+        ---- BELOW ARE SOME TEST OBJECTS ---
+
+        TODO: separate into classes based on the map you're in
+
+         */
+
+
+        //SOME POLE OBJECT
+        Model poleModel = OBJLoader.loadOBJ(memoryManager,"res/models/pole.obj");
+        Texture poleTexture = Texture.loadImageTexture3D(memoryManager,"res/textures/concrete.png");
+
+        Texture poleNormalmap = null;
+        if(normalMapping) {
+            poleNormalmap = Texture.loadImageTexture3D(memoryManager, "res/textures/concrete_normal.png");
+        }
+
+        Matrix4f testObjectMatrix = new Matrix4f();
+        testObjectMatrix.translate(2.0f,0,0.5f);
+        //testObjectMatrix.scale(0.1f,0.1f,0.1f);
+
+        for(Renderer renderer : (normalMapping ? normalmapRenderers : testRenderers)) {//use regular shader on low texture detail
+            ShaderObject testObject = renderer.createObject(poleModel);
+            testObject.addTexture(0,poleTexture);
+            if(normalMapping) testObject.addTexture(1,poleNormalmap);
+            testObject.addUniform(new UniformMatrix4(normalMapping ? normalmapShader : testShader,"modelMatrix",testObjectMatrix));
+            testObject.addUniform(new UniformFloat(normalMapping ? normalmapShader : testShader,"reflectivity",0.5f));
+            testObject.addUniform(new UniformFloat(normalMapping ? normalmapShader : testShader,"shineDamper",10.0f));
+        }
+
+        //SOME FLOOR OBJECT
+        Model planeModel = OBJLoader.loadOBJ(memoryManager,"res/models/plane.obj");
+        Texture planeTexture = Texture.loadImageTexture3D(memoryManager,"res/textures/rocky.png");
+        Texture planeNormalmap = null;
+        if(normalMapping) {
+            planeNormalmap = Texture.loadImageTexture3D(memoryManager, "res/textures/rocky_normal.png");
+        }
+        for(Renderer renderer : (normalMapping ? normalmapRenderers : testRenderers)) {//use regular shader on low texture detail
+            ShaderObject testObject = renderer.createObject(planeModel);
+            testObject.addTexture(0,planeTexture);
+            if(normalMapping) testObject.addTexture(1,planeNormalmap);
+            testObject.addUniform(new UniformMatrix4(normalMapping ? normalmapShader : testShader,"modelMatrix",new Matrix4f()));
+            testObject.addUniform(new UniformFloat(normalMapping ? normalmapShader : testShader,"reflectivity",0.1f));
+            testObject.addUniform(new UniformFloat(normalMapping ? normalmapShader : testShader,"shineDamper",4.0f));
+
         }
 
     }

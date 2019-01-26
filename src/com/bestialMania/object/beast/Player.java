@@ -13,7 +13,7 @@ import static org.lwjgl.glfw.GLFW.*;
 
 public class Player {
     private static Vector2f SCREEN_CENTER = new Vector2f(DisplaySettings.WIDTH/2,DisplaySettings.HEIGHT/2);
-    private static final float MIN_PITCH = -(float)Math.PI*0.1f;
+    private static final float MIN_PITCH = -(float)Math.PI*0.05f;
     private static final float MAX_PITCH = (float)Math.PI*0.49f;
     private InputHandler inputHandler;
     private int playerNum;//player number from 1-4 showing the location on the screen

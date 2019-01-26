@@ -58,15 +58,21 @@ public class Texture {
      * Apply filters to the texture
      */
     public void applyFilters(int filter, int wrap, boolean mipmap) {
-        if(mipmap) glGenerateMipmap(type);
-        glTexParameterf(type,GL_TEXTURE_MIN_FILTER,filter);
+        int minFilter = filter;
+        if(mipmap) {
+            glGenerateMipmap(type);
+            if(filter==GL_LINEAR) minFilter = GL_LINEAR_MIPMAP_LINEAR;
+            else if(filter==GL_NEAREST) minFilter = GL_NEAREST_MIPMAP_NEAREST;
+            glTexParameterf(type, GL_TEXTURE_LOD_BIAS, -0.4f);
+        }
+
+        glTexParameterf(type,GL_TEXTURE_MIN_FILTER,minFilter);
         glTexParameterf(type,GL_TEXTURE_MAG_FILTER,filter);
         glTexParameterf(type,GL_TEXTURE_WRAP_S,wrap);
         glTexParameterf(type,GL_TEXTURE_WRAP_T,wrap);
-        if(mipmap && DisplaySettings.ANISOTROPIC_FILTERING) {
-            glTexParameterf(type, GL_TEXTURE_LOD_BIAS, 0.4f);
+        if(mipmap && DisplaySettings.ANISOTROPIC_FILTERING>0) {
             float amount = GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT;
-            if (amount > 4) amount = 4;
+            if (amount > DisplaySettings.ANISOTROPIC_FILTERING) amount = DisplaySettings.ANISOTROPIC_FILTERING;
             glTexParameterf(type, GL_TEXTURE_MAX_ANISOTROPY_EXT, amount);
         }
     }

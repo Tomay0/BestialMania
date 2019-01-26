@@ -12,7 +12,7 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL20.*;
 
 public class Shader {
-    private static FloatBuffer matrixBuffer = BufferUtils.createFloatBuffer(16);
+    private FloatBuffer matrixBuffer = BufferUtils.createFloatBuffer(16);
 
     private int program;//program ID
 
@@ -51,6 +51,7 @@ public class Shader {
      * Loads a shader from a file and return the ID
      */
     private int loadShader(String path, int type) {
+
         int shader = glCreateShader(type);
 
         //get source code

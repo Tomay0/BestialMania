@@ -132,6 +132,7 @@ public class Beast {
         shaderObject = renderer.createObject(model);
         shaderObject.addTexture(0,texture);
         shaderObject.addUniform(new UniformFloat(renderer.getShader(),"reflectivity",0.2f));
+        shaderObject.addUniform(new UniformFloat(renderer.getShader(),"shineDamper",5.0f));
         shaderObject.addUniform(new UniformMatrix4(renderer.getShader(),"modelMatrix",modelMatrix));
     }
 
