@@ -49,8 +49,8 @@ public class Menu {
         memoryManager = new MemoryManager();
 
         //shaders
-        guiShader = new Shader("res/shaders/gui_vertex.glsl","res/shaders/gui_fragment.glsl");
-        textShader = new Shader("res/shaders/gui_vertex.glsl", "res/shaders/text_fragment.glsl");
+        guiShader = new Shader("res/shaders/gui_v.glsl","res/shaders/gui_f.glsl");
+        textShader = new Shader("res/shaders/gui_v.glsl", "res/shaders/text_f.glsl");
 
         guiRender = renderer.getWindowFramebuffer().createRenderer(guiShader);
         textRender = renderer.getWindowFramebuffer().createRenderer(textShader);

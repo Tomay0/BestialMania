@@ -10,6 +10,7 @@ import com.bestialMania.object.gui.Object2D;
 import com.bestialMania.rendering.*;
 import com.bestialMania.rendering.model.Model;
 import com.bestialMania.rendering.model.OBJLoader;
+import com.bestialMania.rendering.model.Skybox;
 import com.bestialMania.rendering.shader.Shader;
 import com.bestialMania.rendering.shader.UniformFloat;
 import com.bestialMania.rendering.shader.UniformMatrix4;
@@ -45,6 +46,7 @@ public class Game implements State, InputListener {
 
     private List<Renderer> testRenderers = new ArrayList<>();
     private List<Renderer> normalmapRenderers = new ArrayList<>();
+    private List<Renderer> skyboxRenderers = new ArrayList<>();
 
 
     /**
@@ -66,28 +68,34 @@ public class Game implements State, InputListener {
         inputHandler.setCursorDisabled();
 
 
-        Vector3f lightDir = new Vector3f(-0.86f, -0.5f, 0.1f).normalize();
+        Vector3f lightDir = new Vector3f(-1.4f, -0.5f, 2.5f).normalize();
         Vector3f lightColor = new Vector3f(1.0f, 1.0f, 1.0f);
         Matrix4f projection = new Matrix4f();
         projection.perspective(70,(float)windowWidth/(float)windowHeight,0.1f,100);
 
-        //set up shaders
-        Shader testShader = new Shader("res/shaders/3d/test_vertex.glsl","res/shaders/3d/test_fragment.glsl");
+        //regular shader
+        Shader testShader = new Shader("res/shaders/3d/test_v.glsl","res/shaders/3d/test_f.glsl");
         testShader.bindTextureUnits(Arrays.asList("textureSampler"));
         testShader.setUniformVector3f(testShader.getUniformLocation("lightDirection"),lightDir);
         testShader.setUniformVector3f(testShader.getUniformLocation("lightColor"),lightColor);
         testShader.setUniformMatrix4(testShader.getUniformLocation("projectionMatrix"),projection);
 
+        //normalmap shader
         Shader normalmapShader = null;
         if(normalMapping) {
-            normalmapShader = new Shader("res/shaders/3d/normalmap_vertex.glsl","res/shaders/3d/normalmap_fragment.glsl");
+            normalmapShader = new Shader("res/shaders/3d/normalmap_v.glsl","res/shaders/3d/normalmap_f.glsl");
             normalmapShader.bindTextureUnits(Arrays.asList("textureSampler","normalSampler"));
             normalmapShader.setUniformVector3f(normalmapShader.getUniformLocation("lightDirection"),lightDir);
             normalmapShader.setUniformVector3f(normalmapShader.getUniformLocation("lightColor"),lightColor);
             normalmapShader.setUniformMatrix4(normalmapShader.getUniformLocation("projectionMatrix"),projection);
         }
+        //skybox shader
+        Shader skyboxShader = new Shader("res/shaders/3d/skybox_v.glsl","res/shaders/3d/skybox_f.glsl");
+        skyboxShader.bindTextureUnits(Arrays.asList("samplerCube"));
+        skyboxShader.setUniformMatrix4(skyboxShader.getUniformLocation("projectionMatrix"),projection);
 
-        Shader shader2D = new Shader("res/shaders/gui_vertex.glsl","res/shaders/gui_fragment.glsl");
+        //shader for 2d elements
+        Shader shader2D = new Shader("res/shaders/gui_v.glsl","res/shaders/gui_f.glsl");
         shader2D.bindTextureUnits(Arrays.asList("textureSampler"));
 
 
@@ -122,13 +130,19 @@ public class Game implements State, InputListener {
             Beast beast = new Beast(jimmyModel,jimmyTexture);
             Player player = new Player(inputHandler,i+1,players.get(i),beast);
 
+            player.linkCameraToRenderer(renderer);
             //normal mapping renderer
             if(normalMapping) {
                 Renderer nmRenderer = fbo.createRenderer(normalmapShader);
                 normalmapRenderers.add(nmRenderer);
-                player.linkToRenderer(nmRenderer);
+                player.linkCameraToRenderer(nmRenderer);
             }
-            player.linkToRenderer(renderer);
+
+            //skybox renderer
+            Renderer skyboxRenderer = fbo.createRenderer(skyboxShader);
+            skyboxRenderers.add(skyboxRenderer);
+            player.linkCameraDirectionToRenderer(skyboxRenderer);
+
 
             this.players.add(player);
         }
@@ -142,12 +156,19 @@ public class Game implements State, InputListener {
 
         /*
 
-        ---- BELOW ARE SOME TEST OBJECTS ---
+        ---- BELOW ARE SOME TEST OBJECTS FOR THE SCENE ---
 
         TODO: separate into classes based on the map you're in
 
          */
-
+        //SKY BOX
+        Texture skyboxTexture = Texture.loadCubemapTexture(memoryManager,"res/textures/skyboxes/test/desertsky","png");
+        Model skyboxModel = new Skybox(memoryManager);
+        for(Renderer renderer : skyboxRenderers) {
+            ShaderObject object = renderer.createObject(skyboxModel);
+            object.addTexture(0,skyboxTexture);
+            object.disableDepth();
+        }
 
         //SOME POLE OBJECT
         Model poleModel = OBJLoader.loadOBJ(memoryManager,"res/models/pole.obj");
@@ -160,7 +181,7 @@ public class Game implements State, InputListener {
 
         Matrix4f testObjectMatrix = new Matrix4f();
         testObjectMatrix.translate(2.0f,0,0.5f);
-        //testObjectMatrix.scale(0.1f,0.1f,0.1f);
+        testObjectMatrix.scale(3.0f,3.0f,3.0f);
 
         for(Renderer renderer : (normalMapping ? normalmapRenderers : testRenderers)) {//use regular shader on low texture detail
             ShaderObject testObject = renderer.createObject(poleModel);

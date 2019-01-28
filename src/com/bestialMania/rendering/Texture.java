@@ -39,6 +39,13 @@ public class Texture {
     }
 
     /**
+     * Generate a cube map texture
+     */
+    public void genCubemapTexture(int index, int format, ByteBuffer buffer) {
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + index,0,format,width,height,0,format,GL_UNSIGNED_BYTE,buffer);
+    }
+
+    /**
      * Generate a framebuffer texture
      */
     public void genFramebufferTexture(int target, int internalFormat, int format, int formatType) {
@@ -102,6 +109,16 @@ public class Texture {
     }
 
     /**
+     * Width
+     */
+    public int getWidth() {return width;}
+
+    /**
+     * Height
+     */
+    public int getHeight() {return height;}
+
+    /**
      * Load a texture from a file with default settings for 3D textures
      */
     public static Texture loadImageTexture3D(MemoryManager mm, String fileName) {return loadImageTexture(mm,fileName,GL_RGBA,GL_LINEAR,GL_REPEAT,true);}
@@ -120,25 +137,8 @@ public class Texture {
             BufferedImage image = ImageIO.read(new File(fileName));
             int width = image.getWidth();
             int height = image.getHeight();
+            ByteBuffer buffer = getByteBuffer(image,true);
 
-            //convert to pixel array
-            int[] pixels = new int[width*height*4];
-            pixels = image.getRGB(0,0,width,height,null,0,width);
-
-            //convert to byte buffer
-            ByteBuffer buffer = BufferUtils.createByteBuffer(width*height*4);
-
-            for(int y = height-1;y>=0;y--) {
-                for(int x = 0;x<width;x++) {
-                    int px = pixels[y*width+x];
-                    buffer.put((byte) ((px >> 16) & 0xFF));//R
-                    buffer.put((byte) ((px >> 8) & 0xFF));//G
-                    buffer.put((byte) (px & 0xFF));//B
-                    buffer.put((byte) ((px >> 24) & 0xFF));//A
-                }
-            }
-
-            buffer.flip();
 
             //generate the texture
             Texture texture = new Texture(mm,GL_TEXTURE_2D, width,height);
@@ -146,7 +146,7 @@ public class Texture {
             texture.applyFilters(filter,wrap,mipmap);
 
             return texture;
-        }catch(IOException e) {
+        }catch(Exception e) {
             System.err.println("Could not load image: " + fileName);
             System.exit(-1);
         }
@@ -154,12 +154,77 @@ public class Texture {
     }
 
     /**
-     * Width
+     * Load a cube map texture
      */
-    public int getWidth() {return width;}
+    public static Texture loadCubemapTexture(MemoryManager mm, String path, String extension) {
+        try {
+            String[] files = new String[]{
+                    path + "_r." + extension,
+                    path + "_l." + extension,
+                    path + "_u." + extension,
+                    path + "_d." + extension,
+                    path + "_b." + extension,
+                    path + "_f." + extension
+            };
+            BufferedImage[] images = new BufferedImage[6];
+            int width = 0,height = 0;
+
+            for(int i = 0;i<6;i++) {
+                images[i] = ImageIO.read(new File(files[i]));
+                if(width==0) {
+                    width = images[i].getWidth();
+                    height = images[i].getHeight();
+                }
+                else if(width!=images[i].getWidth() || height!=images[i].getHeight()) {
+                    System.err.println("Could not load cube map images: " + path + "_x." + extension);
+                    System.err.println("All must have the same dimensions");
+                    System.exit(-1);
+                }
+
+
+            }
+            Texture texture = new Texture(mm,GL_TEXTURE_CUBE_MAP,width,height);
+            for(int i = 0;i<6;i++) {
+                ByteBuffer buffer = getByteBuffer(images[i],false);
+                texture.genCubemapTexture(i,GL_RGBA,buffer);
+            }
+            texture.applyFilters(GL_LINEAR,GL_CLAMP_TO_EDGE, false);
+
+            return texture;
+        }catch(Exception e) {
+            System.err.println("Could not load cube map images: " + path + "_x." + extension);
+            System.exit(-1);
+        }
+        return null;
+    }
 
     /**
-     * Height
+     * Gets a byte buffer from an image
      */
-    public int getHeight() {return height;}
+    private static ByteBuffer getByteBuffer(BufferedImage image,boolean flip) {
+        int width = image.getWidth();
+        int height = image.getHeight();
+
+        //convert to pixel array
+        int[] pixels = new int[width*height*4];
+        pixels = image.getRGB(0,0,width,height,null,0,width);
+
+        //convert to byte buffer
+        ByteBuffer buffer = BufferUtils.createByteBuffer(width*height*4);
+
+        for(int yi = height-1;yi>=0;yi--) {
+            int y = yi;
+            if(!flip) y = height-1-y;
+            for(int x = 0;x<width;x++) {
+                int px = pixels[y*width+x];
+                buffer.put((byte) ((px >> 16) & 0xFF));//R
+                buffer.put((byte) ((px >> 8) & 0xFF));//G
+                buffer.put((byte) (px & 0xFF));//B
+                buffer.put((byte) ((px >> 24) & 0xFF));//A
+            }
+        }
+
+        buffer.flip();
+        return buffer;
+    }
 }

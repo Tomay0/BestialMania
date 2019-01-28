@@ -2,7 +2,6 @@ package com.bestialMania.object.beast;
 
 import com.bestialMania.DisplaySettings;
 import com.bestialMania.InputHandler;
-import com.bestialMania.rendering.Framebuffer;
 import com.bestialMania.rendering.Renderer;
 import com.bestialMania.rendering.shader.UniformMatrix4;
 import org.joml.Matrix4f;
@@ -15,6 +14,7 @@ public class Player {
     private static Vector2f SCREEN_CENTER = new Vector2f(DisplaySettings.WIDTH/2,DisplaySettings.HEIGHT/2);
     private static final float MIN_PITCH = -(float)Math.PI*0.05f;
     private static final float MAX_PITCH = (float)Math.PI*0.49f;
+    private static final Vector3f ORIGIN = new Vector3f(0,0,0);
     private InputHandler inputHandler;
     private int playerNum;//player number from 1-4 showing the location on the screen
     private int controller;//controller id
@@ -28,8 +28,8 @@ public class Player {
 
     private Vector2f cameraMoveVec;
 
-    private Vector3f cameraLocation,lookLocation,upVector;
-    private Matrix4f viewMatrix;
+    private Vector3f cameraLocation,lookLocation,upVector, dirVector;
+    private Matrix4f viewMatrix, viewDirMatrix;
 
     /*
      * RENDERING STUFF
@@ -55,9 +55,14 @@ public class Player {
         lookLocation = new Vector3f();
         cameraMoveVec = new Vector2f();
         upVector = new Vector3f(0,1,0);
-        //test view matrix TODO
+        dirVector = new Vector3f();
+
         viewMatrix = new Matrix4f();
         viewMatrix.lookAt(new Vector3f(0,0.5f,2),new Vector3f(0,0,0),new Vector3f(0,1,0));
+
+        viewDirMatrix = new Matrix4f();
+
+
     }
 
     /**
@@ -70,8 +75,15 @@ public class Player {
     /**
      * Link the camera's view matrix to the renderer
      */
-    public void linkToRenderer(Renderer renderer) {
+    public void linkCameraToRenderer(Renderer renderer) {
         renderer.addUniform(new UniformMatrix4(renderer.getShader(),"viewMatrix",viewMatrix));
+    }
+
+    /**
+     * Link the camera's direction view matrix to the renderer
+     */
+    public void linkCameraDirectionToRenderer(Renderer renderer) {
+        renderer.addUniform(new UniformMatrix4(renderer.getShader(),"viewMatrix",viewDirMatrix));
     }
 
     /**
@@ -171,8 +183,15 @@ public class Player {
         lookLocation.y = beastLocation.y+cameraHeight;
         lookLocation.z = beastLocation.z;
 
+        //change look to dir
+        lookLocation.sub(cameraLocation,dirVector);
+
         //matrix calculation
         viewMatrix.identity();
         viewMatrix.lookAt(cameraLocation,lookLocation,upVector);
+
+        viewDirMatrix.identity();
+        viewDirMatrix.lookAt(ORIGIN,dirVector,upVector);
+        System.out.println(dirVector);
     }
 }
