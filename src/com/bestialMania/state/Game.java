@@ -112,7 +112,6 @@ public class Game implements State, InputListener {
 
             //framebuffer
             Framebuffer fbo = createPlayerWindow(windowWidth, windowHeight);
-            fbo.setBackgroundColor(new Vector3f((float)Math.random(),(float)Math.random(),(float)Math.random()));
             masterRenderer.addFramebuffer(fbo);
 
             //renderer
