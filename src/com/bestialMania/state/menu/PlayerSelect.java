@@ -1,6 +1,6 @@
 package com.bestialMania.state.menu;
 
-import com.bestialMania.DisplaySettings;
+import com.bestialMania.Settings;
 import com.bestialMania.InputHandler;
 import com.bestialMania.InputListener;
 import com.bestialMania.object.gui.Button;
@@ -12,9 +12,6 @@ import com.bestialMania.state.State;
 import org.joml.Vector3f;
 
 import static org.lwjgl.glfw.GLFW.*;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Player select screen.
@@ -46,8 +43,8 @@ public class PlayerSelect implements State, InputListener, ButtonListener {
         memoryManager = new MemoryManager();
         inputHandler.addListener(this);
 
-        int x = DisplaySettings.WIDTH/4;
-        int y = DisplaySettings.HEIGHT/4;
+        int x = Settings.WIDTH/4;
+        int y = Settings.HEIGHT/4;
         Vector3f c = new Vector3f(255,255,0);
         texts[0] = new Text(memoryManager,"Player 1",menu.getFont(),40, x,y-30, Text.TextAlign.CENTER,c);
         texts[1] = new Text(memoryManager,"Press A/X/Enter button",menu.getFont(),40, x,y+30, Text.TextAlign.CENTER,c);

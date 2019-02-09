@@ -1,6 +1,6 @@
 package com.bestialMania.state.menu;
 
-import com.bestialMania.DisplaySettings;
+import com.bestialMania.Settings;
 import com.bestialMania.InputHandler;
 import com.bestialMania.object.gui.Button;
 import com.bestialMania.object.gui.ButtonListener;
@@ -29,8 +29,8 @@ public class MainMenu implements State, ButtonListener {
 
 
         //buttons
-        startButton = new Button(memoryManager,inputHandler,this, DisplaySettings.WIDTH/2-60,DisplaySettings.HEIGHT/2,"res/textures/ui/start.png","Start","start");
-        quitButton = new Button(memoryManager,inputHandler,this, DisplaySettings.WIDTH/2-60,DisplaySettings.HEIGHT/2+100,"res/textures/ui/quit.png","Quit","quit");
+        startButton = new Button(memoryManager,inputHandler,this, Settings.WIDTH/2-60, Settings.HEIGHT/2,"res/textures/ui/start.png","Start","start");
+        quitButton = new Button(memoryManager,inputHandler,this, Settings.WIDTH/2-60, Settings.HEIGHT/2+100,"res/textures/ui/quit.png","Quit","quit");
 
         startButton.addToRenderer(menu.getGuiRender());
         quitButton.addToRenderer(menu.getGuiRender());

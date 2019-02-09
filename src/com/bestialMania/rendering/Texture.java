@@ -1,12 +1,11 @@
 package com.bestialMania.rendering;
 
-import com.bestialMania.DisplaySettings;
+import com.bestialMania.Settings;
 import org.lwjgl.BufferUtils;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import static org.lwjgl.opengl.EXTTextureFilterAnisotropic.GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT;
@@ -77,9 +76,9 @@ public class Texture {
         glTexParameterf(type,GL_TEXTURE_MAG_FILTER,filter);
         glTexParameterf(type,GL_TEXTURE_WRAP_S,wrap);
         glTexParameterf(type,GL_TEXTURE_WRAP_T,wrap);
-        if(mipmap && DisplaySettings.ANISOTROPIC_FILTERING>0) {
+        if(mipmap && Settings.ANISOTROPIC_FILTERING>0) {
             float amount = GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT;
-            if (amount > DisplaySettings.ANISOTROPIC_FILTERING) amount = DisplaySettings.ANISOTROPIC_FILTERING;
+            if (amount > Settings.ANISOTROPIC_FILTERING) amount = Settings.ANISOTROPIC_FILTERING;
             glTexParameterf(type, GL_TEXTURE_MAX_ANISOTROPY_EXT, amount);
         }
     }

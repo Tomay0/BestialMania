@@ -9,11 +9,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.lwjgl.opengl.GL30.*;
+
 public class Renderer {
     private Shader shader;
     private List<Uniform> uniforms;
     private List<ShaderObject> objects;
     private Map<Integer,Texture> textures;
+
+    private int cull = GL_BACK;
 
     /**
      * Represents a shader with several shader objects
@@ -43,6 +47,13 @@ public class Renderer {
 
 
     /**
+     * Set culling
+     */
+    public void setCull(int cull) {
+        this.cull = cull;
+    }
+
+    /**
      * Add an object
      */
     /*public void addObject(ShaderObject object) {
@@ -69,11 +80,23 @@ public class Renderer {
      * Render
      */
     public void render() {
+        if(cull==GL_FRONT) {
+            glCullFace(GL_FRONT);
+        }
+        else if(cull==GL_NONE) {
+            glDisable(GL_CULL_FACE);
+        }
         shader.bind();
         for(Uniform uniform : uniforms) uniform.bindUniform();
         for(int slot : textures.keySet()) textures.get(slot).bind(slot);
         for(ShaderObject object : objects) {
             object.render();
+        }
+        if(cull==GL_FRONT) {
+            glCullFace(GL_BACK);
+        }
+        else if(cull==GL_NONE) {
+            glEnable(GL_CULL_FACE);
         }
     }
 

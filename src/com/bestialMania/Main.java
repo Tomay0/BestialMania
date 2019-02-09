@@ -46,24 +46,24 @@ public class Main {
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT,GL_TRUE);
         glfwWindowHint(GLFW_OPENGL_PROFILE,GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_DEPTH_BITS,32);
-        if(DisplaySettings.ANTIALIASING) glfwWindowHint(GLFW_SAMPLES,DisplaySettings.SAMPLES);
+        if(Settings.ANTIALIASING) glfwWindowHint(GLFW_SAMPLES, Settings.SAMPLES);
         glfwWindowHint(GLFW_RESIZABLE,GLFW_FALSE);
 
         // Create the window
-        window = glfwCreateWindow(DisplaySettings.WIDTH, DisplaySettings.HEIGHT, "Happiness is an illusion", DisplaySettings.FULLSCREEN ? monitor : NULL, NULL);
+        window = glfwCreateWindow(Settings.WIDTH, Settings.HEIGHT, "Happiness is an illusion", Settings.FULLSCREEN ? monitor : NULL, NULL);
         if ( window == NULL )
             throw new RuntimeException("Failed to create the GLFW window");
 
 
         //set window position
-        if(!DisplaySettings.FULLSCREEN) glfwSetWindowPos(window,
-                (vidmode.width() - DisplaySettings.WIDTH) / 2,
-                (vidmode.height() - DisplaySettings.HEIGHT) / 2);
+        if(!Settings.FULLSCREEN) glfwSetWindowPos(window,
+                (vidmode.width() - Settings.WIDTH) / 2,
+                (vidmode.height() - Settings.HEIGHT) / 2);
 
         //CONTEXT CURRENT
         glfwMakeContextCurrent(window);
 
-        glfwSwapInterval(DisplaySettings.VSYNC ? 1 : 0);// VSync
+        glfwSwapInterval(Settings.VSYNC ? 1 : 0);// VSync
 
         glfwShowWindow(window);
         GL.createCapabilities();

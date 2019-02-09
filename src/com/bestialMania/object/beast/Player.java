@@ -1,6 +1,6 @@
 package com.bestialMania.object.beast;
 
-import com.bestialMania.DisplaySettings;
+import com.bestialMania.Settings;
 import com.bestialMania.InputHandler;
 import com.bestialMania.rendering.Renderer;
 import com.bestialMania.rendering.shader.UniformMatrix4;
@@ -11,7 +11,7 @@ import org.joml.Vector3f;
 import static org.lwjgl.glfw.GLFW.*;
 
 public class Player {
-    private static Vector2f SCREEN_CENTER = new Vector2f(DisplaySettings.WIDTH/2,DisplaySettings.HEIGHT/2);
+    private static Vector2f SCREEN_CENTER = new Vector2f(Settings.WIDTH/2, Settings.HEIGHT/2);
     private static final float MIN_PITCH = -(float)Math.PI*0.05f;
     private static final float MAX_PITCH = (float)Math.PI*0.49f;
     private static final Vector3f ORIGIN = new Vector3f(0,0,0);
@@ -73,6 +73,13 @@ public class Player {
     }
 
     /**
+     * Get the view matrix
+     */
+    public Matrix4f getViewMatrix() {
+        return viewMatrix;
+    }
+
+    /**
      * Link the camera's view matrix to the renderer
      */
     public void linkCameraToRenderer(Renderer renderer) {
@@ -104,17 +111,17 @@ public class Player {
         //mouse camera controls
         if(controller==-1) {
             Vector2f mousePos = inputHandler.getMousePosition();
-            cameraMoveVec.x = (float)(mousePos.x- SCREEN_CENTER.x)*DisplaySettings.HORIZONTAL_MOUSE_SENSITIVITY;
-            cameraMoveVec.y = (float)(mousePos.y- SCREEN_CENTER.y)*DisplaySettings.VERTICAL_MOUSE_SENSITIVITY;
+            cameraMoveVec.x = (float)(mousePos.x- SCREEN_CENTER.x)* Settings.HORIZONTAL_MOUSE_SENSITIVITY;
+            cameraMoveVec.y = (float)(mousePos.y- SCREEN_CENTER.y)* Settings.VERTICAL_MOUSE_SENSITIVITY;
             inputHandler.setMousePosition(SCREEN_CENTER);
         }else{
             //right analog camera controls
             Vector2f rightAnalog = inputHandler.gamepadRightJoystickPosition(controller);
 
-            cameraMoveVec.x = rightAnalog.x * DisplaySettings.HORIZONTAL_CONTROLLER_CAMERA_SENSITIVITY;
-            cameraMoveVec.y = rightAnalog.y * DisplaySettings.VERTICAL_CONTROLLER_CAMERA_SENSITIVITY;
-            if(Math.abs(cameraMoveVec.x)<DisplaySettings.HORIZONTAL_CONTROLLER_CAMERA_SENSITIVITY*0.4f) cameraMoveVec.x = 0;
-            if(Math.abs(cameraMoveVec.y)<DisplaySettings.VERTICAL_CONTROLLER_CAMERA_SENSITIVITY*0.4f) cameraMoveVec.y = 0;
+            cameraMoveVec.x = rightAnalog.x * Settings.HORIZONTAL_CONTROLLER_CAMERA_SENSITIVITY;
+            cameraMoveVec.y = rightAnalog.y * Settings.VERTICAL_CONTROLLER_CAMERA_SENSITIVITY;
+            if(Math.abs(cameraMoveVec.x)< Settings.HORIZONTAL_CONTROLLER_CAMERA_SENSITIVITY*0.4f) cameraMoveVec.x = 0;
+            if(Math.abs(cameraMoveVec.y)< Settings.VERTICAL_CONTROLLER_CAMERA_SENSITIVITY*0.4f) cameraMoveVec.y = 0;
         }
 
         /*
@@ -192,6 +199,5 @@ public class Player {
 
         viewDirMatrix.identity();
         viewDirMatrix.lookAt(ORIGIN,dirVector,upVector);
-        System.out.println(dirVector);
     }
 }

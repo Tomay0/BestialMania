@@ -35,7 +35,7 @@ public class Beast {
         position = new Vector3f(0,0,0);//TODO have some sort of spawn point
         angle = 0;
 
-        positionInterpolate = position;
+        positionInterpolate = new Vector3f(0,0,0);
         movementDirection = new Vector2f((float)Math.sin(angle),(float)Math.cos(angle));
         modelMatrix = new Matrix4f();
         angleTarget = angle;
@@ -96,6 +96,7 @@ public class Beast {
         //interpolate position
         positionInterpolate.x = position.x+movementDirection.x*speed*frameInterpolation;
         positionInterpolate.z = position.z+movementDirection.y*speed*frameInterpolation;
+        //System.out.println(positionInterpolate.x + "," + positionInterpolate.y + "," + positionInterpolate.z);
 
         //interpolate direction
         float angleInterpolate = angle;
@@ -136,4 +137,10 @@ public class Beast {
         shaderObject.addUniform(new UniformMatrix4(renderer.getShader(),"modelMatrix",modelMatrix));
     }
 
+    public Matrix4f getMatrix() {
+        return modelMatrix;
+    }
+    public Model getModel() {
+        return model;
+    }
 }

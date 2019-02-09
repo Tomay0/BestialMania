@@ -1,6 +1,6 @@
 package com.bestialMania.rendering;
 
-import com.bestialMania.DisplaySettings;
+import com.bestialMania.Settings;
 import com.bestialMania.rendering.shader.Shader;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
@@ -26,8 +26,8 @@ public class Framebuffer {
      */
     public Framebuffer() {
         fbo = 0;
-        width = DisplaySettings.WIDTH;
-        height =  DisplaySettings.HEIGHT;
+        width = Settings.WIDTH;
+        height =  Settings.HEIGHT;
     }
 
     /**
@@ -73,7 +73,7 @@ public class Framebuffer {
         for (int i = 0; i < nTextures; i++) {
             int buffer = glGenRenderbuffers();
             glBindRenderbuffer(GL_RENDERBUFFER, buffer);
-            glRenderbufferStorageMultisample(GL_RENDERBUFFER, DisplaySettings.SAMPLES, GL_RGBA8, width, height);
+            glRenderbufferStorageMultisample(GL_RENDERBUFFER, Settings.SAMPLES, GL_RGBA8, width, height);
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_RENDERBUFFER, buffer);
             buffers.add(buffer);
         }
@@ -96,7 +96,7 @@ public class Framebuffer {
     private void genMultisampledDepthRenderbuffers() {
         int dbuffer = glGenRenderbuffers();
         glBindRenderbuffer(GL_RENDERBUFFER,dbuffer);
-        glRenderbufferStorageMultisample(GL_RENDERBUFFER, DisplaySettings.SAMPLES, GL_DEPTH_COMPONENT, width, height);
+        glRenderbufferStorageMultisample(GL_RENDERBUFFER, Settings.SAMPLES, GL_DEPTH_COMPONENT, width, height);
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, dbuffer);
         buffers.add(dbuffer);
     }
@@ -202,7 +202,7 @@ public class Framebuffer {
      */
     public void unbind() {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glViewport(0, 0, DisplaySettings.WIDTH, DisplaySettings.HEIGHT);
+        glViewport(0, 0, Settings.WIDTH, Settings.HEIGHT);
     }
 
     /**

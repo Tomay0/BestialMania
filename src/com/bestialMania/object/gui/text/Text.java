@@ -1,6 +1,6 @@
 package com.bestialMania.object.gui.text;
 
-import com.bestialMania.DisplaySettings;
+import com.bestialMania.Settings;
 import com.bestialMania.rendering.*;
 import com.bestialMania.rendering.model.Model;
 import com.bestialMania.rendering.shader.UniformMatrix4;
@@ -41,8 +41,8 @@ public class Text {
 
         //get scaling correct
         float scale = size/font.getLineHeight();
-        float xScale = 2.0f/ DisplaySettings.WIDTH;
-        float yScale = 2.0f/DisplaySettings.HEIGHT;
+        float xScale = 2.0f/ Settings.WIDTH;
+        float yScale = 2.0f/ Settings.HEIGHT;
 
         //initial cursor position
         Vector2f cursor = new Vector2f(0,0);

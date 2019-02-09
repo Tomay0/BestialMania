@@ -1,6 +1,6 @@
 package com.bestialMania.object.gui;
 
-import com.bestialMania.DisplaySettings;
+import com.bestialMania.Settings;
 import com.bestialMania.rendering.*;
 import com.bestialMania.rendering.model.Rect2D;
 import com.bestialMania.rendering.shader.UniformMatrix4;
@@ -52,14 +52,14 @@ public class Object2D {
      */
     private void generateModel(MemoryManager mm) {
         //create the model
-        float absWidth = 2 * width/ DisplaySettings.WIDTH;
-        float absHeight = 2 * height/ DisplaySettings.HEIGHT;
+        float absWidth = 2 * width/ Settings.WIDTH;
+        float absHeight = 2 * height/ Settings.HEIGHT;
 
         model = new Rect2D(mm,-1,1-absHeight,absWidth-1,1);//convert to OpenGL coordinate system
 
         //create the transformation matrix
         matrix = new Matrix4f();
-        matrix.translate(2 * x/DisplaySettings.WIDTH, -2 * y/DisplaySettings.HEIGHT,0);
+        matrix.translate(2 * x/ Settings.WIDTH, -2 * y/ Settings.HEIGHT,0);
     }
 
     /**
