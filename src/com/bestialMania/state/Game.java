@@ -8,6 +8,7 @@ import com.bestialMania.object.beast.Beast;
 import com.bestialMania.object.beast.Player;
 import com.bestialMania.object.gui.Object2D;
 import com.bestialMania.rendering.*;
+import com.bestialMania.rendering.model.DAELoader;
 import com.bestialMania.rendering.model.Model;
 import com.bestialMania.rendering.model.OBJLoader;
 import com.bestialMania.rendering.model.Skybox;
@@ -181,7 +182,7 @@ public class Game implements State, InputListener {
 
         //create the beast you play as (JIMMY)
         Texture jimmyTexture = Texture.loadImageTexture3D(memoryManager,"res/textures/jimmy_tex.png");
-        Model jimmyModel = OBJLoader.loadOBJ(memoryManager,"res/models/jimmy.obj");
+        Model jimmyModel = DAELoader.loadDAEModel(memoryManager,"res/models/dae/jimmy.dae");
 
 
         //Create a window, renderer and character for each player
@@ -328,6 +329,9 @@ public class Game implements State, InputListener {
             testObject.addUniform(new UniformFloat(normalMapping ? normalmapShader : testShader,"shineDamper",4.0f));
         }
         createShadowCastingObject(planeModel,planeMatrix);
+
+        //TEST ANIMATED MODEL
+        //Model m = DAELoader.loadDAEModel(memoryManager,"res/models/dae/jimmy.dae");
     }
 
     /**

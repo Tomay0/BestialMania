@@ -1,6 +1,5 @@
 package com.bestialMania.rendering.model;
 
-import com.bestialMania.rendering.MasterRenderer;
 import com.bestialMania.rendering.MemoryManager;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
@@ -67,66 +66,10 @@ public class OBJLoader {
                 }
             }
 
-            //build the model
-            Model model = new Model(mm);
-
-            //build indices
-            int[] newIndices = new int[indices.size()*3];
-            for(int i = 0;i<indices.size();i++) {
-                Vector3i v = indices.get(i);
-                newIndices[i*3] = v.x;
-                newIndices[i*3+1] = v.y;
-                newIndices[i*3+2] = v.z;
-            }
-            model.bindIndices(newIndices);
-
-            //build vertices
-            float[] newVertices = new float[vertexList.size()*3];
-            for(int i = 0;i<vertexList.size();i++) {
-                ModelVertex v = vertexList.get(i);
-                newVertices[i*3] = v.getVertex().x;
-                newVertices[i*3+1] = v.getVertex().y;
-                newVertices[i*3+2] = v.getVertex().z;
-            }
-            model.genFloatAttribute(0,3, newVertices);
-
-            //build uvs
-            if(uvs.size()>0) {
-                float[] newUVs = new float[vertexList.size()*2];
-                for(int i = 0;i<vertexList.size();i++) {
-                    ModelVertex v = vertexList.get(i);
-                    newUVs[i*2] = v.getUV().x;
-                    newUVs[i*2+1] = v.getUV().y;
-                }
-                model.genFloatAttribute(1,2, newUVs);
-
-            }
-
-            //build normals
-            if(normals.size()>0) {
-                float[] newNormals = new float[vertexList.size() * 3];
-                for(int i = 0;i<vertexList.size();i++) {
-                    ModelVertex v = vertexList.get(i);
-                    newNormals[i*3] = v.getNormal().x;
-                    newNormals[i*3+1] = v.getNormal().y;
-                    newNormals[i*3+2] = v.getNormal().z;
-                }
-                model.genFloatAttribute(2,3, newNormals);
-            }
-
-            //tangents and bitangents
-            if(uvs.size()>0 && normals.size()>0) {
-                float[] tangents = new float[vertexList.size() * 3];
-                for(int i = 0;i<vertexList.size();i++) {
-                    ModelVertex v = vertexList.get(i);
-                    tangents[i*3] = v.getTangent().x;
-                    tangents[i*3+1] = v.getTangent().y;
-                    tangents[i*3+2] = v.getTangent().z;
-                }
-                model.genFloatAttribute(3,3, tangents);
-            }
-
             scan.close();
+
+            //build the model
+            Model model = buildModel(mm,indices,vertexList,uvs.size()>0,normals.size()>0);
 
 
             return model;
@@ -142,7 +85,7 @@ public class OBJLoader {
      * Processes a string which represents some vertex/uv/normal set on a model.
      * Adds to the vertexMap/vertexList collections if not already in them.
      */
-    private static int processVertex(String string, Map<String, ModelVertex> vertexMap, List<ModelVertex> vertexList,
+    public static int processVertex(String string, Map<String, ModelVertex> vertexMap, List<ModelVertex> vertexList,
                                       List<Vector3f> vertices, List<Vector2f> uvs, List<Vector3f> normals) {
         int id;
 
@@ -177,7 +120,9 @@ public class OBJLoader {
                     mv = new ModelVertex(id,vertices.get(Integer.parseInt(split[0])-1),uvs.get(Integer.parseInt(split[1])-1));
                 }
                 else if(split.length==3) {
-                    mv = new ModelVertex(id,vertices.get(Integer.parseInt(split[0])-1),uvs.get(Integer.parseInt(split[1])-1),normals.get(Integer.parseInt(split[2])-1));
+                    mv = new ModelVertex(id,vertices.get(Integer.parseInt(split[0])-1),
+                            uvs.get(Integer.parseInt(split[1])-1),
+                            normals.get(Integer.parseInt(split[2])-1));
                 }
             }
 
@@ -192,7 +137,7 @@ public class OBJLoader {
      * Calculate tangent vectors for a given face
      *
      */
-    private static void processTangents(ModelVertex mv1, ModelVertex mv2, ModelVertex mv3) {
+    public static void processTangents(ModelVertex mv1, ModelVertex mv2, ModelVertex mv3) {
         //Ugly code that I don't really understand
         Vector3f v1 = mv1.getVertex();
         Vector3f v2 = mv2.getVertex();
@@ -217,4 +162,69 @@ public class OBJLoader {
         mv3.setTangent(tangent);
     }
 
+
+    /**
+     * Builds the model from the given data
+     */
+    public static Model buildModel(MemoryManager mm, List<Vector3i> indices,List<ModelVertex> vertexList, boolean hasUvs, boolean hasNormals) {
+        Model model = new Model(mm);
+
+        //build indices
+        int[] newIndices = new int[indices.size()*3];
+        for(int i = 0;i<indices.size();i++) {
+            Vector3i v = indices.get(i);
+            newIndices[i*3] = v.x;
+            newIndices[i*3+1] = v.y;
+            newIndices[i*3+2] = v.z;
+        }
+        model.bindIndices(newIndices);
+
+        //build vertices
+        float[] newVertices = new float[vertexList.size()*3];
+        for(int i = 0;i<vertexList.size();i++) {
+            ModelVertex v = vertexList.get(i);
+            newVertices[i*3] = v.getVertex().x;
+            newVertices[i*3+1] = v.getVertex().y;
+            newVertices[i*3+2] = v.getVertex().z;
+        }
+        model.genFloatAttribute(0,3, newVertices);
+
+        //build uvs
+        if(hasUvs) {
+            float[] newUVs = new float[vertexList.size()*2];
+            for(int i = 0;i<vertexList.size();i++) {
+                ModelVertex v = vertexList.get(i);
+                newUVs[i*2] = v.getUV().x;
+                newUVs[i*2+1] = v.getUV().y;
+            }
+            model.genFloatAttribute(1,2, newUVs);
+
+        }
+
+        //build normals
+        if(hasNormals) {
+            float[] newNormals = new float[vertexList.size() * 3];
+            for(int i = 0;i<vertexList.size();i++) {
+                ModelVertex v = vertexList.get(i);
+                newNormals[i*3] = v.getNormal().x;
+                newNormals[i*3+1] = v.getNormal().y;
+                newNormals[i*3+2] = v.getNormal().z;
+            }
+            model.genFloatAttribute(2,3, newNormals);
+        }
+
+        //tangents and bitangents
+        if(hasUvs && hasNormals) {
+            float[] tangents = new float[vertexList.size() * 3];
+            for(int i = 0;i<vertexList.size();i++) {
+                ModelVertex v = vertexList.get(i);
+                tangents[i*3] = v.getTangent().x;
+                tangents[i*3+1] = v.getTangent().y;
+                tangents[i*3+2] = v.getTangent().z;
+            }
+            model.genFloatAttribute(3,3, tangents);
+        }
+
+        return model;
+    }
 }
