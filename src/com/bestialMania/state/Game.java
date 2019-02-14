@@ -4,13 +4,14 @@ import com.bestialMania.Settings;
 import com.bestialMania.InputHandler;
 import com.bestialMania.InputListener;
 import com.bestialMania.Main;
+import com.bestialMania.object.animation.AnimatedObject;
+import com.bestialMania.object.animation.Pose;
 import com.bestialMania.object.beast.Beast;
 import com.bestialMania.object.beast.Player;
 import com.bestialMania.object.gui.Object2D;
 import com.bestialMania.rendering.*;
-import com.bestialMania.rendering.model.DAELoader;
 import com.bestialMania.rendering.model.Model;
-import com.bestialMania.rendering.model.OBJLoader;
+import com.bestialMania.rendering.model.loader.Loader;
 import com.bestialMania.rendering.model.Skybox;
 import com.bestialMania.rendering.shader.Shader;
 import com.bestialMania.rendering.shader.UniformFloat;
@@ -43,7 +44,7 @@ public class Game implements State, InputListener {
 
 
     //Shaders
-    private Shader normalmapShader, testShader, skyboxShader, shader2D, depthShader;
+    private Shader normalmapShader, testShader, skyboxShader, shader2D, depthShader, animatedShader;
 
     //Renderers
     private Renderer renderer2D;
@@ -52,6 +53,7 @@ public class Game implements State, InputListener {
     private List<Player> players = new ArrayList<>();
 
     private List<Renderer> testRenderers = new ArrayList<>();
+    private List<Renderer> animatedRenderers = new ArrayList<>();
     private List<Renderer> normalmapRenderers = new ArrayList<>();
     private List<Renderer> skyboxRenderers = new ArrayList<>();
 
@@ -143,6 +145,13 @@ public class Game implements State, InputListener {
         testShader.setUniformVector3f(testShader.getUniformLocation("lightColor"),lightColor);
         testShader.setUniformMatrix4(testShader.getUniformLocation("projectionMatrix"),projection);
 
+        //animated shader
+        animatedShader = new Shader("res/shaders/3d/animated_v.glsl","res/shaders/3d/test_f.glsl");
+        animatedShader.bindTextureUnits(Arrays.asList("textureSampler"));
+        animatedShader.setUniformVector3f(animatedShader.getUniformLocation("lightDirection"),lightDir);
+        animatedShader.setUniformVector3f(animatedShader.getUniformLocation("lightColor"),lightColor);
+        animatedShader.setUniformMatrix4(animatedShader.getUniformLocation("projectionMatrix"),projection);
+
         //normalmap shader
         normalmapShader = null;
         if(normalMapping) {
@@ -182,8 +191,7 @@ public class Game implements State, InputListener {
 
         //create the beast you play as (JIMMY)
         Texture jimmyTexture = Texture.loadImageTexture3D(memoryManager,"res/textures/jimmy_tex.png");
-        Model jimmyModel = DAELoader.loadDAEModel(memoryManager,"res/models/dae/jimmy.dae");
-
+        AnimatedObject jimmy = Loader.loadAnimatedModel(memoryManager,"res/models/dae/jimmy.dae");
 
         //Create a window, renderer and character for each player
         for(int i = 0;i<controllers.size();i++) {
@@ -215,7 +223,7 @@ public class Game implements State, InputListener {
             sceneObject.addToRenderer(renderer2D);
 
             //the player object
-            Beast beast = new Beast(jimmyModel,jimmyTexture);
+            Beast beast = new Beast(jimmy,jimmyTexture);
             Player player = new Player(inputHandler,i+1,controllers.get(i),beast);
 
             player.linkCameraToRenderer(renderer);
@@ -231,13 +239,18 @@ public class Game implements State, InputListener {
             skyboxRenderers.add(skyboxRenderer);
             player.linkCameraDirectionToRenderer(skyboxRenderer);
 
+            //animated renderer
+            Renderer animatedRenderer = fbo.createRenderer(animatedShader);
+            animatedRenderers.add(animatedRenderer);
+            player.linkCameraToRenderer(animatedRenderer);
+
 
             this.players.add(player);
         }
 
         //link all beast's to renderers
         for(Player player : this.players) {
-            for(Renderer renderer : testRenderers) {
+            for(Renderer renderer : animatedRenderers) {
                 player.getBeast().linkToRenderer(renderer);
             }
             createShadowCastingObject(player.getBeast().getModel(),player.getBeast().getMatrix());
@@ -256,7 +269,6 @@ public class Game implements State, InputListener {
                 float front = shadowDistanceValues.get(j);
                 if (j>0) front-=(shadowDistanceValues.get(j)-shadowDistanceValues.get(j-1)) * seamRatio;
                 float back = shadowDistanceValues.get(j+1);
-                System.out.println(front + "," + back);
                 //add to depth renderer
                 shadowBoxes[i][j] = new ShadowBox((float)windowWidth/(float)windowHeight,players.get(i).getViewMatrix(),lightDir,front,back);
                 shadowBoxes[i][j].linkToDepthRenderer(shadowRenderers[i][j]);
@@ -290,7 +302,7 @@ public class Game implements State, InputListener {
      */
     private void loadObjects() {
         //SOME POLE OBJECT
-        Model poleModel = OBJLoader.loadOBJ(memoryManager,"res/models/pole.obj");
+        Model poleModel = Loader.loadOBJ(memoryManager,"res/models/pole.obj");
         Texture poleTexture = Texture.loadImageTexture3D(memoryManager,"res/textures/concrete.png");
 
         Texture poleNormalmap = null;
@@ -313,7 +325,7 @@ public class Game implements State, InputListener {
         createShadowCastingObject(poleModel,testObjectMatrix);
 
         //SOME FLOOR OBJECT
-        Model planeModel = OBJLoader.loadOBJ(memoryManager,"res/models/plane.obj");
+        Model planeModel = Loader.loadOBJ(memoryManager,"res/models/plane.obj");
         Matrix4f planeMatrix = new Matrix4f();
         Texture planeTexture = Texture.loadImageTexture3D(memoryManager,"res/textures/rocky.png");
         Texture planeNormalmap = null;

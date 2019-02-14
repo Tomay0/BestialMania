@@ -1,5 +1,7 @@
 package com.bestialMania.object.beast;
 
+import com.bestialMania.object.animation.AnimatedObject;
+import com.bestialMania.object.animation.Animation;
 import com.bestialMania.rendering.Renderer;
 import com.bestialMania.rendering.ShaderObject;
 import com.bestialMania.rendering.Texture;
@@ -24,14 +26,14 @@ public class Beast {
     private float speed;//current speed
 
     //TODO expand rendering out more to allow for animation
-    private Model model;
+    private AnimatedObject object;
     private Texture texture;
     private ShaderObject shaderObject;
 
     /**
      * Create a beast
      */
-    public Beast(Model model, Texture texture){
+    public Beast(AnimatedObject object, Texture texture){
         position = new Vector3f(0,0,0);//TODO have some sort of spawn point
         angle = 0;
 
@@ -40,7 +42,18 @@ public class Beast {
         modelMatrix = new Matrix4f();
         angleTarget = angle;
         speed = 0;
-        this.model = model;
+        this.object = object;
+
+        //TEST ANIMATION
+        Animation animation = new Animation(object.getArmature(),object.getPose(1),true);
+        animation.addKeyFrame(0.4f,object.getPose(0));
+        animation.addKeyFrame(0.5f,object.getPose(2));
+        animation.addKeyFrame(0.9f,object.getPose(2));
+        animation.addKeyFrame(1.0f,object.getPose(0));
+        animation.addKeyFrame(1.5f,object.getPose(1));
+        animation.addKeyFrame(2.0f,object.getPose(1));
+        object.setAnimation(animation);
+
         this.texture = texture;
     }
 
@@ -84,6 +97,7 @@ public class Beast {
 
         if(angle>Math.PI) angle-=2*Math.PI;
         if(angle<-Math.PI) angle+=2*Math.PI;
+        object.update();
     }
 
     /**
@@ -92,7 +106,7 @@ public class Beast {
      * return the interpolated position
      */
     public Vector3f interpolate(float frameInterpolation) {
-
+        object.interpolate(frameInterpolation);
         //interpolate position
         positionInterpolate.x = position.x+movementDirection.x*speed*frameInterpolation;
         positionInterpolate.z = position.z+movementDirection.y*speed*frameInterpolation;
@@ -130,17 +144,16 @@ public class Beast {
      * Add the model to the renderer
      */
     public void linkToRenderer(Renderer renderer) {
-        shaderObject = renderer.createObject(model);
+        shaderObject = object.createObject(renderer);
         shaderObject.addTexture(0,texture);
         shaderObject.addUniform(new UniformFloat(renderer.getShader(),"reflectivity",0.2f));
         shaderObject.addUniform(new UniformFloat(renderer.getShader(),"shineDamper",5.0f));
         shaderObject.addUniform(new UniformMatrix4(renderer.getShader(),"modelMatrix",modelMatrix));
     }
 
+
+    public Model getModel() {return object.getModel();}
     public Matrix4f getMatrix() {
         return modelMatrix;
-    }
-    public Model getModel() {
-        return model;
     }
 }

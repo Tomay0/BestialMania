@@ -11,7 +11,7 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
 public class Main {
-    private static final double TICKS_PER_SECOND = 60;//constant tick rate at which the game updates, independent of the render time.
+    public static final double TICKS_PER_SECOND = 60;//constant tick rate at which the game updates, independent of the render time.
     private long window;// The window handle
 
     private InputHandler inputHandler;//Input handler

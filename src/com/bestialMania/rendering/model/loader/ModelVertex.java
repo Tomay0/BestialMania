@@ -1,4 +1,4 @@
-package com.bestialMania.rendering.model;
+package com.bestialMania.rendering.model.loader;
 
 import org.joml.Vector2f;
 import org.joml.Vector3f;
@@ -11,6 +11,7 @@ public class ModelVertex {
     private Vector2f uv;
     private Vector3f normal;
     private Vector3f tangent;
+    private VertexWeightData vertexWeightData = null;
     private int id;
 
     /**
@@ -54,6 +55,8 @@ public class ModelVertex {
     public Vector2f getUV() {return uv;}
     public Vector3f getNormal() {return normal;}
     public Vector3f getTangent() {return tangent;}
+    public VertexWeightData getVertexWeightData() {return vertexWeightData;}
+    public void setVertexWeightData(VertexWeightData vertexWeightData) {this.vertexWeightData = vertexWeightData;}
 
     /**
      * Set the tangent vector

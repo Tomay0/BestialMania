@@ -1,7 +1,4 @@
-package com.bestialMania.rendering.model;
-
-import com.bestialMania.rendering.model.armature.Armature;
-import org.joml.Vector3f;
+package com.bestialMania.rendering.model.loader;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,11 +42,18 @@ public class VertexWeightData {
         }
     }
 
-    public String testString(Armature armature) {
-        String s = "";
-        for(int i = 0;i<3;i++) {
-            s += armature.getJoint(jointIds.get(i)).getName() + " " + weights.get(i) + ", ";
-        }
-        return s;
+
+    /**
+     * Get the joint id by the given index
+     */
+    public int getJointId(int index) {
+        return jointIds.get(index);
+    }
+
+    /**
+     * Get the joint's weight for the given index
+     */
+    public float getWeight(int index) {
+        return weights.get(index);
     }
 }
