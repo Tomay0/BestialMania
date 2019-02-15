@@ -153,6 +153,7 @@ public class Beast {
 
 
     public Model getModel() {return object.getModel();}
+    public AnimatedObject getAnimatedObject() {return object;}
     public Matrix4f getMatrix() {
         return modelMatrix;
     }

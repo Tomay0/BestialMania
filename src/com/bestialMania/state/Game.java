@@ -5,7 +5,6 @@ import com.bestialMania.InputHandler;
 import com.bestialMania.InputListener;
 import com.bestialMania.Main;
 import com.bestialMania.object.animation.AnimatedObject;
-import com.bestialMania.object.animation.Pose;
 import com.bestialMania.object.beast.Beast;
 import com.bestialMania.object.beast.Player;
 import com.bestialMania.object.gui.Object2D;
@@ -44,7 +43,7 @@ public class Game implements State, InputListener {
 
 
     //Shaders
-    private Shader normalmapShader, testShader, skyboxShader, shader2D, depthShader, animatedShader;
+    private Shader normalmapShader, testShader, skyboxShader, shader2D, depthShader, animatedDepthShader, animatedShader;
 
     //Renderers
     private Renderer renderer2D;
@@ -60,6 +59,7 @@ public class Game implements State, InputListener {
     //shadow boxes
     private List<Float> shadowDistanceValues;
     private Renderer[][] shadowRenderers;
+    private Renderer[][] shadowAnimatedRenderers;
     private Texture[][] shadowTextures;
     private ShadowBox[][] shadowBoxes;
 
@@ -123,6 +123,7 @@ public class Game implements State, InputListener {
         shadowDistanceValues = Arrays.asList(0.1f,FAR_DIST * 0.125f,FAR_DIST * 0.45f,FAR_DIST);//Currently works for triple shadow boxes, but potentially try 2 or 4 for different settings
 
         shadowRenderers = new Renderer[controllers.size()][shadowDistanceValues.size()-1];
+        shadowAnimatedRenderers = new Renderer[controllers.size()][shadowDistanceValues.size()-1];
         shadowTextures = new Texture[controllers.size()][shadowDistanceValues.size()-1];
         shadowBoxes = new ShadowBox[controllers.size()][shadowDistanceValues.size()-1];
 
@@ -178,6 +179,7 @@ public class Game implements State, InputListener {
 
         //depth shader for shadow mapping
         depthShader = new Shader("res/shaders/depth_v.glsl","res/shaders/depth_f.glsl");
+        animatedDepthShader = new Shader("res/shaders/animated_depth_v.glsl","res/shaders/depth_f.glsl");
     }
 
 
@@ -204,6 +206,8 @@ public class Game implements State, InputListener {
                 //shadow map renderer
                 shadowRenderers[i][j] = shadowFbo.createRenderer(depthShader);
                 shadowRenderers[i][j].setCull(GL_FRONT);
+                shadowAnimatedRenderers[i][j] = shadowFbo.createRenderer(animatedDepthShader);
+                shadowAnimatedRenderers[i][j].setCull(GL_FRONT);
                 shadowTextures[i][j] = shadowFbo.getTexture(0);
             }
 
@@ -253,7 +257,7 @@ public class Game implements State, InputListener {
             for(Renderer renderer : animatedRenderers) {
                 player.getBeast().linkToRenderer(renderer);
             }
-            createShadowCastingObject(player.getBeast().getModel(),player.getBeast().getMatrix());
+            createShadowCastingAnimatedObject(player.getBeast().getAnimatedObject(),player.getBeast().getMatrix());
         }
     }
 
@@ -272,6 +276,7 @@ public class Game implements State, InputListener {
                 //add to depth renderer
                 shadowBoxes[i][j] = new ShadowBox((float)windowWidth/(float)windowHeight,players.get(i).getViewMatrix(),lightDir,front,back);
                 shadowBoxes[i][j].linkToDepthRenderer(shadowRenderers[i][j]);
+                shadowBoxes[i][j].linkToDepthRenderer(shadowAnimatedRenderers[i][j]);
 
                 if(normalMapping) {
                     //Shadow matrices to renderer
@@ -368,6 +373,18 @@ public class Game implements State, InputListener {
             for(Renderer renderer : rendererArray) {
                 ShaderObject object = renderer.createObject(model);
                 object.addUniform(new UniformMatrix4(renderer.getShader(), "modelMatrix", modelMatrix));
+            }
+        }
+    }
+
+    /**
+     * Add an animated object to a shadow renderer
+     */
+    private void createShadowCastingAnimatedObject(AnimatedObject object, Matrix4f modelMatrix) {
+        for(Renderer[] rendererArray : shadowAnimatedRenderers) {
+            for(Renderer renderer : rendererArray) {
+                ShaderObject so = object.createObject(renderer);
+                so.addUniform(new UniformMatrix4(renderer.getShader(), "modelMatrix", modelMatrix));
             }
         }
     }
