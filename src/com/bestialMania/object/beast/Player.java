@@ -130,6 +130,9 @@ public class Player {
 
          */
 
+        //update the beast
+        beast.update();
+
         float speed;//"speed" of the controller (Eg: smaller if you lightly push the left analog stick up
         Vector2f dir;//direction your controller is pointing RIGHT = POSITIVE X. DOWN = POSITIVE Y
         //keyboard
@@ -158,9 +161,6 @@ public class Player {
             rotatedDir.y = dir.x*yawSinus+dir.y*yawCosinus;
             beast.setDirection(rotatedDir);
         }else beast.setSpeed(0);
-
-        //update the beast
-        beast.update();
     }
 
     /**

@@ -56,7 +56,7 @@ public class AnimatedObject {
     }
 
     /**
-     * Set the pose to one of the stored poses
+     * Set the transforms to be of the given pose.
      */
     public void setPose(Pose pose) {
         Joint root = armature.getRootJoint();

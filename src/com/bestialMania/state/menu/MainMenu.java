@@ -12,7 +12,7 @@ public class MainMenu implements State, ButtonListener {
     //submenu stuff
     private Menu menu;
     private InputHandler inputHandler;
-    private MasterRenderer renderer;
+    private MasterRenderer masterRenderer;
     private MemoryManager memoryManager;
 
     //buttons
@@ -21,9 +21,9 @@ public class MainMenu implements State, ButtonListener {
     /**
      * Setup the main menu
      */
-    public MainMenu(Menu menu, InputHandler inputHandler, MasterRenderer renderer) {
+    public MainMenu(Menu menu, InputHandler inputHandler, MasterRenderer masterRenderer) {
         this.menu = menu;
-        this.renderer = renderer;
+        this.masterRenderer = masterRenderer;
         this.inputHandler = inputHandler;
         this.memoryManager = new MemoryManager();
 
@@ -47,7 +47,7 @@ public class MainMenu implements State, ButtonListener {
      */
     @Override
     public void render(float frameInterpolation) {
-        renderer.render();
+        masterRenderer.render();
     }
 
     /**
