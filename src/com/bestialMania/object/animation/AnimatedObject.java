@@ -46,6 +46,25 @@ public class AnimatedObject {
         }
     }
 
+
+    /**
+     * Copy an animated object
+     */
+    public AnimatedObject(AnimatedObject copy) {
+        this.model = copy.model;
+        this.armature = copy.armature;
+        for(Pose pose : copy.poses) {
+            addPose(pose);
+        }
+        jointTransforms = new Matrix4f[armature.size()];
+        parentTransforms = new Matrix4f[armature.size()];
+
+        for(int i = 0;i<armature.size();i++) {
+            jointTransforms[i] = new Matrix4f();
+            parentTransforms[i] = new Matrix4f();
+        }
+    }
+
     public void addPose(Pose pose) {poses.add(pose);}
     public Pose getPose(int id) {return poses.get(id);}
     public List<Pose> getPoses() {return Collections.unmodifiableList(poses);}

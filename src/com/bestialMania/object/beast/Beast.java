@@ -45,13 +45,18 @@ public class Beast {
         this.object = object;
 
         //TEST ANIMATION
-        Animation animation = new Animation(object.getArmature(),object.getPose(1),true);
-        animation.addKeyFrame(0.4f,object.getPose(0));
-        animation.addKeyFrame(0.5f,object.getPose(2));
-        animation.addKeyFrame(0.9f,object.getPose(2));
-        animation.addKeyFrame(1.0f,object.getPose(0));
-        animation.addKeyFrame(1.5f,object.getPose(1));
-        animation.addKeyFrame(2.0f,object.getPose(1));
+        Animation animation = new Animation(object.getArmature(),object.getPose(0),true);
+        int i = 0;
+        float time = 0;
+        while(i<12) {
+            i++;
+            time+=0.34;
+            animation.addKeyFrame(time,object.getPose(i));
+            i++;
+            time+=0.06;
+            animation.addKeyFrame(time,object.getPose(i));
+
+        }
         object.setAnimation(animation);
 
         this.texture = texture;

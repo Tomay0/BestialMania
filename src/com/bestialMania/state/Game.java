@@ -227,7 +227,7 @@ public class Game implements State, InputListener {
             sceneObject.addToRenderer(renderer2D);
 
             //the player object
-            Beast beast = new Beast(jimmy,jimmyTexture);
+            Beast beast = new Beast(i==0 ? jimmy : new AnimatedObject(jimmy),jimmyTexture);
             Player player = new Player(inputHandler,i+1,controllers.get(i),beast);
 
             player.linkCameraToRenderer(renderer);
