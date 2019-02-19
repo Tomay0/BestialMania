@@ -59,4 +59,8 @@ public class ShaderObject {
         model.draw();
         if(!depth) glDepthFunc(GL_LESS);
     }
+
+    public Shader getShader() {
+        return shader;
+    }
 }

@@ -1,4 +1,4 @@
-package com.bestialMania.object.animation;
+package com.bestialMania.animation;
 
 import com.bestialMania.rendering.Renderer;
 import com.bestialMania.rendering.ShaderObject;
@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class AnimatedObject {
+public class AnimatedModel {
     private Model model;
     private Armature armature;
     private List<Pose> poses = new ArrayList<>();//all poses loaded from a file
@@ -34,7 +34,7 @@ public class AnimatedObject {
      * Object that can be animated
      * Has a model, armature and a list of poses to animate from.
      */
-    public AnimatedObject(Model model, Armature armature) {
+    public AnimatedModel(Model model, Armature armature) {
         this.model = model;
         this.armature = armature;
         jointTransforms = new Matrix4f[armature.size()];
@@ -50,7 +50,7 @@ public class AnimatedObject {
     /**
      * Copy an animated object
      */
-    public AnimatedObject(AnimatedObject copy) {
+    public AnimatedModel(AnimatedModel copy) {
         this.model = copy.model;
         this.armature = copy.armature;
         for(Pose pose : copy.poses) {
@@ -157,14 +157,10 @@ public class AnimatedObject {
     }
 
     /**
-     * Creates a shader object and loads all the transforms to it
+     * Get the joint transform at an index
      */
-    public ShaderObject createObject(Renderer renderer) {
-        ShaderObject shaderObject = renderer.createObject(model);
-        for(int i = 0;i<armature.size();i++) {
-            shaderObject.addUniform(new UniformMatrix4(renderer.getShader(),"jointTransforms[" + i + "]",jointTransforms[i]));
-        }
-        return shaderObject;
+    public Matrix4f getJointTransform(int i) {
+        return jointTransforms[i];
     }
 
 }

@@ -1,6 +1,5 @@
-package com.bestialMania.object.gui.text;
+package com.bestialMania.gui.text;
 
-import org.joml.Vector2f;
 import org.joml.Vector2f;
 
 public class FontCharacter {

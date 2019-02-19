@@ -2,15 +2,12 @@ package com.bestialMania;
 
 import static org.lwjgl.glfw.GLFW.*;
 
-import com.bestialMania.object.gui.Button;
 import org.joml.Vector2f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFWGamepadState;
-import org.lwjgl.glfw.GLFWJoystickCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.glfw.GLFWMouseButtonCallback;
 
-import java.awt.event.ActionListener;
 import java.nio.DoubleBuffer;
 import java.util.*;
 

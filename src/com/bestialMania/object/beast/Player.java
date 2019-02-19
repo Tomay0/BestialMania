@@ -130,9 +130,6 @@ public class Player {
 
          */
 
-        //update the beast
-        beast.update();
-
         float speed;//"speed" of the controller (Eg: smaller if you lightly push the left analog stick up
         Vector2f dir;//direction your controller is pointing RIGHT = POSITIVE X. DOWN = POSITIVE Y
         //keyboard
@@ -180,7 +177,7 @@ public class Player {
         float pitchCosinus = (float)Math.cos(pitch);
 
         //get camera location
-        Vector3f beastLocation = beast.interpolate(frameInterpolation);
+        Vector3f beastLocation = beast.getPositionInterpolate();
         cameraLocation.x = beastLocation.x - cameraDist*yawSinus*pitchCosinus;
         cameraLocation.z = beastLocation.z + cameraDist*yawCosinus*pitchCosinus;
         cameraLocation.y = beastLocation.y + cameraDist*pitchSinus + cameraHeight;

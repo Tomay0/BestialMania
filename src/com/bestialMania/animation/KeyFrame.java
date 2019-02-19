@@ -1,4 +1,4 @@
-package com.bestialMania.object.animation;
+package com.bestialMania.animation;
 
 public class KeyFrame {
     private float timestamp;

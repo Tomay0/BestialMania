@@ -1,4 +1,4 @@
-package com.bestialMania.object.gui;
+package com.bestialMania.gui;
 
 public interface ButtonListener {
     void press(String action);

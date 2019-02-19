@@ -1,4 +1,4 @@
-package com.bestialMania.object.animation;
+package com.bestialMania.animation;
 
 import com.bestialMania.Main;
 import org.joml.Matrix4f;

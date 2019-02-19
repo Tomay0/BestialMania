@@ -1,7 +1,8 @@
 package com.bestialMania.rendering.model.loader;
 
-import com.bestialMania.object.animation.*;
+import com.bestialMania.animation.*;
 import com.bestialMania.MemoryManager;
+import com.bestialMania.animation.AnimatedModel;
 import com.bestialMania.rendering.model.Model;
 import com.bestialMania.xml.XmlNode;
 import com.bestialMania.xml.XmlParser;
@@ -89,7 +90,7 @@ public class Loader {
     /**
      * Loads an animated DAE Model
      */
-    public static AnimatedObject loadAnimatedModel(MemoryManager mm, String fileName) {
+    public static AnimatedModel loadAnimatedModel(MemoryManager mm, String fileName) {
         try {
 
             XmlNode rootNode = XmlParser.loadXmlFile(new File(fileName));
@@ -109,7 +110,7 @@ public class Loader {
                 System.exit(-1);
             }
 
-            AnimatedObject object = new AnimatedObject(model,armature);
+            AnimatedModel object = new AnimatedModel(model,armature);
             loadPoses(rootNode,object);
 
             return object;
@@ -556,7 +557,7 @@ public class Loader {
      * Each "pose" is one keyframe of the animation in the DAE file. These may not necessarily be in order or at useful timestamp values.
      * Each pose is given an ID which is not guaranteed to be in order of time.
      */
-    private static void loadPoses(XmlNode root, AnimatedObject object) {
+    private static void loadPoses(XmlNode root, AnimatedModel object) {
         XmlNode node = root.getChild("library_animations");
         if(node==null) return;
 

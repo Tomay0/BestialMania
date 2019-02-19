@@ -1,4 +1,4 @@
-package com.bestialMania.object.gui;
+package com.bestialMania.gui;
 
 import com.bestialMania.MemoryManager;
 import com.bestialMania.Settings;

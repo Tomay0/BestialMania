@@ -1,10 +1,14 @@
 package com.bestialMania.state;
 
 import com.bestialMania.*;
-import com.bestialMania.object.animation.AnimatedObject;
+import com.bestialMania.map.MapData;
+import com.bestialMania.animation.AnimatedModel;
+import com.bestialMania.object.AnimatedObject;
+import com.bestialMania.object.Object3D;
+import com.bestialMania.object.StaticObject;
 import com.bestialMania.object.beast.Beast;
 import com.bestialMania.object.beast.Player;
-import com.bestialMania.object.gui.Object2D;
+import com.bestialMania.gui.Object2D;
 import com.bestialMania.rendering.*;
 import com.bestialMania.rendering.model.Model;
 import com.bestialMania.rendering.model.loader.Loader;
@@ -42,19 +46,24 @@ public class Game implements State, InputListener {
 
 
     //Shaders
-    private Shader normalmapShader, testShader, skyboxShader, shader2D, depthShader, animatedDepthShader, animatedShader;
+    private Shader shader2D, depthShader, animatedDepthShader;
 
     //Sound Sources
     private SoundSource musicSource;
 
+    /*
+    each of these shaders have 1 renderer per framebuffer.
+    0 = skybox renderer
+    1 = animated renderer (for characters)
+    2+ = reserved for map dependent shaders
+     */
+    private List<RendererList> rendererLists = new ArrayList<>();
+
     //Renderers
     private Renderer renderer2D;
 
-
-    private List<Renderer> testRenderers = new ArrayList<>();
-    private List<Renderer> animatedRenderers = new ArrayList<>();
-    private List<Renderer> normalmapRenderers = new ArrayList<>();
-    private List<Renderer> skyboxRenderers = new ArrayList<>();
+    //All objects that update
+    List<Object3D> objects = new ArrayList<>();
 
     //players in the game
     private List<Player> players = new ArrayList<>();
@@ -77,7 +86,7 @@ public class Game implements State, InputListener {
     /**
      * Initialize a game
      */
-    public Game(Main main, InputHandler inputHandler, List<Integer> controllers) {
+    public Game(Main main, InputHandler inputHandler, List<Integer> controllers, MapData map) {
         this.main = main;
         this.inputHandler = inputHandler;
         masterRenderer = new MasterRenderer();
@@ -91,8 +100,8 @@ public class Game implements State, InputListener {
         windowHeight =  controllers.size()==1 ? Settings.HEIGHT : Settings.HEIGHT/2;
 
 
-        lightDir = new Vector3f(-1.4f, -0.5f, 2.5f).normalize();
-        lightColor = new Vector3f(1.0f, 1.0f, 1.0f);
+        lightDir = map.getLightDirection();
+        lightColor = map.getLightColor();
         projection = new Matrix4f();
         projection.perspective(Settings.FOV,(float)windowWidth/(float)windowHeight,0.1f,FAR_DIST);
 
@@ -123,6 +132,7 @@ public class Game implements State, InputListener {
                 break;
         }
 
+        //initialize shadow box stuff
         shadowDistanceValues = Arrays.asList(0.1f,FAR_DIST * 0.125f,FAR_DIST * 0.45f,FAR_DIST);//Currently works for triple shadow boxes, but potentially try 2 or 4 for different settings
 
         shadowRenderers = new Renderer[controllers.size()][shadowDistanceValues.size()-1];
@@ -130,84 +140,88 @@ public class Game implements State, InputListener {
         shadowTextures = new Texture[controllers.size()][shadowDistanceValues.size()-1];
         shadowBoxes = new ShadowBox[controllers.size()][shadowDistanceValues.size()-1];
 
+        //load all game related shaders
         loadShaders();
+        //load all map related shaders
+        map.loadShaders(this);
+
+        //load all player windows and renderers
         loadRenderersAndPlayers(controllers);
+
+        //load the shadow boxes
         loadShadowboxes();
-        loadSkybox();
-        loadObjects();
-        loadMusic();
 
-    }
+        //load the sky box
+        loadSkybox(map.getSkyboxTexture());
 
-    /**
-     * Load the "music"
-     *
-     */
-    private void loadMusic() {
-        Sound sound = new Sound(memoryManager,"res/sound/pumped_up_kicks.wav");
+        //load objects from the map
+        map.loadObjects(this);
+
+        //music
+        Sound sound = new Sound(memoryManager,map.getMusic());
         musicSource = new SoundSource(sound,true);
         musicSource.play();
     }
 
     /**
-     * Load the shaders
+     * Load the major shaders
      */
     private void loadShaders() {
-        //regular shader
-        testShader = new Shader("res/shaders/3d/test_v.glsl","res/shaders/3d/test_f.glsl");
-        testShader.bindTextureUnits(Arrays.asList("textureSampler"));
-        testShader.setUniformVector3f(testShader.getUniformLocation("lightDirection"),lightDir);
-        testShader.setUniformVector3f(testShader.getUniformLocation("lightColor"),lightColor);
-        testShader.setUniformMatrix4(testShader.getUniformLocation("projectionMatrix"),projection);
-
-        //animated shader
-        animatedShader = new Shader("res/shaders/3d/animated_v.glsl","res/shaders/3d/test_f.glsl");
-        animatedShader.bindTextureUnits(Arrays.asList("textureSampler"));
-        animatedShader.setUniformVector3f(animatedShader.getUniformLocation("lightDirection"),lightDir);
-        animatedShader.setUniformVector3f(animatedShader.getUniformLocation("lightColor"),lightColor);
-        animatedShader.setUniformMatrix4(animatedShader.getUniformLocation("projectionMatrix"),projection);
-
-        //normalmap shader
-        normalmapShader = null;
-        if(normalMapping) {
-            normalmapShader = new Shader("res/shaders/3d/normalmap_v.glsl","res/shaders/3d/normalmap_f.glsl");
-            normalmapShader.bindTextureUnits(Arrays.asList("textureSampler","normalSampler","shadowSampler[0]","shadowSampler[1]","shadowSampler[2]"));
-            normalmapShader.setUniformVector3f(normalmapShader.getUniformLocation("lightDirection"),lightDir);
-            normalmapShader.setUniformVector3f(normalmapShader.getUniformLocation("lightColor"),lightColor);
-            normalmapShader.setUniformMatrix4(normalmapShader.getUniformLocation("projectionMatrix"),projection);
-            normalmapShader.setUniformFloat(normalmapShader.getUniformLocation("pxSize"),1.0f/(float)shadowResolution);
-            normalmapShader.setUniformInt(normalmapShader.getUniformLocation("pcfCount"),shadowPCFCount);
-            normalmapShader.setUniformFloat(normalmapShader.getUniformLocation("pcfSpread"),shadowPCFSpread);
-            for(int i = 0;i<shadowDistanceValues.size()-1;i++) {
-                normalmapShader.setUniformFloat(normalmapShader.getUniformLocation("shadowDist[" + i + "]"),shadowDistanceValues.get(i+1));
-            }
-        }
-        //skybox shader
-        skyboxShader = new Shader("res/shaders/3d/skybox_v.glsl","res/shaders/3d/skybox_f.glsl");
-        skyboxShader.bindTextureUnits(Arrays.asList("samplerCube"));
-        skyboxShader.setUniformMatrix4(skyboxShader.getUniformLocation("projectionMatrix"),projection);
-
         //shader for 2d elements
         shader2D = new Shader("res/shaders/gui_v.glsl","res/shaders/gui_f.glsl");
         shader2D.bindTextureUnits(Arrays.asList("textureSampler"));
 
-        //depth shader for shadow mapping
+        //depth shaders for shadow mapping
         depthShader = new Shader("res/shaders/depth_v.glsl","res/shaders/depth_f.glsl");
         animatedDepthShader = new Shader("res/shaders/animated_depth_v.glsl","res/shaders/depth_f.glsl");
+
+        //skybox shader
+        Shader skyboxShader = new Shader("res/shaders/3d/skybox_v.glsl","res/shaders/3d/skybox_f.glsl");
+        skyboxShader.bindTextureUnits(Arrays.asList("samplerCube"));
+        loadShader(skyboxShader,false,true,false,true);
+
+        //animated shader
+        Shader animatedShader = new Shader("res/shaders/3d/animated_v.glsl","res/shaders/3d/test_f.glsl");
+        animatedShader.bindTextureUnits(Arrays.asList("textureSampler"));
+        loadShader(animatedShader,true,true,false,false);
+    }
+
+    /**
+     * Load a shader and create a renderer list
+     */
+    public void loadShader(Shader shader, boolean lighting, boolean projection, boolean shadow, boolean viewMatrixDirOnly) {
+        if(lighting) {
+            shader.setUniformVector3f(shader.getUniformLocation("lightDirection"),lightDir);
+            shader.setUniformVector3f(shader.getUniformLocation("lightColor"),lightColor);
+        }
+        if(projection) {
+            shader.setUniformMatrix4(shader.getUniformLocation("projectionMatrix"),this.projection);
+        }
+        if(shadow) {
+            shader.setUniformFloat(shader.getUniformLocation("pxSize"),1.0f/(float)shadowResolution);
+            shader.setUniformInt(shader.getUniformLocation("pcfCount"),shadowPCFCount);
+            shader.setUniformFloat(shader.getUniformLocation("pcfSpread"),shadowPCFSpread);
+            for(int i = 0;i<shadowDistanceValues.size()-1;i++) {
+                shader.setUniformFloat(shader.getUniformLocation("shadowDist[" + i + "]"),shadowDistanceValues.get(i+1));
+            }
+        }
+        RendererList rendererList = new RendererList(shader,shadow, viewMatrixDirOnly);
+        rendererLists.add(rendererList);
     }
 
 
     /**
      * Load each player, for each player, have their own framebuffer with some renderers, link the camera's view matrix to the renderer
+     * TODO spawnpoints of each player
+     * TODO character selection
      */
     private void loadRenderersAndPlayers(List<Integer> controllers) {
-
         //2d renderer
         renderer2D = masterRenderer.getWindowFramebuffer().createRenderer(shader2D);
 
         //create the beast you play as (JIMMY)
         Texture jimmyTexture = Texture.loadImageTexture3D(memoryManager,"res/textures/jimmy_tex.png");
-        AnimatedObject jimmy = Loader.loadAnimatedModel(memoryManager,"res/models/dae/jimmy.dae");
+        AnimatedModel jimmy = Loader.loadAnimatedModel(memoryManager,"res/models/dae/jimmy.dae");
 
         //Create a window, renderer and character for each player
         for(int i = 0;i<controllers.size();i++) {
@@ -229,10 +243,6 @@ public class Game implements State, InputListener {
             Framebuffer fbo = createPlayerWindow();
             masterRenderer.addFramebuffer(fbo);
 
-            //renderer
-            Renderer renderer = fbo.createRenderer(testShader);
-            testRenderers.add(renderer);
-
             //rectangle on screen as the splitscreen window
             Object2D sceneObject = new Object2D(memoryManager,
                     controllers.size()>2 && i%2==1 ? Settings.WIDTH/2 : 0,
@@ -241,128 +251,20 @@ public class Game implements State, InputListener {
             sceneObject.addToRenderer(renderer2D);
 
             //the player object
-            Beast beast = new Beast(i==0 ? jimmy : new AnimatedObject(jimmy),jimmyTexture);
+            Beast beast = new Beast(i==0 ? jimmy : new AnimatedModel(jimmy),jimmyTexture);
             Player player = new Player(inputHandler,i+1,controllers.get(i),beast);
 
-            player.linkCameraToRenderer(renderer);
-            //normal mapping renderer
-            if(normalMapping) {
-                Renderer nmRenderer = fbo.createRenderer(normalmapShader);
-                normalmapRenderers.add(nmRenderer);
-                player.linkCameraToRenderer(nmRenderer);
+            //create all renderers from the shaders
+            for(RendererList rendererList : rendererLists) {
+                rendererList.createRenderer(fbo,player);
             }
-
-            //skybox renderer
-            Renderer skyboxRenderer = fbo.createRenderer(skyboxShader);
-            skyboxRenderers.add(skyboxRenderer);
-            player.linkCameraDirectionToRenderer(skyboxRenderer);
-
-            //animated renderer
-            Renderer animatedRenderer = fbo.createRenderer(animatedShader);
-            animatedRenderers.add(animatedRenderer);
-            player.linkCameraToRenderer(animatedRenderer);
-
-
             this.players.add(player);
         }
 
         //link all beast's to renderers
         for(Player player : this.players) {
-            for(Renderer renderer : animatedRenderers) {
-                player.getBeast().linkToRenderer(renderer);
-            }
-            createShadowCastingAnimatedObject(player.getBeast().getAnimatedObject(),player.getBeast().getMatrix());
+            createObject(player.getBeast(),1,true);
         }
-    }
-
-
-    /**
-     * Load the shadow boxes
-     */
-    private void loadShadowboxes() {
-        float seamRatio = 0.3f;
-        for(int i = 0;i<players.size();i++) {
-            for(int j = 0;j<shadowDistanceValues.size()-1;j++) {
-                //calculate positions
-                float front = shadowDistanceValues.get(j);
-                if (j>0) front-=(shadowDistanceValues.get(j)-shadowDistanceValues.get(j-1)) * seamRatio;
-                float back = shadowDistanceValues.get(j+1);
-                //add to depth renderer
-                shadowBoxes[i][j] = new ShadowBox((float)windowWidth/(float)windowHeight,players.get(i).getViewMatrix(),lightDir,front,back);
-                shadowBoxes[i][j].linkToDepthRenderer(shadowRenderers[i][j]);
-                shadowBoxes[i][j].linkToDepthRenderer(shadowAnimatedRenderers[i][j]);
-
-                if(normalMapping) {
-                    //Shadow matrices to renderer
-                    shadowBoxes[i][j].linkToRenderer(normalmapRenderers.get(i),j);
-                    //Shadow textures to renderer
-                    normalmapRenderers.get(i).addTexture(2+j,shadowTextures[i][j]);
-                }
-            }
-        }
-    }
-
-
-    /**
-     * Load the skybox
-     */
-    private void loadSkybox() {
-        Texture skyboxTexture = Texture.loadCubemapTexture(memoryManager,"res/textures/skyboxes/test/desertsky","png");
-        Model skyboxModel = new Skybox(memoryManager);
-        for(Renderer renderer : skyboxRenderers) {
-            ShaderObject object = renderer.createObject(skyboxModel);
-            object.addTexture(0,skyboxTexture);
-            object.disableDepth();
-        }
-    }
-
-    /**
-     * Create the ingame objects
-     */
-    private void loadObjects() {
-        //SOME POLE OBJECT
-        Model poleModel = Loader.loadOBJ(memoryManager,"res/models/pole.obj");
-        Texture poleTexture = Texture.loadImageTexture3D(memoryManager,"res/textures/concrete.png");
-
-        Texture poleNormalmap = null;
-        if(normalMapping) {
-            poleNormalmap = Texture.loadImageTexture3D(memoryManager, "res/textures/concrete_normal.png");
-        }
-
-        Matrix4f testObjectMatrix = new Matrix4f();
-        testObjectMatrix.translate(2.0f,0,0.5f);
-        testObjectMatrix.scale(3.0f,3.0f,3.0f);
-
-        for(Renderer renderer : (normalMapping ? normalmapRenderers : testRenderers)) {//use regular shader on low texture detail
-            ShaderObject testObject = renderer.createObject(poleModel);
-            testObject.addTexture(0,poleTexture);
-            if(normalMapping) testObject.addTexture(1,poleNormalmap);
-            testObject.addUniform(new UniformMatrix4(normalMapping ? normalmapShader : testShader,"modelMatrix",testObjectMatrix));
-            testObject.addUniform(new UniformFloat(normalMapping ? normalmapShader : testShader,"reflectivity",0.5f));
-            testObject.addUniform(new UniformFloat(normalMapping ? normalmapShader : testShader,"shineDamper",10.0f));
-        }
-        createShadowCastingObject(poleModel,testObjectMatrix);
-
-        //SOME FLOOR OBJECT
-        Model planeModel = Loader.loadOBJ(memoryManager,"res/models/plane.obj");
-        Matrix4f planeMatrix = new Matrix4f();
-        Texture planeTexture = Texture.loadImageTexture3D(memoryManager,"res/textures/rocky.png");
-        Texture planeNormalmap = null;
-        if(normalMapping) {
-            planeNormalmap = Texture.loadImageTexture3D(memoryManager, "res/textures/rocky_normal.png");
-        }
-        for(Renderer renderer : (normalMapping ? normalmapRenderers : testRenderers)) {//use regular shader on low texture detail
-            ShaderObject testObject = renderer.createObject(planeModel);
-            testObject.addTexture(0,planeTexture);
-            if(normalMapping) testObject.addTexture(1,planeNormalmap);
-            testObject.addUniform(new UniformMatrix4(normalMapping ? normalmapShader : testShader,"modelMatrix",planeMatrix));
-            testObject.addUniform(new UniformFloat(normalMapping ? normalmapShader : testShader,"reflectivity",0.1f));
-            testObject.addUniform(new UniformFloat(normalMapping ? normalmapShader : testShader,"shineDamper",4.0f));
-        }
-        createShadowCastingObject(planeModel,planeMatrix);
-
-        //TEST ANIMATED MODEL
-        //Model m = DAELoader.loadDAEModel(memoryManager,"res/models/dae/jimmy.dae");
     }
 
     /**
@@ -379,14 +281,80 @@ public class Game implements State, InputListener {
         return fbo;
     }
 
+
+    /**
+     * Load the shadow boxes
+     * TODO larger shadow box should cover the entire map
+     */
+    private void loadShadowboxes() {
+        float seamRatio = 0.3f;
+        for(int i = 0;i<players.size();i++) {
+            for(int j = 0;j<shadowDistanceValues.size()-1;j++) {
+                //calculate positions
+                float front = shadowDistanceValues.get(j);
+                if (j>0) front-=(shadowDistanceValues.get(j)-shadowDistanceValues.get(j-1)) * seamRatio;
+                float back = shadowDistanceValues.get(j+1);
+                //add to depth renderer
+                shadowBoxes[i][j] = new ShadowBox((float)windowWidth/(float)windowHeight,players.get(i).getViewMatrix(),lightDir,front,back);
+                shadowBoxes[i][j].linkToDepthRenderer(shadowRenderers[i][j]);
+                shadowBoxes[i][j].linkToDepthRenderer(shadowAnimatedRenderers[i][j]);
+
+                //Shadow matrices to renderer
+                for(RendererList rendererList : rendererLists) {
+                    if(rendererList.receivesShadows()) {
+                        shadowBoxes[i][j].linkToRenderer(rendererList.getRenderer(i),j);
+                        rendererList.getRenderer(i).addTexture(2+j,shadowTextures[i][j]);
+
+                    }
+                }
+            }
+        }
+    }
+
+
+    /**
+     * Load the skybox
+     */
+    private void loadSkybox(String fileName) {
+        Texture skyboxTexture = Texture.loadCubemapTexture(memoryManager,fileName,"png");
+        Model skyboxModel = new Skybox(memoryManager);
+        for(Renderer renderer : rendererLists.get(0)) {
+            ShaderObject object = renderer.createObject(skyboxModel);
+            object.addTexture(0,skyboxTexture);
+            object.disableDepth();
+        }
+    }
+
+    /**
+     * Create an object
+     */
+    public void createObject(Object3D object, int rendererId, boolean castsShadows) {
+        //link to major renderer
+        for(Renderer renderer : rendererLists.get(rendererId)) {
+            object.linkToRenderer(renderer);
+        }
+
+        //add to shadow casting renderers
+        if(castsShadows) {
+            if(object instanceof AnimatedObject) {
+                AnimatedObject animatedObject = (AnimatedObject) object;
+                createShadowCastingAnimatedObject(animatedObject);
+            }
+            else {
+                createShadowCastingObject(object);
+            }
+        }
+        objects.add(object);
+    }
+
+
     /**
      * Add an object to a shadow renderer
      */
-    private void createShadowCastingObject(Model model, Matrix4f modelMatrix) {
+    private void createShadowCastingObject(Object3D object) {
         for(Renderer[] rendererArray : shadowRenderers) {
             for(Renderer renderer : rendererArray) {
-                ShaderObject object = renderer.createObject(model);
-                object.addUniform(new UniformMatrix4(renderer.getShader(), "modelMatrix", modelMatrix));
+                object.createShaderObject(renderer);
             }
         }
     }
@@ -394,11 +362,11 @@ public class Game implements State, InputListener {
     /**
      * Add an animated object to a shadow renderer
      */
-    private void createShadowCastingAnimatedObject(AnimatedObject object, Matrix4f modelMatrix) {
+    private void createShadowCastingAnimatedObject(AnimatedObject object) {
         for(Renderer[] rendererArray : shadowAnimatedRenderers) {
             for(Renderer renderer : rendererArray) {
-                ShaderObject so = object.createObject(renderer);
-                so.addUniform(new UniformMatrix4(renderer.getShader(), "modelMatrix", modelMatrix));
+                ShaderObject so = object.createShaderObject(renderer);
+                object.linkTransformsToShaderObject(so);
             }
         }
     }
@@ -422,6 +390,11 @@ public class Game implements State, InputListener {
      */
     @Override
     public void update() {
+        //update objects
+        for(Object3D object : objects) {
+            object.update();
+        }
+        //update players
         for(Player player : players) {
             player.update();
         }
@@ -432,6 +405,10 @@ public class Game implements State, InputListener {
      */
     @Override
     public void render(float frameInterpolation) {
+        //update objects
+        for(Object3D object : objects) {
+            object.interpolate(frameInterpolation);
+        }
         //update players
         for(Player player : players) {
             player.interpolate(frameInterpolation);
@@ -456,6 +433,21 @@ public class Game implements State, InputListener {
         musicSource.stop();
         musicSource.cleanUp();
     }
+
+    /**
+     * Returns if normal mapping is used
+     */
+    public boolean usesNormalMapping() {
+        return normalMapping;
+    }
+
+    /**
+     * Returns the memory manager
+     */
+    public MemoryManager getMemoryManager() {
+        return memoryManager;
+    }
+
 
     //unneeded most likely as all remove will be in cleanUp
     @Override

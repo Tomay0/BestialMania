@@ -2,8 +2,8 @@ package com.bestialMania.state.menu;
 
 import com.bestialMania.Settings;
 import com.bestialMania.InputHandler;
-import com.bestialMania.object.gui.Button;
-import com.bestialMania.object.gui.ButtonListener;
+import com.bestialMania.gui.Button;
+import com.bestialMania.gui.ButtonListener;
 import com.bestialMania.rendering.MasterRenderer;
 import com.bestialMania.MemoryManager;
 import com.bestialMania.state.State;

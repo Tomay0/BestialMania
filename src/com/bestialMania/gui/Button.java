@@ -1,4 +1,4 @@
-package com.bestialMania.object.gui;
+package com.bestialMania.gui;
 
 import com.bestialMania.InputHandler;
 import com.bestialMania.InputListener;

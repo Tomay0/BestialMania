@@ -2,13 +2,13 @@ package com.bestialMania.state.menu;
 
 import com.bestialMania.InputHandler;
 import com.bestialMania.Main;
-import com.bestialMania.object.gui.text.Font;
+import com.bestialMania.map.EmeraldValley;
+import com.bestialMania.map.MapData;
+import com.bestialMania.gui.text.Font;
 import com.bestialMania.rendering.MasterRenderer;
 import com.bestialMania.MemoryManager;
 import com.bestialMania.rendering.Renderer;
 import com.bestialMania.rendering.shader.Shader;
-import com.bestialMania.sound.Sound;
-import com.bestialMania.sound.SoundSource;
 import com.bestialMania.state.Game;
 import org.joml.Vector3f;
 
@@ -24,6 +24,8 @@ public class Menu {
     //Menu state enum, used for easy switching between menus.
     public enum MenuState {PLAYER_SELECT,MAIN_MENU};
 
+    private static final MapData[] MAPS = {new EmeraldValley()};
+
     private MasterRenderer renderer;//the renderer
     private MemoryManager memoryManager;//memory manager
     private InputHandler inputHandler;
@@ -37,6 +39,7 @@ public class Menu {
 
     //OPTIONS TODO: map selection, character selection, other game settings
     private List<Integer> connectedPlayers = new ArrayList<>();//list of connected control schemes (4 max). In order of who joined
+    private int mapIndex;//currently selected map corresponding the MAPS array
 
     /**
      * Initialize the menu
@@ -49,6 +52,7 @@ public class Menu {
         renderer = new MasterRenderer();
         renderer.getWindowFramebuffer().setBackgroundColor(new Vector3f(0.2f,0.2f,0.2f));
         memoryManager = new MemoryManager();
+        mapIndex = 0;
 
         //shaders
         guiShader = new Shader("res/shaders/gui_v.glsl","res/shaders/gui_f.glsl");
@@ -69,7 +73,7 @@ public class Menu {
             System.out.println("Cannot start now, need at least one player");
         }else{
             main.getCurrentState().cleanUp();//delete all memories associated with the menu
-            main.setCurrentState(new Game(main,inputHandler,connectedPlayers));
+            main.setCurrentState(new Game(main,inputHandler,connectedPlayers, MAPS[mapIndex]));
         }
     }
 
