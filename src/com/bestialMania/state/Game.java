@@ -1,9 +1,6 @@
 package com.bestialMania.state;
 
-import com.bestialMania.Settings;
-import com.bestialMania.InputHandler;
-import com.bestialMania.InputListener;
-import com.bestialMania.Main;
+import com.bestialMania.*;
 import com.bestialMania.object.animation.AnimatedObject;
 import com.bestialMania.object.beast.Beast;
 import com.bestialMania.object.beast.Player;
@@ -16,6 +13,8 @@ import com.bestialMania.rendering.shader.Shader;
 import com.bestialMania.rendering.shader.UniformFloat;
 import com.bestialMania.rendering.shader.UniformMatrix4;
 import com.bestialMania.rendering.shadow.ShadowBox;
+import com.bestialMania.sound.Sound;
+import com.bestialMania.sound.SoundSource;
 import com.bestialMania.state.menu.Menu;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -45,16 +44,20 @@ public class Game implements State, InputListener {
     //Shaders
     private Shader normalmapShader, testShader, skyboxShader, shader2D, depthShader, animatedDepthShader, animatedShader;
 
+    //Sound Sources
+    private SoundSource musicSource;
+
     //Renderers
     private Renderer renderer2D;
 
-    //players in the game
-    private List<Player> players = new ArrayList<>();
 
     private List<Renderer> testRenderers = new ArrayList<>();
     private List<Renderer> animatedRenderers = new ArrayList<>();
     private List<Renderer> normalmapRenderers = new ArrayList<>();
     private List<Renderer> skyboxRenderers = new ArrayList<>();
+
+    //players in the game
+    private List<Player> players = new ArrayList<>();
 
     //shadow boxes
     private List<Float> shadowDistanceValues;
@@ -132,7 +135,18 @@ public class Game implements State, InputListener {
         loadShadowboxes();
         loadSkybox();
         loadObjects();
+        loadMusic();
 
+    }
+
+    /**
+     * Load the "music"
+     *
+     */
+    private void loadMusic() {
+        Sound sound = new Sound(memoryManager,"res/sound/pumped_up_kicks.wav");
+        musicSource = new SoundSource(sound,true);
+        musicSource.play();
     }
 
     /**
@@ -439,6 +453,8 @@ public class Game implements State, InputListener {
         inputHandler.setCursorEnabled();
         inputHandler.removeListener(this);
         memoryManager.cleanUp();
+        musicSource.stop();
+        musicSource.cleanUp();
     }
 
     //unneeded most likely as all remove will be in cleanUp

@@ -1,5 +1,6 @@
 package com.bestialMania.rendering;
 
+import com.bestialMania.MemoryManager;
 import com.bestialMania.Settings;
 import org.lwjgl.BufferUtils;
 

@@ -1,7 +1,6 @@
 package com.bestialMania.rendering.model;
 
-import com.bestialMania.rendering.MasterRenderer;
-import com.bestialMania.rendering.MemoryManager;
+import com.bestialMania.MemoryManager;
 import org.joml.*;
 import org.lwjgl.BufferUtils;
 

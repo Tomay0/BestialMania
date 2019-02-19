@@ -1,5 +1,6 @@
 package com.bestialMania.object.gui.text;
 
+import com.bestialMania.MemoryManager;
 import com.bestialMania.Settings;
 import com.bestialMania.rendering.*;
 import com.bestialMania.rendering.model.Model;

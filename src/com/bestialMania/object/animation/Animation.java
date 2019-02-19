@@ -101,4 +101,7 @@ public class Animation {
         return localTransforms[jointId];
     }
 
+    public void setCurrentTime(float timestamp) {
+        this.currentTime = timestamp;
+    }
 }

@@ -1,6 +1,6 @@
 package com.bestialMania.object.gui.text;
 
-import com.bestialMania.rendering.MemoryManager;
+import com.bestialMania.MemoryManager;
 import com.bestialMania.rendering.Texture;
 
 import java.io.File;

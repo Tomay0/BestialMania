@@ -1,5 +1,6 @@
 package com.bestialMania.rendering;
 
+import com.bestialMania.MemoryManager;
 import com.bestialMania.Settings;
 import com.bestialMania.rendering.shader.Shader;
 import org.joml.Vector3f;
@@ -253,6 +254,7 @@ public class Framebuffer {
             System.out.println("Error: Could not create framebuffer.");
             System.exit(-1);
         }
+        mm.addFramebuffer(framebuffer);
         return framebuffer;
     }
 
@@ -271,6 +273,7 @@ public class Framebuffer {
             System.out.println("Error: Could not create framebuffer.");
             System.exit(-1);
         }
+        mm.addFramebuffer(framebuffer);
         return framebuffer;
     }
 
@@ -290,6 +293,7 @@ public class Framebuffer {
             System.out.println("Error: Could not create framebuffer.");
             System.exit(-1);
         }
+        mm.addFramebuffer(framebuffer);
 
         return framebuffer;
     }

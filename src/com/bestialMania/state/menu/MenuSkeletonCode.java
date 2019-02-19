@@ -2,7 +2,7 @@ package com.bestialMania.state.menu;
 
 import com.bestialMania.InputHandler;
 import com.bestialMania.rendering.MasterRenderer;
-import com.bestialMania.rendering.MemoryManager;
+import com.bestialMania.MemoryManager;
 import com.bestialMania.state.State;
 
 

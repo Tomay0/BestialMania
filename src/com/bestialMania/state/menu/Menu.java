@@ -4,9 +4,11 @@ import com.bestialMania.InputHandler;
 import com.bestialMania.Main;
 import com.bestialMania.object.gui.text.Font;
 import com.bestialMania.rendering.MasterRenderer;
-import com.bestialMania.rendering.MemoryManager;
+import com.bestialMania.MemoryManager;
 import com.bestialMania.rendering.Renderer;
 import com.bestialMania.rendering.shader.Shader;
+import com.bestialMania.sound.Sound;
+import com.bestialMania.sound.SoundSource;
 import com.bestialMania.state.Game;
 import org.joml.Vector3f;
 
@@ -83,7 +85,6 @@ public class Menu {
      */
     public void setCurrentState(MenuState state) {
         if(main.getCurrentState()!=null) main.getCurrentState().removeObjects();//remove objects in previous state
-
         switch(state) {
             //Player selection menu
             case PLAYER_SELECT: {

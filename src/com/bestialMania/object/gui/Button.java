@@ -2,7 +2,7 @@ package com.bestialMania.object.gui;
 
 import com.bestialMania.InputHandler;
 import com.bestialMania.InputListener;
-import com.bestialMania.rendering.MemoryManager;
+import com.bestialMania.MemoryManager;
 import org.joml.Vector2f;
 
 import static org.lwjgl.glfw.GLFW.*;

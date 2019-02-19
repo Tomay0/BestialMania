@@ -3,20 +3,28 @@ package com.bestialMania;
 import com.bestialMania.state.State;
 import com.bestialMania.state.menu.Menu;
 import org.lwjgl.glfw.*;
+import org.lwjgl.openal.AL;
+import org.lwjgl.openal.ALC;
+import org.lwjgl.openal.ALCCapabilities;
+import org.lwjgl.openal.ALCapabilities;
 import org.lwjgl.opengl.*;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.openal.ALC11.*;
+import static org.lwjgl.openal.AL11.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
 public class Main {
     public static final double TICKS_PER_SECOND = 60;//constant tick rate at which the game updates, independent of the render time.
     private long window;// The window handle
+    private long audioDevice, audioContext;
 
     private InputHandler inputHandler;//Input handler
     private State currentState;
     private boolean running = true;
+
 
     public void run() {
         init();
@@ -68,6 +76,24 @@ public class Main {
         glfwShowWindow(window);
         GL.createCapabilities();
 
+        //OpenAL (audio)
+        //some init code they tell you to use on the github
+        String defaultDevice = alcGetString(0,ALC_DEFAULT_DEVICE_SPECIFIER);
+        audioDevice = alcOpenDevice(defaultDevice);
+
+        int[] attributes = {0};
+        audioContext = alcCreateContext(audioDevice,attributes);
+        alcMakeContextCurrent(audioContext);
+
+        ALCCapabilities alcCapabilities = ALC.createCapabilities(audioDevice);
+        ALCapabilities alCapabilities = AL.createCapabilities(alcCapabilities);
+
+        if(!alCapabilities.OpenAL10) {
+            System.err.println("Open AL is not supported!");
+            System.exit(-1);
+        }
+
+
         //create the input handler for the window
         inputHandler = new InputHandler(window);
 
@@ -75,12 +101,21 @@ public class Main {
         Menu menu = new Menu(this,inputHandler);
         menu.setCurrentState(Menu.MenuState.MAIN_MENU);
 
+
         //some OpenGL settings
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
-        glCullFace(GL_BACK);//TODO change to GL_BACK after implementing the projection matrix
+        glCullFace(GL_BACK);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        //some OpenAL settings
+        alDistanceModel(AL_EXPONENT_DISTANCE_CLAMPED);//clamped = gain doesn't get higher than 1
+        alListener3f(AL_POSITION,0,0,0);//doesn't change
+        alListener3f(AL_VELOCITY,0,0,0);
+        float[] orientation = { 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f };
+        alListenerfv(AL_ORIENTATION, orientation);
+
     }
 
     /**
@@ -141,9 +176,13 @@ public class Main {
      */
     private void terminate() {
         currentState.cleanUp();//delete things from the current state
+        alcDestroyContext(audioContext);
+        alcCloseDevice(audioDevice);
+
         glfwFreeCallbacks(window);
         glfwDestroyWindow(window);
         glfwTerminate();
+
     }
 
     /**

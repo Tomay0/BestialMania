@@ -7,7 +7,7 @@ import com.bestialMania.object.gui.Button;
 import com.bestialMania.object.gui.ButtonListener;
 import com.bestialMania.object.gui.text.Text;
 import com.bestialMania.rendering.MasterRenderer;
-import com.bestialMania.rendering.MemoryManager;
+import com.bestialMania.MemoryManager;
 import com.bestialMania.state.State;
 import org.joml.Vector3f;
 

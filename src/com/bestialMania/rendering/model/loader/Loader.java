@@ -1,7 +1,7 @@
 package com.bestialMania.rendering.model.loader;
 
 import com.bestialMania.object.animation.*;
-import com.bestialMania.rendering.MemoryManager;
+import com.bestialMania.MemoryManager;
 import com.bestialMania.rendering.model.Model;
 import com.bestialMania.xml.XmlNode;
 import com.bestialMania.xml.XmlParser;

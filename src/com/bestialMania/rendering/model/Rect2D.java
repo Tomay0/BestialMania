@@ -1,9 +1,6 @@
 package com.bestialMania.rendering.model;
 
-import com.bestialMania.rendering.MasterRenderer;
-import com.bestialMania.rendering.MemoryManager;
-import com.bestialMania.rendering.Texture;
-import com.bestialMania.rendering.model.Model;
+import com.bestialMania.MemoryManager;
 
 /**
  * Test class for rendering 2D rectangle with a texture

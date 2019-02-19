@@ -12,10 +12,6 @@ import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
-/**
- * TODO:
- * Make movement smoother, so you don't turn instantly in another direction
- */
 public class Beast {
     private static final float TURN_SPEED = 0.1f;
 
@@ -25,7 +21,6 @@ public class Beast {
     private Matrix4f modelMatrix;
     private float speed;//current speed
 
-    //TODO expand rendering out more to allow for animation
     private AnimatedObject object;
     private Texture texture;
     private ShaderObject shaderObject;
@@ -48,15 +43,23 @@ public class Beast {
         Animation animation = new Animation(object.getArmature(),object.getPose(0),true);
         int i = 0;
         float time = 0;
+
+        float songBPM = 128;//PUMPED UP KICKS = 128. Running in the 90s = 159. Spaceghostpurp = 150 Change to make jimmy sync up to the song you pick
+
+
+        float beatDuration = 60.0f/songBPM;
+
+
         while(i<12) {
             i++;
-            time+=0.34;
+            time+=0.85*beatDuration;
             animation.addKeyFrame(time,object.getPose(i));
             i++;
-            time+=0.06;
+            time+=0.15*beatDuration;
             animation.addKeyFrame(time,object.getPose(i));
 
         }
+        animation.setCurrentTime(time+beatDuration*0.1f);
         object.setAnimation(animation);
 
         this.texture = texture;

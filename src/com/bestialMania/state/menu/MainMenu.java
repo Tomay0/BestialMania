@@ -5,7 +5,7 @@ import com.bestialMania.InputHandler;
 import com.bestialMania.object.gui.Button;
 import com.bestialMania.object.gui.ButtonListener;
 import com.bestialMania.rendering.MasterRenderer;
-import com.bestialMania.rendering.MemoryManager;
+import com.bestialMania.MemoryManager;
 import com.bestialMania.state.State;
 
 public class MainMenu implements State, ButtonListener {
