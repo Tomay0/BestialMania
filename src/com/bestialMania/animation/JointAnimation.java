@@ -30,7 +30,8 @@ public class JointAnimation {
     /**
      * Calculate the interpolated matrix based on the time through the animation
      */
-    public Matrix4f calculateMatrix(float currentTime) {
+    public void calculateMatrix(float currentTime) {
+
         while(currentIndex < keyframes.size()-1) {
             if(currentTime >= keyframes.get(currentIndex+1).getTimestamp())
                 currentIndex++;
@@ -45,12 +46,12 @@ public class JointAnimation {
         //last frame of the animation
         if(currentIndex==keyframes.size()-1) {
             JointTransform jointTransform = keyframes.get(keyframes.size()-1).getJointTransform();
-            return jointTransform.getMatrix();
+            jointTransform.getMatrix().get(interpolatedMatrix);
         }
         //first frame of the animation
         else if(currentIndex==-1) {
             JointTransform jointTransform = keyframes.get(0).getJointTransform();
-            return jointTransform.getMatrix();
+            jointTransform.getMatrix().get(interpolatedMatrix);
         }
         //interpolated between currentIndex and currentIndex+1
         else{
@@ -64,15 +65,20 @@ public class JointAnimation {
             float interpolation = progression/timespan;
 
             JointTransform.interpolate(j1,j2,interpolatedMatrix,interpolation);
-            return interpolatedMatrix;
         }
 
     }
-
     /**
      * Get the joint
      */
     public Joint getJoint() {
         return joint;
+    }
+
+    /**
+     * Return transform at the current animation's state
+     */
+    public Matrix4f getMatrix() {
+        return interpolatedMatrix;
     }
 }

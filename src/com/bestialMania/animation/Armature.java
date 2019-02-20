@@ -2,8 +2,10 @@ package com.bestialMania.animation;
 
 import org.joml.Matrix4f;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 public class Armature implements Iterable<Joint>{
     private Joint rootJoint;
@@ -61,6 +63,18 @@ public class Armature implements Iterable<Joint>{
      */
     public Joint getRootJoint() {
         return rootJoint;
+    }
+
+
+    /**
+     * Get a list of all joints that do not include the listed joints
+     */
+    public Set<String> getJointsExcluding(Set<String> excluding) {
+        Set<String> set = new HashSet<>(joints.keySet());
+        for(String exclude : excluding) {
+            if(set.contains(exclude)) set.remove(exclude);
+        }
+        return set;
     }
 
     /**

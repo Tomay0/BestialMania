@@ -2,6 +2,7 @@ package com.bestialMania.object.beast;
 
 import com.bestialMania.animation.AnimatedModel;
 import com.bestialMania.animation.Animation;
+import com.bestialMania.animation.Pose;
 import com.bestialMania.object.AnimatedObject;
 import com.bestialMania.rendering.Renderer;
 import com.bestialMania.rendering.ShaderObject;
@@ -14,7 +15,13 @@ import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 public class Beast extends AnimatedObject {
+
+    private static final float songBPM = 128;//PUMPED UP KICKS = 128. Running in the 90s = 159. Spaceghostpurp = 150 Change to make jimmy sync up to the song you pick
     private static final float TURN_SPEED = 0.1f;
 
     private Vector3f position, positionInterpolate;
@@ -23,6 +30,8 @@ public class Beast extends AnimatedObject {
     private float speed;//current speed
 
     private Texture texture;
+    private Animation animation,animation2;
+    private int t = 0;
 
     /**
      * Create a beast
@@ -37,12 +46,14 @@ public class Beast extends AnimatedObject {
         angleTarget = angle;
         speed = 0;
 
-        //TEST ANIMATION
-        Animation animation = new Animation(animatedModel.getArmature(),animatedModel.getPose(0),true);
+        //TEST ANIMATION (trying to animation 2 parts separately)
+        Set<String> testAffectedJoints = new HashSet<>(Arrays.asList("Dummy003","Dummy057","Dummy058","Dummy062","Dummy059","Dummy063","Dummy060","Dummy064","Dummy061"));//legs only
+        Set<String> testAffectedJoints2 = animatedModel.getArmature().getJointsExcluding(testAffectedJoints);//rest of the body
+
+        animation = new Animation(animatedModel.getArmature(),animatedModel.getPose(0),testAffectedJoints,true);
+        animation2 = new Animation(animatedModel.getArmature(),animatedModel.getPose(0),testAffectedJoints2,true);
         int i = 0;
         float time = 0;
-
-        float songBPM = 128;//PUMPED UP KICKS = 128. Running in the 90s = 159. Spaceghostpurp = 150 Change to make jimmy sync up to the song you pick
 
 
         float beatDuration = 60.0f/songBPM;
@@ -52,13 +63,17 @@ public class Beast extends AnimatedObject {
             i++;
             time+=0.85*beatDuration;
             animation.addKeyFrame(time,animatedModel.getPose(i));
+            animation2.addKeyFrame(time,animatedModel.getPose(i));
             i++;
             time+=0.15*beatDuration;
             animation.addKeyFrame(time,animatedModel.getPose(i));
+            animation2.addKeyFrame(time,animatedModel.getPose(i));
 
         }
         animation.setCurrentTime(time+beatDuration*0.1f);
-        animatedModel.setAnimation(animation);
+        animation2.setCurrentTime(time+beatDuration*0.1f);
+        applyAnimation(animation);
+        applyAnimation(animation2);
 
         this.texture = texture;
     }
@@ -86,6 +101,7 @@ public class Beast extends AnimatedObject {
     /**
      * Update position and orientation
      */
+    @Override
     public void update() {
         position.x+=movementDirection.x*speed;
         position.z+=movementDirection.y*speed;
@@ -103,7 +119,15 @@ public class Beast extends AnimatedObject {
 
         if(angle>Math.PI) angle-=2*Math.PI;
         if(angle<-Math.PI) angle+=2*Math.PI;
-        animatedModel.update();
+
+        t++;
+        if(t>200) {
+            Pose pose = getCurrentPose();
+            setPose(pose);
+            cancelAnimation(animation2);
+        }
+
+        updateAnimation();
     }
 
     /**
@@ -111,8 +135,8 @@ public class Beast extends AnimatedObject {
      *
      * return the interpolated position
      */
+    @Override
     public void interpolate(float frameInterpolation) {
-        animatedModel.interpolate(frameInterpolation);
         //interpolate position
         positionInterpolate.x = position.x+movementDirection.x*speed*frameInterpolation;
         positionInterpolate.z = position.z+movementDirection.y*speed*frameInterpolation;
@@ -141,6 +165,7 @@ public class Beast extends AnimatedObject {
 
         //scale
         modelMatrix.scale(0.1f,0.1f,0.1f);
+        interpolateAnimation(frameInterpolation);
 
     }
 
@@ -162,7 +187,6 @@ public class Beast extends AnimatedObject {
 
 
     public Model getModel() {return animatedModel.getModel();}
-    public AnimatedModel getAnimatedObject() {return animatedModel;}
     public Matrix4f getMatrix() {
         return modelMatrix;
     }

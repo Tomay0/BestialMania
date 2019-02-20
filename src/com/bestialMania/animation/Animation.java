@@ -3,9 +3,7 @@ package com.bestialMania.animation;
 import com.bestialMania.Main;
 import org.joml.Matrix4f;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class Animation {
     private static final float timeAdvance = 1.0f/ (float)Main.TICKS_PER_SECOND;
@@ -15,7 +13,6 @@ public class Animation {
     private float end;
 
     private Map<String,JointAnimation> jointAnimations = new HashMap<>();
-    private Matrix4f[] localTransforms;
 
     /**
      * Create an animation.
@@ -30,9 +27,21 @@ public class Animation {
             jointAnimation.addKeyframe(0,defaultPose);
             jointAnimations.put(joint.getName(),jointAnimation);
         }
-        localTransforms = new Matrix4f[armature.size()];
-        for(int i = 0;i<armature.size();i++) {
-            localTransforms[i] = new Matrix4f();
+    }
+
+    /**
+     * Create an animation.
+     * All applied joints are assigned a default pose, more keyframes get added later
+     */
+    public Animation(Armature armature, Pose defaultPose, Set<String> appliedJoints, boolean loop) {
+        currentTime = 0;
+        end = 0;
+        this.loop = loop;
+        for(String jointName : appliedJoints) {
+            Joint joint = armature.getJoint(jointName);
+            JointAnimation jointAnimation = new JointAnimation(joint);
+            jointAnimation.addKeyframe(0,defaultPose);
+            jointAnimations.put(joint.getName(),jointAnimation);
         }
     }
 
@@ -40,8 +49,8 @@ public class Animation {
      * Add a keyframe to the animation (must be done in order)
      * Only applies to the joints you provide
      */
-    public void addKeyFrame(float timestamp, Pose pose, Set<String> joints) {
-        for(String jointName : joints) {
+    public void addKeyFrame(float timestamp, Pose pose, Set<String> appliedJoints) {
+        for(String jointName : appliedJoints) {
             JointAnimation jointAnimation = jointAnimations.get(jointName);
             jointAnimation.addKeyframe(timestamp,pose);
         }
@@ -79,7 +88,6 @@ public class Animation {
      * (Called every render())
      */
     public void calculateMatrices(float interpolation) {
-
         float actualTime = currentTime + timeAdvance*interpolation;
         if(end==0) actualTime = 0;
         else if(loop){
@@ -89,19 +97,22 @@ public class Animation {
         }
 
         for(JointAnimation jointAnimation : jointAnimations.values()) {
-            Matrix4f matrix = jointAnimation.calculateMatrix(actualTime);
-            matrix.get(localTransforms[jointAnimation.getJoint().getId()]);
+            jointAnimation.calculateMatrix(actualTime);
         }
     }
 
     /**
      * Get the local transform for a joint id
      */
-    public Matrix4f getMatrix(int jointId) {
-        return localTransforms[jointId];
+    public Matrix4f getLocalTransform(String jointName) {
+        return jointAnimations.get(jointName).getMatrix();
     }
 
     public void setCurrentTime(float timestamp) {
         this.currentTime = timestamp;
+    }
+
+    public Collection<String> getAffectedJoints() {
+        return Collections.unmodifiableCollection(jointAnimations.keySet());
     }
 }
