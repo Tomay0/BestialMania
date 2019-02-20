@@ -9,6 +9,7 @@ import com.bestialMania.rendering.Texture;
 import com.bestialMania.rendering.model.Model;
 import com.bestialMania.rendering.shader.UniformFloat;
 import com.bestialMania.rendering.shader.UniformMatrix4;
+import com.bestialMania.state.game.Game;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
@@ -26,8 +27,8 @@ public class Beast extends AnimatedObject {
     /**
      * Create a beast
      */
-    public Beast(AnimatedModel animatedModel, Texture texture){
-        super(animatedModel, new Matrix4f());
+    public Beast(Game game, AnimatedModel animatedModel, Texture texture){
+        super(game, animatedModel, new Matrix4f());
         position = new Vector3f(0,0,0);//TODO have some sort of spawn point
         angle = 0;
 

@@ -1,4 +1,4 @@
-package com.bestialMania.map;
+package com.bestialMania.state.game.map;
 
 import com.bestialMania.object.Object3D;
 import com.bestialMania.object.StaticObject;
@@ -6,7 +6,7 @@ import com.bestialMania.rendering.Texture;
 import com.bestialMania.rendering.model.Model;
 import com.bestialMania.rendering.model.loader.Loader;
 import com.bestialMania.rendering.shader.Shader;
-import com.bestialMania.state.Game;
+import com.bestialMania.state.game.Game;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -67,10 +67,10 @@ public class EmeraldValley extends MapData{
         testObjectMatrix.scale(3.0f,3.0f,3.0f);
         if(game.usesNormalMapping()) {
             Texture poleNormalmap = Texture.loadImageTexture3D(game.getMemoryManager(), "res/textures/concrete_normal.png");
-            Object3D object = new StaticObject(poleModel,testObjectMatrix,poleTexture, poleNormalmap,0.5f,10.0f);
+            Object3D object = new StaticObject(game, poleModel,testObjectMatrix,poleTexture, poleNormalmap,0.5f,10.0f);
             game.createObject(object,3,true);
         }else{
-            Object3D object = new StaticObject(poleModel,testObjectMatrix,poleTexture,0.5f,10.0f);
+            Object3D object = new StaticObject(game, poleModel,testObjectMatrix,poleTexture,0.5f,10.0f);
             game.createObject(object,2,true);
         }
 
@@ -80,11 +80,11 @@ public class EmeraldValley extends MapData{
         Texture planeTexture = Texture.loadImageTexture3D(game.getMemoryManager(),"res/textures/rocky.png");
         if(game.usesNormalMapping()) {
             Texture planeNormalmap = Texture.loadImageTexture3D(game.getMemoryManager(), "res/textures/rocky_normal.png");
-            Object3D object = new StaticObject(planeModel,planeMatrix,planeTexture, planeNormalmap,0.1f,4.0f);
+            Object3D object = new StaticObject(game, planeModel,planeMatrix,planeTexture, planeNormalmap,0.1f,4.0f);
             game.createObject(object,3,true);
         }
         else{
-            Object3D object = new StaticObject(planeModel,planeMatrix,planeTexture,0.1f,4.0f);
+            Object3D object = new StaticObject(game, planeModel,planeMatrix,planeTexture,0.1f,4.0f);
             game.createObject(object,2,true);
         }
 

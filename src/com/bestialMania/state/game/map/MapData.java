@@ -1,6 +1,6 @@
-package com.bestialMania.map;
+package com.bestialMania.state.game.map;
 
-import com.bestialMania.state.Game;
+import com.bestialMania.state.game.Game;
 import org.joml.Vector3f;
 
 /**

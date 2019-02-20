@@ -1,4 +1,4 @@
-package com.bestialMania.state;
+package com.bestialMania.state.game;
 
 import com.bestialMania.object.beast.Player;
 import com.bestialMania.rendering.Framebuffer;

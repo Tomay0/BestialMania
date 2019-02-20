@@ -2,14 +2,14 @@ package com.bestialMania.state.menu;
 
 import com.bestialMania.InputHandler;
 import com.bestialMania.Main;
-import com.bestialMania.map.EmeraldValley;
-import com.bestialMania.map.MapData;
+import com.bestialMania.state.game.map.EmeraldValley;
+import com.bestialMania.state.game.map.MapData;
 import com.bestialMania.gui.text.Font;
 import com.bestialMania.rendering.MasterRenderer;
 import com.bestialMania.MemoryManager;
 import com.bestialMania.rendering.Renderer;
 import com.bestialMania.rendering.shader.Shader;
-import com.bestialMania.state.Game;
+import com.bestialMania.state.game.Game;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;

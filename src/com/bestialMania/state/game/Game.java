@@ -1,11 +1,10 @@
-package com.bestialMania.state;
+package com.bestialMania.state.game;
 
 import com.bestialMania.*;
-import com.bestialMania.map.MapData;
+import com.bestialMania.state.game.map.MapData;
 import com.bestialMania.animation.AnimatedModel;
 import com.bestialMania.object.AnimatedObject;
 import com.bestialMania.object.Object3D;
-import com.bestialMania.object.StaticObject;
 import com.bestialMania.object.beast.Beast;
 import com.bestialMania.object.beast.Player;
 import com.bestialMania.gui.Object2D;
@@ -14,17 +13,17 @@ import com.bestialMania.rendering.model.Model;
 import com.bestialMania.rendering.model.loader.Loader;
 import com.bestialMania.rendering.model.Skybox;
 import com.bestialMania.rendering.shader.Shader;
-import com.bestialMania.rendering.shader.UniformFloat;
-import com.bestialMania.rendering.shader.UniformMatrix4;
 import com.bestialMania.rendering.shadow.ShadowBox;
 import com.bestialMania.sound.Sound;
 import com.bestialMania.sound.SoundSource;
+import com.bestialMania.state.State;
 import com.bestialMania.state.menu.Menu;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE;
@@ -64,6 +63,7 @@ public class Game implements State, InputListener {
 
     //All objects that update
     List<Object3D> objects = new ArrayList<>();
+    List<Object3D> objectsCopy = new ArrayList<>();//avoid concurrent modifications exception
 
     //players in the game
     private List<Player> players = new ArrayList<>();
@@ -251,7 +251,7 @@ public class Game implements State, InputListener {
             sceneObject.addToRenderer(renderer2D);
 
             //the player object
-            Beast beast = new Beast(i==0 ? jimmy : new AnimatedModel(jimmy),jimmyTexture);
+            Beast beast = new Beast(this, i==0 ? jimmy : new AnimatedModel(jimmy),jimmyTexture);
             Player player = new Player(inputHandler,i+1,controllers.get(i),beast);
 
             //create all renderers from the shaders
@@ -347,6 +347,13 @@ public class Game implements State, InputListener {
         objects.add(object);
     }
 
+    /**
+     * Remove an object. Executed via object.removeObject();
+     */
+    public void removeObject(Object3D object) {
+        objects.remove(object);
+    }
+
 
     /**
      * Add an object to a shadow renderer
@@ -390,8 +397,10 @@ public class Game implements State, InputListener {
      */
     @Override
     public void update() {
+        objectsCopy.clear();
+        objectsCopy.addAll(objects);
         //update objects
-        for(Object3D object : objects) {
+        for(Object3D object : objectsCopy) {
             object.update();
         }
         //update players
@@ -405,8 +414,10 @@ public class Game implements State, InputListener {
      */
     @Override
     public void render(float frameInterpolation) {
+        objectsCopy.clear();
+        objectsCopy.addAll(objects);
         //update objects
-        for(Object3D object : objects) {
+        for(Object3D object : objectsCopy) {
             object.interpolate(frameInterpolation);
         }
         //update players

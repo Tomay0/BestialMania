@@ -3,12 +3,13 @@ package com.bestialMania.object;
 import com.bestialMania.animation.AnimatedModel;
 import com.bestialMania.rendering.ShaderObject;
 import com.bestialMania.rendering.shader.UniformMatrix4;
+import com.bestialMania.state.game.Game;
 import org.joml.Matrix4f;
 
 public abstract class AnimatedObject extends Object3D{
     protected AnimatedModel animatedModel;
-    public AnimatedObject(AnimatedModel animatedModel, Matrix4f modelMatrix) {
-        super(animatedModel.getModel(),modelMatrix);
+    public AnimatedObject(Game game, AnimatedModel animatedModel, Matrix4f modelMatrix) {
+        super(game,animatedModel.getModel(),modelMatrix);
         this.animatedModel = animatedModel;
     }
 
