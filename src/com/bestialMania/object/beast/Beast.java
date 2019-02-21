@@ -22,12 +22,20 @@ import java.util.Set;
 public class Beast extends AnimatedObject {
 
     private static final float songBPM = 128;//PUMPED UP KICKS = 128. Running in the 90s = 159. Spaceghostpurp = 150 Change to make jimmy sync up to the song you pick
+    private static final float ACCELERATION = 0.05f;
     private static final float TURN_SPEED = 0.1f;
+    private static final float FAST_TURN_SPEED = 0.25f;
+    private static final float FAST_TURN_ANGLE = (float)Math.PI/3.0f;
 
-    private Vector3f position, positionInterpolate;
-    private Vector2f movementDirection;//direction they are facing
-    private float angle, angleTarget;
-    private float speed;//current speed
+    //PHYSICS
+    private Vector3f position, positionInterpolate;//position vector(s)
+    private Vector2f movementVector;//current movement vector
+    private Vector2f intendedMovementVector;//intended movement vector to accelerate towards
+    private Vector2f movementDirection;//intended direction to move towards
+    private float angleTarget;//intended angle to face towards
+    private float angle;//angle the model is facing TODO possibly animate turning around better
+    private float speed;//current intended speed
+    private float turnSpeed = TURN_SPEED;//turning speed
 
     private Texture texture;
     private Animation animation,animation2;
@@ -43,6 +51,8 @@ public class Beast extends AnimatedObject {
 
         positionInterpolate = new Vector3f(0,0,0);
         movementDirection = new Vector2f((float)Math.sin(angle),(float)Math.cos(angle));
+        movementVector = new Vector2f(0,0);
+        intendedMovementVector = new Vector2f();
         angleTarget = angle;
         speed = 0;
 
@@ -103,29 +113,59 @@ public class Beast extends AnimatedObject {
      */
     @Override
     public void update() {
-        position.x+=movementDirection.x*speed;
-        position.z+=movementDirection.y*speed;
+        //Please update the position BEFORE you change the speed and direction
+        position.x+=movementVector.x;
+        position.z+=movementVector.y;
+
+
+        //acceleration towards intended movement
+        intendedMovementVector.x = movementDirection.x*speed;
+        intendedMovementVector.y = movementDirection.y*speed;
+
+        if(movementVector.x<intendedMovementVector.x) {
+            movementVector.x+=ACCELERATION;
+            if(movementVector.x>intendedMovementVector.x) movementVector.x = intendedMovementVector.x;
+        }else if(movementVector.x>intendedMovementVector.x) {
+            movementVector.x-=ACCELERATION;
+            if(movementVector.x<intendedMovementVector.x) movementVector.x = intendedMovementVector.x;
+        }
+
+        if(movementVector.y<intendedMovementVector.y) {
+            movementVector.y+=ACCELERATION;
+            if(movementVector.y>intendedMovementVector.y) movementVector.y = intendedMovementVector.y;
+        }else if(movementVector.y>intendedMovementVector.y) {
+            movementVector.y-=ACCELERATION;
+            if(movementVector.y<intendedMovementVector.y) movementVector.y = intendedMovementVector.y;
+        }
+
+        //FAST TURN AROUND
+        if(Math.abs(angle-angleTarget)>FAST_TURN_ANGLE && Math.abs(angle-angleTarget)<2*Math.PI-FAST_TURN_ANGLE) {
+            turnSpeed = FAST_TURN_SPEED;
+        }
 
         //turn to face direction of movement
-        if(Math.abs(angle-angleTarget)<TURN_SPEED) angle = angleTarget;
+        if(Math.abs(angle-angleTarget)<turnSpeed || Math.abs(angle-angleTarget)>2*Math.PI-turnSpeed) {
+            angle = angleTarget;
+            turnSpeed = TURN_SPEED;
+        }
         else if(angle>angleTarget) {
-            if(angle-angleTarget>Math.PI) angle+=TURN_SPEED;
-            else angle-=TURN_SPEED;
+            if(angle-angleTarget>Math.PI) angle+=turnSpeed;
+            else angle-=turnSpeed;
         }
         else {
-            if(angleTarget-angle>Math.PI) angle-=TURN_SPEED;
-            else angle+=TURN_SPEED;
+            if(angleTarget-angle>Math.PI) angle-=turnSpeed;
+            else angle+=turnSpeed;
         }
 
         if(angle>Math.PI) angle-=2*Math.PI;
         if(angle<-Math.PI) angle+=2*Math.PI;
 
-        t++;
+        /*t++;
         if(t>200) {
             Pose pose = getCurrentPose();
             setPose(pose);
             cancelAnimation(animation2);
-        }
+        }*/
 
         updateAnimation();
     }
@@ -138,14 +178,13 @@ public class Beast extends AnimatedObject {
     @Override
     public void interpolate(float frameInterpolation) {
         //interpolate position
-        positionInterpolate.x = position.x+movementDirection.x*speed*frameInterpolation;
-        positionInterpolate.z = position.z+movementDirection.y*speed*frameInterpolation;
-        //System.out.println(positionInterpolate.x + "," + positionInterpolate.y + "," + positionInterpolate.z);
+        positionInterpolate.x = position.x+movementVector.x*frameInterpolation;
+        positionInterpolate.z = position.z+movementVector.y*frameInterpolation;
 
         //interpolate direction
         float angleInterpolate = angle;
-        float turnAmount = TURN_SPEED*frameInterpolation;
-        if(Math.abs(angle-angleTarget)<turnAmount) angleInterpolate = angleTarget;
+        float turnAmount = turnSpeed*frameInterpolation;
+        if(Math.abs(angle-angleTarget)<turnAmount || Math.abs(angle-angleTarget)>2*Math.PI-turnAmount) angleInterpolate = angleTarget;
         else if(angle>angleTarget) {
             if(angle-angleTarget>Math.PI) angleInterpolate+=turnAmount;
             else angleInterpolate-=turnAmount;
