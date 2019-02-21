@@ -12,8 +12,30 @@ import java.nio.DoubleBuffer;
 import java.util.*;
 
 public class InputHandler{
-    private static final int N_BUTTONS = 14;//number of buttons on a controller to check
+    private static final int N_BUTTONS = 15;//number of buttons on a controller to check
     private static final int N_CONTROLLERS = 16;//number of controller slots available
+    /*
+    BUTTONS:
+    0 = A/X
+    1 = B/Circle
+    2 = X/Square
+    3 = Y/Triangle
+    4 = LB/L1
+    5 = RB/R1
+    6 = back/Share
+    7 = start/Options
+    8 = None/Playstation button
+    9 = Left analog
+    10 = Right analog
+    11 = dpad-up
+    12 = dpad-right
+    13 = dpad-down
+    14 = dpad-left
+
+
+
+
+     */
 
     //fields
     private long window;

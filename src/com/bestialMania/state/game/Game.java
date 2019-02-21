@@ -75,6 +75,9 @@ public class Game implements State, InputListener {
     private Texture[][] shadowTextures;
     private ShadowBox[][] shadowBoxes;
 
+    //collisions
+    private Floor floor;
+
     //some variables
     private boolean normalMapping;
     private Vector3f lightDir, lightColor;
@@ -139,6 +142,9 @@ public class Game implements State, InputListener {
         shadowAnimatedRenderers = new Renderer[controllers.size()][shadowDistanceValues.size()-1];
         shadowTextures = new Texture[controllers.size()][shadowDistanceValues.size()-1];
         shadowBoxes = new ShadowBox[controllers.size()][shadowDistanceValues.size()-1];
+
+        //load floor
+        floor = map.loadFloor();
 
         //load all game related shaders
         loadShaders();
@@ -458,6 +464,11 @@ public class Game implements State, InputListener {
     public MemoryManager getMemoryManager() {
         return memoryManager;
     }
+
+    /**
+     * Get the floor collisions
+     */
+    public Floor getFloor() {return floor;}
 
 
     //unneeded most likely as all remove will be in cleanUp

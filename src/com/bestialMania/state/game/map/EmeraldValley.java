@@ -6,6 +6,7 @@ import com.bestialMania.rendering.Texture;
 import com.bestialMania.rendering.model.Model;
 import com.bestialMania.rendering.model.loader.Loader;
 import com.bestialMania.rendering.shader.Shader;
+import com.bestialMania.state.game.Floor;
 import com.bestialMania.state.game.Game;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -88,5 +89,13 @@ public class EmeraldValley extends MapData{
             game.createObject(object,2,true);
         }
 
+    }
+
+    /**
+     * TODO load actual floor collisions
+     */
+    @Override
+    public Floor loadFloor() {
+        return new Floor();
     }
 }

@@ -132,6 +132,8 @@ public class Player {
 
         float speed;//"speed" of the controller (Eg: smaller if you lightly push the left analog stick up
         Vector2f dir;//direction your controller is pointing RIGHT = POSITIVE X. DOWN = POSITIVE Y
+        boolean running=false;//if you are running
+
         //keyboard
         if(controller==-1) {
             speed = 0;
@@ -139,16 +141,23 @@ public class Player {
                     (inputHandler.isKeyPressed(GLFW_KEY_S) ? 1 : 0)-(inputHandler.isKeyPressed(GLFW_KEY_W) ? 1 : 0));
             if(dir.x==0&&dir.y==0) speed = 0;
             else speed = 1;
+
+
+            if(inputHandler.isKeyPressed(GLFW_KEY_SPACE)) beast.jump();
+            if(inputHandler.isKeyPressed(GLFW_KEY_LEFT_SHIFT)) running = true;
         }
         //controller
         else {
             dir = inputHandler.gamepadLeftJoystickPosition(controller);
             speed = dir.length();
+
+            if(inputHandler.isGamepadButtonPressed(controller,0)) beast.jump();
+            if(inputHandler.isGamepadButtonPressed(controller,9)) running = true;
         }
         //only move if the speed is high enough (as there may be noise in the analog stick)
         if(speed>0.4f) {
             if(speed>1) speed=1;
-            beast.setSpeed(speed*0.1f);
+            beast.setSpeed(speed,running);
             dir.normalize();
 
             Vector2f rotatedDir = new Vector2f();
@@ -157,7 +166,7 @@ public class Player {
             rotatedDir.x = dir.x*yawCosinus-dir.y*yawSinus;
             rotatedDir.y = dir.x*yawSinus+dir.y*yawCosinus;
             beast.setDirection(rotatedDir);
-        }else beast.setSpeed(0);
+        }else beast.setSpeed(0,false);
     }
 
     /**
