@@ -1,12 +1,14 @@
 package com.bestialMania.state.game.map;
 
+import com.bestialMania.collision.BoundingBox;
+import com.bestialMania.collision.TriangleLoader;
 import com.bestialMania.object.Object3D;
 import com.bestialMania.object.StaticObject;
 import com.bestialMania.rendering.Texture;
 import com.bestialMania.rendering.model.Model;
 import com.bestialMania.rendering.model.loader.Loader;
 import com.bestialMania.rendering.shader.Shader;
-import com.bestialMania.state.game.Floor;
+import com.bestialMania.collision.Floor;
 import com.bestialMania.state.game.Game;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -14,6 +16,11 @@ import org.joml.Vector3f;
 import java.util.Arrays;
 
 public class EmeraldValley extends MapData{
+    public EmeraldValley() {
+        boundingBox = new BoundingBox(-32,-100,-32,32,100,32);
+    }
+
+
     @Override
     public Vector3f getLightDirection() {
         return new Vector3f(-1.4f, -0.5f, 2.5f).normalize();
@@ -96,6 +103,9 @@ public class EmeraldValley extends MapData{
      */
     @Override
     public Floor loadFloor() {
-        return new Floor();
+        Floor floor = new Floor(boundingBox);
+        floor.addTriangles(TriangleLoader.loadTrianglesOBJ("res/models/plane.obj"));
+
+        return floor;
     }
 }

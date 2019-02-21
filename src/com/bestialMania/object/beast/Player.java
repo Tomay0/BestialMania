@@ -97,12 +97,12 @@ public class Player {
      * Update the beast
      */
     public void update() {
+        if(controller!=-1) if(!inputHandler.isControllerActive(controller)) System.err.println("Controller ID " + controller + " is inactive!");
         //update to correct camera direction
         cameraYaw+=cameraMoveVec.x;
         cameraPitch+=cameraMoveVec.y;
         if(cameraPitch<MIN_PITCH) cameraPitch = MIN_PITCH;
         if(cameraPitch>MAX_PITCH) cameraPitch = MAX_PITCH;
-
         /*
 
             CHANGE CAMERA ANGLES
@@ -114,7 +114,7 @@ public class Player {
             cameraMoveVec.x = (float)(mousePos.x- SCREEN_CENTER.x)* Settings.HORIZONTAL_MOUSE_SENSITIVITY;
             cameraMoveVec.y = (float)(mousePos.y- SCREEN_CENTER.y)* Settings.VERTICAL_MOUSE_SENSITIVITY;
             inputHandler.setMousePosition(SCREEN_CENTER);
-        }else{
+        }else if(inputHandler.isControllerActive(controller)){
             //right analog camera controls
             Vector2f rightAnalog = inputHandler.gamepadRightJoystickPosition(controller);
 
@@ -147,12 +147,16 @@ public class Player {
             if(inputHandler.isKeyPressed(GLFW_KEY_LEFT_SHIFT)) running = true;
         }
         //controller
-        else {
+        else if(inputHandler.isControllerActive(controller)){
             dir = inputHandler.gamepadLeftJoystickPosition(controller);
             speed = dir.length();
 
             if(inputHandler.isGamepadButtonPressed(controller,0)) beast.jump();
             if(inputHandler.isGamepadButtonPressed(controller,9)) running = true;
+        }
+        else{
+            speed = 0;
+            dir = new Vector2f(0,0);
         }
         //only move if the speed is high enough (as there may be noise in the analog stick)
         if(speed>0.4f) {

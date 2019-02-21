@@ -1,6 +1,7 @@
 package com.bestialMania.state.game;
 
 import com.bestialMania.*;
+import com.bestialMania.collision.Floor;
 import com.bestialMania.state.game.map.MapData;
 import com.bestialMania.animation.AnimatedModel;
 import com.bestialMania.object.AnimatedObject;
@@ -23,7 +24,6 @@ import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE;

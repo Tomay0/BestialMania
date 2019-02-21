@@ -2,15 +2,13 @@ package com.bestialMania.object.beast;
 
 import com.bestialMania.animation.AnimatedModel;
 import com.bestialMania.animation.Animation;
-import com.bestialMania.animation.Pose;
 import com.bestialMania.object.AnimatedObject;
 import com.bestialMania.rendering.Renderer;
 import com.bestialMania.rendering.ShaderObject;
 import com.bestialMania.rendering.Texture;
 import com.bestialMania.rendering.model.Model;
 import com.bestialMania.rendering.shader.UniformFloat;
-import com.bestialMania.rendering.shader.UniformMatrix4;
-import com.bestialMania.state.game.Floor;
+import com.bestialMania.collision.Floor;
 import com.bestialMania.state.game.Game;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
@@ -36,9 +34,17 @@ public class Beast extends AnimatedObject {
     private static final float SPEED_JUMP_MULTIPLIER = 2.0f;//increasing this makes running increase your jump height much more.
     private static final float RUN_MODIFIER = 1.25f;//running speed modifier
 
-    //character constants
+    //character constants, these depend on what beast you pick
     private float characterSpeed = 0.1f;
     private float characterJump = 0.08f;
+
+    /*
+    Collision detection:
+    Your position is located at the bottom centre.
+    Collision bounds is a cylinder of specified radius and height below.
+     */
+    private float characterRadius = 0.2f;
+    private float characterHeight = 1.2f;
 
     //PHYSICS
     private Vector3f position, positionInterpolate;//position vector(s)
