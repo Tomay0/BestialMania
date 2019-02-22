@@ -1,6 +1,7 @@
 package com.bestialMania.state.game.map;
 
 import com.bestialMania.collision.BoundingBox;
+import com.bestialMania.collision.Triangle;
 import com.bestialMania.collision.TriangleLoader;
 import com.bestialMania.object.Object3D;
 import com.bestialMania.object.StaticObject;
@@ -38,7 +39,7 @@ public class EmeraldValley extends MapData{
 
     @Override
     public String getMusic() {
-        return "res/sound/pumped_up_kicks.wav";
+        return "res/sound/spaceghostpurp.wav";
     }
 
     /**
@@ -84,16 +85,21 @@ public class EmeraldValley extends MapData{
 
         //SOME FLOOR OBJECT
         Model planeModel = Loader.loadOBJ(game.getMemoryManager(),"res/models/plane.obj");
+        Model planeModel2 = Loader.loadOBJ(game.getMemoryManager(), "res/models/plane2.obj");
         Matrix4f planeMatrix = new Matrix4f();
         Texture planeTexture = Texture.loadImageTexture3D(game.getMemoryManager(),"res/textures/rocky.png");
         if(game.usesNormalMapping()) {
             Texture planeNormalmap = Texture.loadImageTexture3D(game.getMemoryManager(), "res/textures/rocky_normal.png");
             Object3D object = new StaticObject(game, planeModel,planeMatrix,planeTexture, planeNormalmap,0.1f,4.0f);
+            Object3D object2 = new StaticObject(game, planeModel2,planeMatrix,planeTexture, planeNormalmap,0.1f,4.0f);
             game.createObject(object,3,true);
+            game.createObject(object2,3,true);
         }
         else{
             Object3D object = new StaticObject(game, planeModel,planeMatrix,planeTexture,0.1f,4.0f);
+            Object3D object2 = new StaticObject(game, planeModel2,planeMatrix,planeTexture,0.1f,4.0f);
             game.createObject(object,2,true);
+            game.createObject(object2,2,true);
         }
 
     }
@@ -105,6 +111,7 @@ public class EmeraldValley extends MapData{
     public Floor loadFloor() {
         Floor floor = new Floor(boundingBox);
         floor.addTriangles(TriangleLoader.loadTrianglesOBJ("res/models/plane.obj"));
+        floor.addTriangles(TriangleLoader.loadTrianglesOBJ("res/models/plane2.obj"));
 
         return floor;
     }

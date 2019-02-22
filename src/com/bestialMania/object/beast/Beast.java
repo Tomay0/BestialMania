@@ -20,7 +20,7 @@ import java.util.Set;
 
 public class Beast extends AnimatedObject {
     //TEST STUFF
-    private static final float songBPM = 128;//PUMPED UP KICKS = 128. Running in the 90s = 159. Spaceghostpurp = 150 Change to make jimmy sync up to the song you pick
+    private static final float songBPM = 150;//PUMPED UP KICKS = 128. Running in the 90s = 159. Spaceghostpurp = 150 Change to make jimmy sync up to the song you pick
     private int t = 0;
 
     //constants
@@ -33,6 +33,9 @@ public class Beast extends AnimatedObject {
     private static final float FAST_TURN_ANGLE = (float)Math.PI*0.6f;//you must turn at least this angle amount to do a "fast turn"
     private static final float SPEED_JUMP_MULTIPLIER = 2.0f;//increasing this makes running increase your jump height much more.
     private static final float RUN_MODIFIER = 1.25f;//running speed modifier
+
+    public static final float UPHILL_CLIMB_HEIGHT = 0.2f;//how step of an angle you can climb in one movement
+    public static final float DOWNHILL_CLIMB_HEIGHT = 0.2f;//how step of an angle you can descend in one movement
 
     //character constants, these depend on what beast you pick
     private float characterSpeed = 0.1f;
@@ -167,7 +170,7 @@ public class Beast extends AnimatedObject {
         position.x+=movementVector.x;
         position.z+=movementVector.y;
         position.y+=yspeed;
-        onGround = position.y<=floorY;
+        onGround = position.y<floorY+0.0001f;//0.001f is a small bias to prevent floating point rounding errors
         //land on the ground
         if(onGround) {
             position.y = floorY;
@@ -205,6 +208,19 @@ public class Beast extends AnimatedObject {
         positionInterpolate.z = position.z+movementVector.y;
         positionInterpolate.y = position.y+yspeed;
         floorY = floor.getHeightAtLocation(positionInterpolate);
+        //change your yspeed when on the ground to be the same as that of the slope
+        if(onGround) {
+            float heightBelowFloor = floorY-position.y;
+            if(heightBelowFloor > -DOWNHILL_CLIMB_HEIGHT && heightBelowFloor<UPHILL_CLIMB_HEIGHT) {//stick to the ground if the ground infront of you goes downhill
+                yspeed = heightBelowFloor;
+            }
+            else{//no longer on the ground, moved too fast (This should occur very rarely TODO remove the print statement)
+                onGround = false;
+                yspeed-=GRAVITY;
+                System.err.println("Fell off floor? Potential collision problems");
+                floor.printHeightAtLocation(positionInterpolate);
+            }
+        }
 
 
 

@@ -11,9 +11,11 @@ public class Triangle {
         v1 = new Vector3f(x1,y1,z1);
         v2 = new Vector3f(x2,y2,z2);
         v3 = new Vector3f(x3,y3,z3);
-
-
     }*/
+
+    /**
+     * Floor/Wall triangle of 3 vertices
+     */
     public Triangle(Vector3f v1, Vector3f v2, Vector3f v3) {
         this.v1 = new Vector3f(v1.x,v1.y,v1.z);
         this.v2 = new Vector3f(v2.x,v2.y,v2.z);
@@ -37,7 +39,8 @@ public class Triangle {
     public BoundingBox getBoundingBox() {return boundingBox;}
 
     /**
-     * Calculate the planar equation
+     * Calculate the planar equation ax + by + cz = d
+     *
      */
     public void calcPlanarEquation() {
         Vector3f v1_2 = new Vector3f(), v1_3 = new Vector3f(), cross = new Vector3f();
@@ -48,14 +51,13 @@ public class Triangle {
         b = cross.y;
         c = cross.z;
         if(a==0&&b==0&&c==0) planar = false;
-        d = a*v1.x + b*v2.y + c*v3.z;
+        d = a*v1.x + b*v1.y + c*v1.z;
     }
 
     /**
      * Gets the y value on the triangle of a point's x,z
-     * If this is not on the triangle or not within the bounds, return the minimum float value
-     * ymin is maximum distance below it must be
-     * ymax is the maximum distance above it must be
+     * If this is not on the triangle or not within the bounds, return Floor.MIN_Y
+     * the y must lie within ymin and ymax from the point's y value to be considered close enough
      */
     public float getTriangleY(Vector3f point, float ymin, float ymax) {
         if(!planar) return Floor.MIN_Y;
@@ -68,8 +70,10 @@ public class Triangle {
         return Floor.MIN_Y;
     }
 
-
-    private boolean onTriangle(Vector3f point) {
+    /**
+     * Calculate if a point is within the triangle from a top-down view
+     */
+    public boolean onTriangle(Vector3f point) {
         boolean b1 = sign(point, v1, v2) <= 0.0f;
         boolean b2 = sign(point, v2, v3) <= 0.0f;
         boolean b3 = sign(point, v3, v1) <= 0.0f;
@@ -79,14 +83,24 @@ public class Triangle {
     private float sign (Vector3f p1, Vector3f p2, Vector3f p3) {
         return (p1.x - p3.x) * (p2.z - p3.z) - (p2.x - p3.x) * (p1.z - p3.z);
     }
-    private float getY(Vector3f point) {
-        if(b==0) return Floor.MIN_Y;
 
-        return (a*point.x+c*point.z)/-b;
+    /**
+     * Get y on the triangle's plane using planar equation
+     */
+    public float getY(Vector3f point) {
+        if(b==0 || !planar) return Floor.MIN_Y;
+
+        return (a*point.x+c*point.z-d)/-b;
     }
 
-
+    /**
+     * Testing purposes only
+     */
     public String toString() {
-        return v1.x + "," + v1.y + "," + v1.z + " " + v2.x + "," + v2.y + "," + v2.z + " " + v3.x + "," + v3.y + "," + v3.z;
+        return "TRIANGLE: " + v1.x + "," + v1.y + "," + v1.z + " " + v2.x + "," + v2.y + "," + v2.z + " " + v3.x + "," + v3.y + "," + v3.z;
+    }
+
+    public String getEquation() {
+        return a + "x + " + b + "y + " + c + "z = " + d;
     }
 }

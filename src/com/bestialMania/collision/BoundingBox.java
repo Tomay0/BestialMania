@@ -68,4 +68,8 @@ public class BoundingBox {
     public boolean containsPoint(Vector3f point) {
         return (point.x >= x1 && point.x<= x2 && point.y >= y1 && point.y <=y2 && point.z>=z1 && point.z<=z2);
     }
+
+    public String toString() {
+        return x1 + "," + y1 + "," + z1 + " - " + x2 + "," + y2 + "," + z2;
+    }
 }
