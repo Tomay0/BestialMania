@@ -33,8 +33,9 @@ public class Beast extends AnimatedObject {
     private static final float FAST_TURN_ANGLE = (float)Math.PI*0.6f;//you must turn at least this angle amount to do a "fast turn"
     private static final float SPEED_JUMP_MULTIPLIER = 2.0f;//increasing this makes running increase your jump height much more.
     private static final float RUN_MODIFIER = 1.25f;//running speed modifier
+    private static final float TERMINAL_VELOCITY = 0.15f;//fastest speed you can fall
 
-    public static final float UPHILL_CLIMB_HEIGHT = 0.2f;//how step of an angle you can climb in one movement
+    public static final float UPHILL_CLIMB_HEIGHT = 0.25f;//how step of an angle you can climb in one movement. Make this larger than terminal velocity to avoid falling through the floor
     public static final float DOWNHILL_CLIMB_HEIGHT = 0.2f;//how step of an angle you can descend in one movement
 
     //character constants, these depend on what beast you pick
@@ -148,11 +149,10 @@ public class Beast extends AnimatedObject {
         if(onGround) {
             float speedMultiplier = 1;
             speedMultiplier+=movementVector.length()*SPEED_JUMP_MULTIPLIER;
+            if(yspeed<0) yspeed=0;
+            yspeed += characterJump*speedMultiplier;
 
-            yspeed = characterJump*speedMultiplier;
-
-
-            //if(turnSpeed==FAST_TURN_SPEED) yspeed = 0.3f;//SUPER MARIO BACKFLIP
+            //if(turnSpeed==FAST_TURN_SPEED) yspeed += characterJump*speedMultiplier;//SUPER MARIO BACKFLIP
         }
     }
 
@@ -204,6 +204,9 @@ public class Beast extends AnimatedObject {
 
         //Get the height at which the next
         if(!onGround) yspeed-=GRAVITY;
+        if(yspeed<-TERMINAL_VELOCITY) {
+            yspeed=-TERMINAL_VELOCITY;
+        }
         positionInterpolate.x = position.x+movementVector.x;
         positionInterpolate.z = position.z+movementVector.y;
         positionInterpolate.y = position.y+yspeed;
@@ -214,7 +217,7 @@ public class Beast extends AnimatedObject {
             if(heightBelowFloor > -DOWNHILL_CLIMB_HEIGHT && heightBelowFloor<UPHILL_CLIMB_HEIGHT) {//stick to the ground if the ground infront of you goes downhill
                 yspeed = heightBelowFloor;
             }
-            else{//this occurs if you fall off the edge of a floor triangle, also occurs
+            else{//this occurs if you fall off the edge of a floor triangle
                 onGround = false;
                 yspeed-=GRAVITY;
                 //System.err.println("Fell off floor? Potential collision problems");

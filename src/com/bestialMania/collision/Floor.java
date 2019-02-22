@@ -36,12 +36,6 @@ public class Floor {
             int minZ = (int)Math.floor(bb.getZ1()) - this.minZ;
             int maxZ = (int)Math.ceil(bb.getZ2()) - this.minZ;
 
-            if(bb.getZ2()==27.217262f) {
-                System.out.println("YEET");
-                System.out.println(minX + "-" + maxX + " " + minZ + "-" + maxZ);
-                int someZ = (int)Math.floor(21.9f) - this.minZ;
-            }
-
             for(int x = minX;x<=maxX;x++) {
                 for(int z = minZ;z<=maxZ;z++) {
                     if(x<0 || z<0 || x>=floor.length || z>=floor[0].length) continue;//out of bounds
@@ -76,7 +70,7 @@ public class Floor {
     public float getHeightAtLocation(Vector3f position) {
         float maxY = MIN_Y;
         for(Triangle triangle : trianglesAtPoint(position)) {
-            float y = triangle.getTriangleY(position, -2,Beast.UPHILL_CLIMB_HEIGHT);
+            float y = triangle.getTriangleY(position, -Beast.DOWNHILL_CLIMB_HEIGHT,Beast.UPHILL_CLIMB_HEIGHT);
             if(y>maxY) maxY = y;
         }
         return maxY;
@@ -89,7 +83,7 @@ public class Floor {
         System.out.println(position.x + "," + position.y + "," + position.z);
         float maxY = MIN_Y;
         for(Triangle triangle : trianglesAtPoint(position)) {
-            float y = triangle.getTriangleY(position,-2,Beast.UPHILL_CLIMB_HEIGHT);
+            float y = triangle.getTriangleY(position,-Beast.DOWNHILL_CLIMB_HEIGHT,Beast.UPHILL_CLIMB_HEIGHT);
             System.out.println(triangle);
             System.out.println(triangle.onTriangle(position));
             System.out.println(triangle.getEquation());
