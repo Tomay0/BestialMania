@@ -214,11 +214,11 @@ public class Beast extends AnimatedObject {
             if(heightBelowFloor > -DOWNHILL_CLIMB_HEIGHT && heightBelowFloor<UPHILL_CLIMB_HEIGHT) {//stick to the ground if the ground infront of you goes downhill
                 yspeed = heightBelowFloor;
             }
-            else{//no longer on the ground, moved too fast (This should occur very rarely TODO remove the print statement)
+            else{//this occurs if you fall off the edge of a floor triangle, also occurs
                 onGround = false;
                 yspeed-=GRAVITY;
-                System.err.println("Fell off floor? Potential collision problems");
-                floor.printHeightAtLocation(positionInterpolate);
+                //System.err.println("Fell off floor? Potential collision problems");
+                //floor.printHeightAtLocation(positionInterpolate);
             }
         }
 
@@ -271,7 +271,7 @@ public class Beast extends AnimatedObject {
         positionInterpolate.x = position.x+movementVector.x*frameInterpolation;
         positionInterpolate.z = position.z+movementVector.y*frameInterpolation;
         positionInterpolate.y = position.y+yspeed*frameInterpolation;
-        if(positionInterpolate.y<floorY) {//landing on the ground
+        if(positionInterpolate.y<floorY && yspeed<0) {//landing on the ground
             positionInterpolate.y = floorY;
         }
 
