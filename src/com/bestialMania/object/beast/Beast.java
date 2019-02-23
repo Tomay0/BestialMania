@@ -9,18 +9,18 @@ import com.bestialMania.rendering.Texture;
 import com.bestialMania.rendering.model.Model;
 import com.bestialMania.rendering.shader.UniformFloat;
 import com.bestialMania.collision.Floor;
+import com.bestialMania.sound.Sound;
+import com.bestialMania.sound.SoundSource;
 import com.bestialMania.state.game.Game;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class Beast extends AnimatedObject {
     //TEST STUFF
-    private static final float songBPM = 150;//PUMPED UP KICKS = 128. Running in the 90s = 159. Spaceghostpurp = 150 Change to make jimmy sync up to the song you pick
+    private static final float songBPM = 128;//PUMPED UP KICKS = 128. Running in the 90s = 159. Spaceghostpurp = 150 Change to make jimmy sync up to the song you pick
     private int t = 0;
 
     //constants
@@ -33,9 +33,9 @@ public class Beast extends AnimatedObject {
     private static final float FAST_TURN_ANGLE = (float)Math.PI*0.6f;//you must turn at least this angle amount to do a "fast turn"
     private static final float SPEED_JUMP_MULTIPLIER = 2.0f;//increasing this makes running increase your jump height much more.
     private static final float RUN_MODIFIER = 1.25f;//running speed modifier
-    private static final float TERMINAL_VELOCITY = 0.15f;//fastest speed you can fall
+    private static final float TERMINAL_VELOCITY = 0.5f;//fastest speed you can fall
 
-    public static final float UPHILL_CLIMB_HEIGHT = 0.25f;//how step of an angle you can climb in one movement. Make this larger than terminal velocity to avoid falling through the floor
+    public static final float UPHILL_CLIMB_HEIGHT = 0.7f;//how step of an angle you can climb in one movement. Make this larger than terminal velocity to avoid falling through the floor
     public static final float DOWNHILL_CLIMB_HEIGHT = 0.2f;//how step of an angle you can descend in one movement
 
     //character constants, these depend on what beast you pick
@@ -63,6 +63,8 @@ public class Beast extends AnimatedObject {
     private float floorY;
     private boolean onGround;
     private boolean midairTurn = false;
+    private Sound oof;
+    private List<SoundSource> sources = new ArrayList<>();
 
     //collisions
     private Floor floor;
@@ -123,6 +125,8 @@ public class Beast extends AnimatedObject {
         applyAnimation(animation);
         applyAnimation(animation2);
 
+        oof = new Sound(game.getMemoryManager(),"res/sound/oof2.wav");
+
     }
 
     /**
@@ -170,12 +174,27 @@ public class Beast extends AnimatedObject {
         position.x+=movementVector.x;
         position.z+=movementVector.y;
         position.y+=yspeed;
+        boolean inAir = !onGround;
         onGround = position.y<floorY+0.0001f;//0.001f is a small bias to prevent floating point rounding errors
         //land on the ground
         if(onGround) {
+            if(inAir) {
+                //LAND ON GROUND
+                SoundSource source = new SoundSource(oof,false,-yspeed / TERMINAL_VELOCITY);
+                source.play();
+                sources.add(source);
+            }
             position.y = floorY;
             yspeed = 0;
             midairTurn = false;
+        }
+
+        for(SoundSource source : new ArrayList<>(sources)) {
+            if(!source.isPlaying()) {
+                source.stop();
+                source.cleanUp();
+                sources.remove(source);
+            }
         }
 
 

@@ -1,5 +1,7 @@
 package com.bestialMania.sound;
 
+import com.bestialMania.Main;
+
 import static org.lwjgl.openal.AL10.*;
 
 /**
@@ -12,9 +14,16 @@ public class SoundSource {
      * Create a sound source with no modifications other than specifying if the sound should loop
      */
     public SoundSource(Sound sound, boolean loop) {
+        this(sound,loop,1.0f);
+    }
+    /**
+     * Create a sound source with loop and gain specifications
+     */
+    public SoundSource(Sound sound, boolean loop,float gain) {
+        if(!Main.AUDIO) return;
         source = alGenSources();
         alSourcef(source,AL_PITCH,1.0f);
-        alSourcef(source,AL_GAIN,1.0f);
+        alSourcef(source,AL_GAIN,gain);
         alSource3f(source,AL_POSITION,0,0,0);
         alSource3f(source,AL_VELOCITY,0,0,0);
         alSourcei(source,AL_LOOPING,loop ? AL_TRUE : AL_FALSE);
@@ -25,6 +34,8 @@ public class SoundSource {
      * Start playing the sound
      */
     public void play() {
+
+        if(!Main.AUDIO) return;
         alSourcePlay(source);
     }
 
@@ -32,6 +43,7 @@ public class SoundSource {
      * Pause the sound
      */
     public void pause() {
+        if(!Main.AUDIO) return;
         alSourcePause(source);
     }
 
@@ -39,6 +51,8 @@ public class SoundSource {
      * Stop the sound
      */
     public void stop() {
+
+        if(!Main.AUDIO) return;
         alSourceStop(source);
     }
 
@@ -46,6 +60,9 @@ public class SoundSource {
      * Returns if the sound is playing
      */
     public boolean isPlaying() {
+
+        if(!Main.AUDIO) return false;
+
         return alGetSourcei(source,AL_SOURCE_STATE) == AL_PLAYING;
     }
 
@@ -53,6 +70,7 @@ public class SoundSource {
      * Delete the sound source
      */
     public void cleanUp() {
+        if(!Main.AUDIO) return;
         alDeleteSources(source);
     }
 }

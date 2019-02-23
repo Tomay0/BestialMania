@@ -14,9 +14,9 @@ public class Settings {
     public static float HORIZONTAL_CONTROLLER_CAMERA_SENSITIVITY = 0.05f;//>mouse sensitivity
     public static float VERTICAL_CONTROLLER_CAMERA_SENSITIVITY = 0.05f;//>mouse sensitivity
 
-    public static int WIDTH = 1920;
-    public static int HEIGHT = 1080;
-    public static boolean FULLSCREEN = true;
+    public static int WIDTH = 1600;//This will automatically be changed to your monitor's resolution if fullscreen is on
+    public static int HEIGHT = 900;
+    public static boolean FULLSCREEN = false;
     public static int ANISOTROPIC_FILTERING = 2;//either off,2x,4x,8x,16x
     public static boolean ANTIALIASING = true;
     public static GraphicsSetting TEXTURE_DETAIL = GraphicsSetting.HIGH;//LOW = no texture effects. HIGH = normal mapping TODO add more texture detail stuff

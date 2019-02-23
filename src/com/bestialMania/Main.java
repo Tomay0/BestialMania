@@ -17,6 +17,7 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
 public class Main {
+    public static boolean AUDIO = true;//if audio does not load this will be set to false
     public static final double TICKS_PER_SECOND = 60;//constant tick rate at which the game updates, independent of the render time.
     private long window;// The window handle
     private long audioDevice, audioContext;
@@ -58,7 +59,11 @@ public class Main {
         glfwWindowHint(GLFW_RESIZABLE,GLFW_FALSE);
 
         // Create the window
-        window = glfwCreateWindow(Settings.WIDTH, Settings.HEIGHT, "Happiness is an illusion", Settings.FULLSCREEN ? monitor : NULL, NULL);
+        if(Settings.FULLSCREEN) {//note that in fullscreen the width/height is adjusted to your monitor's resolution
+            Settings.WIDTH = vidmode.width();
+            Settings.HEIGHT = vidmode.height();
+        }
+        window = glfwCreateWindow(Settings.WIDTH,Settings.HEIGHT,"Bestial Mania", Settings.FULLSCREEN ? monitor : NULL, NULL);
         if ( window == NULL )
             throw new RuntimeException("Failed to create the GLFW window");
 
@@ -78,19 +83,27 @@ public class Main {
 
         //OpenAL (audio)
         //some init code they tell you to use on the github
-        String defaultDevice = alcGetString(0,ALC_DEFAULT_DEVICE_SPECIFIER);
-        audioDevice = alcOpenDevice(defaultDevice);
+        if(AUDIO) {
+            try {
+                String defaultDevice = alcGetString(0, ALC_DEFAULT_DEVICE_SPECIFIER);
+                audioDevice = alcOpenDevice(defaultDevice);
 
-        int[] attributes = {0};
-        audioContext = alcCreateContext(audioDevice,attributes);
-        alcMakeContextCurrent(audioContext);
+                int[] attributes = {0};
+                audioContext = alcCreateContext(audioDevice, attributes);
+                alcMakeContextCurrent(audioContext);
 
-        ALCCapabilities alcCapabilities = ALC.createCapabilities(audioDevice);
-        ALCapabilities alCapabilities = AL.createCapabilities(alcCapabilities);
+                ALCCapabilities alcCapabilities = ALC.createCapabilities(audioDevice);
+                ALCapabilities alCapabilities = AL.createCapabilities(alcCapabilities);
 
-        if(!alCapabilities.OpenAL10) {
-            System.err.println("Open AL is not supported!");
-            System.exit(-1);
+                if (!alCapabilities.OpenAL10) {
+                    System.err.println("Open AL is not supported!");
+                    AUDIO = false;
+                }
+            }catch(Exception e) {
+                System.err.println("Could not load audio");
+                e.printStackTrace();
+                AUDIO = false;
+            }
         }
 
 
@@ -110,11 +123,14 @@ public class Main {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         //some OpenAL settings
-        alDistanceModel(AL_EXPONENT_DISTANCE_CLAMPED);//clamped = gain doesn't get higher than 1
-        alListener3f(AL_POSITION,0,0,0);//doesn't change
-        alListener3f(AL_VELOCITY,0,0,0);
-        float[] orientation = { 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f };
-        alListenerfv(AL_ORIENTATION, orientation);
+        if(AUDIO) {
+
+            alDistanceModel(AL_EXPONENT_DISTANCE_CLAMPED);//clamped = gain doesn't get higher than 1
+            alListener3f(AL_POSITION,0,0,0);//doesn't change
+            alListener3f(AL_VELOCITY,0,0,0);
+            float[] orientation = { 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f };
+            alListenerfv(AL_ORIENTATION, orientation);
+        }
 
     }
 
@@ -176,8 +192,11 @@ public class Main {
      */
     private void terminate() {
         currentState.cleanUp();//delete things from the current state
-        alcDestroyContext(audioContext);
-        alcCloseDevice(audioDevice);
+
+        if(AUDIO) {
+            alcDestroyContext(audioContext);
+            alcCloseDevice(audioDevice);
+        }
 
         glfwFreeCallbacks(window);
         glfwDestroyWindow(window);

@@ -14,7 +14,7 @@ import java.util.Map;
  */
 public class MasterRenderer {
     private List<Framebuffer> framebuffers = new ArrayList<>();
-    private Framebuffer window;
+    private Framebuffer window, windowResized;
 
     /**
      * Renders everything in the scene.

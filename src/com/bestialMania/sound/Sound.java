@@ -1,5 +1,6 @@
 package com.bestialMania.sound;
 
+import com.bestialMania.Main;
 import com.bestialMania.MemoryManager;
 import org.lwjgl.openal.AL10;
 
@@ -25,6 +26,7 @@ public class Sound {
      * Initialize a sound buffer
      */
     public Sound(MemoryManager mm, String fileName) {
+        if(!Main.AUDIO) return;
         mm.addSound(this);
 
         buffer = alGenBuffers();
@@ -48,6 +50,7 @@ public class Sound {
      * Delete the sound buffer from memory
      */
     public void cleanUp() {
+        if(!Main.AUDIO) return;
         alDeleteBuffers(buffer);
     }
 

@@ -39,7 +39,7 @@ public class EmeraldValley extends MapData{
 
     @Override
     public String getMusic() {
-        return "res/sound/spaceghostpurp.wav";
+        return "res/sound/pumped_up_kicks.wav";
     }
 
     /**
@@ -70,7 +70,7 @@ public class EmeraldValley extends MapData{
     public void loadObjects(Game game) {
         //SOME POLE OBJECT
         Model poleModel = Loader.loadOBJ(game.getMemoryManager(),"res/models/pole.obj");
-        Texture poleTexture = Texture.loadImageTexture3D(game.getMemoryManager(),"res/textures/concrete.png");
+        Texture poleTexture = Texture.loadImageTexture3D(game.getMemoryManager(),"res/textures/sexy.png");
         Matrix4f testObjectMatrix = new Matrix4f();
         testObjectMatrix.translate(2.0f,0,0.5f);
         testObjectMatrix.scale(3.0f,3.0f,3.0f);

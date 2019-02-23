@@ -39,6 +39,8 @@ public class Menu {
 
     //OPTIONS TODO: map selection, character selection, other game settings
     private List<Integer> connectedPlayers = new ArrayList<>();//list of connected control schemes (4 max). In order of who joined
+
+    //-1, 1, 2, 3
     private int mapIndex;//currently selected map corresponding the MAPS array
 
     /**
