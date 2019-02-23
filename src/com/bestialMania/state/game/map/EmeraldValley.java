@@ -70,7 +70,7 @@ public class EmeraldValley extends MapData{
     public void loadObjects(Game game) {
         //SOME POLE OBJECT
         Model poleModel = Loader.loadOBJ(game.getMemoryManager(),"res/models/pole.obj");
-        Texture poleTexture = Texture.loadImageTexture3D(game.getMemoryManager(),"res/textures/sexy.png");
+        Texture poleTexture = Texture.loadImageTexture3D(game.getMemoryManager(),"res/textures/concrete.png");
         Matrix4f testObjectMatrix = new Matrix4f();
         testObjectMatrix.translate(2.0f,0,0.5f);
         testObjectMatrix.scale(3.0f,3.0f,3.0f);
@@ -101,6 +101,12 @@ public class EmeraldValley extends MapData{
             game.createObject(object,2,true);
             game.createObject(object2,2,true);
         }
+
+        //SOME WALL OBJECT
+        Model wallModel = Loader.loadOBJ(game.getMemoryManager(), "res/models/wall.obj");
+        Texture wallTexture = Texture.loadImageTexture3D(game.getMemoryManager(),"res/textures/sexy.png");
+        Object3D wallObject = new StaticObject(game,wallModel,new Matrix4f(),wallTexture,0.5f,10.0f);
+        game.createObject(wallObject,2,true);
 
     }
 
