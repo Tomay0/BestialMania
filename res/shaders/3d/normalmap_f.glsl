@@ -15,7 +15,9 @@ out vec4 color;
 
 uniform sampler2D textureSampler;
 uniform sampler2D normalSampler;
-uniform sampler2D shadowSampler[N_SHADOWMAPS];
+uniform sampler2D shadowSampler0;
+uniform sampler2D shadowSampler1;
+uniform sampler2D shadowSampler2;
 uniform float pxSize;
 uniform int pcfCount;
 uniform float pcfSpread;
@@ -31,10 +33,15 @@ const vec3 ambient = vec3(0.4);
     Get the shadow amount for a specific shadow map
 */
 float getShadow(int shadowMap, float incrAmount) {
+
     float shadow = 0;
     for(float x = -pcfCount * pcfSpread; x <= pcfCount * pcfSpread;x+= pcfSpread) {
         for(float y = -pcfCount * pcfSpread; y <= pcfCount * pcfSpread;y+= pcfSpread) {
-            float shadowDepth = texture(shadowSampler[shadowMap],shadowSpace[shadowMap].xy + vec2(x,y) * pxSize).r;
+            float shadowDepth;
+            if(shadowMap==0) shadowDepth = texture(shadowSampler0,shadowSpace[shadowMap].xy + vec2(x,y) * pxSize).r;
+            else if(shadowMap==1) shadowDepth = texture(shadowSampler1,shadowSpace[shadowMap].xy + vec2(x,y) * pxSize).r;
+            else shadowDepth = texture(shadowSampler2,shadowSpace[shadowMap].xy + vec2(x,y) * pxSize).r;
+
             if(shadowSpace[shadowMap].z > shadowDepth ) {
                 shadow += incrAmount;
             }
