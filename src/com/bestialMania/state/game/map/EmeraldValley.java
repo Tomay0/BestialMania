@@ -1,7 +1,7 @@
 package com.bestialMania.state.game.map;
 
 import com.bestialMania.collision.BoundingBox;
-import com.bestialMania.collision.Triangle;
+import com.bestialMania.collision.CollisionHandler;
 import com.bestialMania.collision.TriangleLoader;
 import com.bestialMania.object.Object3D;
 import com.bestialMania.object.StaticObject;
@@ -9,7 +9,6 @@ import com.bestialMania.rendering.Texture;
 import com.bestialMania.rendering.model.Model;
 import com.bestialMania.rendering.model.loader.Loader;
 import com.bestialMania.rendering.shader.Shader;
-import com.bestialMania.collision.Floor;
 import com.bestialMania.state.game.Game;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -111,14 +110,15 @@ public class EmeraldValley extends MapData{
     }
 
     /**
-     * TODO load actual floor collisions
+     * Loads the floor and wall collisions
      */
     @Override
-    public Floor loadFloor() {
-        Floor floor = new Floor(boundingBox);
-        floor.addTriangles(TriangleLoader.loadTrianglesOBJ("res/models/plane.obj"));
-        floor.addTriangles(TriangleLoader.loadTrianglesOBJ("res/models/plane2.obj"));
+    public CollisionHandler loadCollisions() {
+        CollisionHandler collisionHandler = new CollisionHandler(boundingBox);
+        collisionHandler.addFloor(TriangleLoader.loadTrianglesOBJ("res/models/plane.obj"));
+        collisionHandler.addFloor(TriangleLoader.loadTrianglesOBJ("res/models/plane2.obj"));
+        collisionHandler.addWalls(TriangleLoader.loadTrianglesOBJ("res/models/wall.obj"));
 
-        return floor;
+        return collisionHandler;
     }
 }

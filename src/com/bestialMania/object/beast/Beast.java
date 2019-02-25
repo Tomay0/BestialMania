@@ -2,13 +2,14 @@ package com.bestialMania.object.beast;
 
 import com.bestialMania.animation.AnimatedModel;
 import com.bestialMania.animation.Animation;
+import com.bestialMania.collision.CollisionHandler;
+import com.bestialMania.collision.TriangleEdge;
 import com.bestialMania.object.AnimatedObject;
 import com.bestialMania.rendering.Renderer;
 import com.bestialMania.rendering.ShaderObject;
 import com.bestialMania.rendering.Texture;
 import com.bestialMania.rendering.model.Model;
 import com.bestialMania.rendering.shader.UniformFloat;
-import com.bestialMania.collision.Floor;
 import com.bestialMania.sound.Sound;
 import com.bestialMania.sound.SoundSource;
 import com.bestialMania.state.game.Game;
@@ -55,19 +56,21 @@ public class Beast extends AnimatedObject {
     private Vector2f movementVector;//current movement vector
     private Vector2f intendedMovementVector;//intended movement vector to accelerate towards
     private Vector2f movementDirection;//intended direction to move towards
+    private Vector2f wallPushVector = new Vector2f();//the vector that a wall pushes you out with
     private float angleTarget;//intended angle to face towards
     private float angle;//angle the model is facing TODO possibly animate turning around better
     private float speed;//current intended speed
     private float turnSpeed = TURN_SPEED;//turning speed
     private float yspeed;
     private float floorY;
+    //private float wallIntersect = 1;//If not 1, you will collide into a wall this ratio between ticks. Eg: wallIntersect = 0.5 will stop you at a wall halfway through the frame
     private boolean onGround;
     private boolean midairTurn = false;
     private Sound oof;
     private List<SoundSource> sources = new ArrayList<>();
 
     //collisions
-    private Floor floor;
+    private CollisionHandler collisionHandler;
 
     //texture
     private Texture texture;
@@ -80,7 +83,7 @@ public class Beast extends AnimatedObject {
      */
     public Beast(Game game, AnimatedModel animatedModel, Texture texture){
         super(game, animatedModel, new Matrix4f());
-        this.floor = game.getFloor();
+        this.collisionHandler = game.getCollisionHandler();
         this.texture = texture;
         position = new Vector3f(0,0,0);//TODO have some sort of spawn point
         angle = 0;
@@ -92,7 +95,7 @@ public class Beast extends AnimatedObject {
         angleTarget = angle;
         speed = 0;
         yspeed = 0;
-        floorY = floor.getHeightAtLocation(position);
+        floorY = collisionHandler.getHeightAtLocation(position);
         onGround = position.y<=floorY;
         if(onGround) position.y=floorY;
 
@@ -171,8 +174,8 @@ public class Beast extends AnimatedObject {
     @Override
     public void update() {
         //Please update the position BEFORE you change the speed and direction
-        position.x+=movementVector.x;
-        position.z+=movementVector.y;
+        position.x+=movementVector.x+wallPushVector.x;
+        position.z+=movementVector.y+wallPushVector.y;
         position.y+=yspeed;
         boolean inAir = !onGround;
         onGround = position.y<floorY+0.0001f;//0.001f is a small bias to prevent floating point rounding errors
@@ -188,6 +191,14 @@ public class Beast extends AnimatedObject {
             yspeed = 0;
             midairTurn = false;
         }
+        //crash into a wall
+        /*if(wallIntersect!=1) {
+            movementVector.x = 0;
+            movementVector.y = 0;
+            SoundSource source = new SoundSource(oof,false);
+            source.play();
+            sources.add(source);
+        }*/
 
         for(SoundSource source : new ArrayList<>(sources)) {
             if(!source.isPlaying()) {
@@ -196,7 +207,6 @@ public class Beast extends AnimatedObject {
                 sources.remove(source);
             }
         }
-
 
         //acceleration towards intended movement
         intendedMovementVector.x = movementDirection.x*speed;
@@ -221,6 +231,7 @@ public class Beast extends AnimatedObject {
             if(movementVector.y<intendedMovementVector.y) movementVector.y = intendedMovementVector.y;
         }
 
+
         //Get the height at which the next
         if(!onGround) yspeed-=GRAVITY;
         if(yspeed<-TERMINAL_VELOCITY) {
@@ -229,7 +240,8 @@ public class Beast extends AnimatedObject {
         positionInterpolate.x = position.x+movementVector.x;
         positionInterpolate.z = position.z+movementVector.y;
         positionInterpolate.y = position.y+yspeed;
-        floorY = floor.getHeightAtLocation(positionInterpolate);
+
+        floorY = collisionHandler.getHeightAtLocation(positionInterpolate);
         //change your yspeed when on the ground to be the same as that of the slope
         if(onGround) {
             float heightBelowFloor = floorY-position.y;
@@ -243,6 +255,12 @@ public class Beast extends AnimatedObject {
                 //floor.printHeightAtLocation(positionInterpolate);
             }
         }
+        positionInterpolate.y+=0.001f;//slight bias so you slide over the top of walls but not underneath
+        if(!collisionHandler.getWallIntersection(positionInterpolate,characterRadius,wallPushVector)) {
+            wallPushVector.x=0;
+            wallPushVector.y=0;
+        }
+
 
 
 
@@ -289,9 +307,11 @@ public class Beast extends AnimatedObject {
      */
     @Override
     public void interpolate(float frameInterpolation) {
+        float positionInterpolation = frameInterpolation;
+        //if(frameInterpolation > wallIntersect) positionInterpolation = wallIntersect;
         //interpolate position
-        positionInterpolate.x = position.x+movementVector.x*frameInterpolation;
-        positionInterpolate.z = position.z+movementVector.y*frameInterpolation;
+        positionInterpolate.x = position.x+movementVector.x*positionInterpolation;
+        positionInterpolate.z = position.z+movementVector.y*positionInterpolation;
         positionInterpolate.y = position.y+yspeed*frameInterpolation;
         if(positionInterpolate.y<floorY && yspeed<0) {//landing on the ground
             positionInterpolate.y = floorY;

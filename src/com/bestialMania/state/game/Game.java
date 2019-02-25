@@ -1,7 +1,7 @@
 package com.bestialMania.state.game;
 
 import com.bestialMania.*;
-import com.bestialMania.collision.Floor;
+import com.bestialMania.collision.CollisionHandler;
 import com.bestialMania.state.game.map.MapData;
 import com.bestialMania.animation.AnimatedModel;
 import com.bestialMania.object.AnimatedObject;
@@ -76,7 +76,7 @@ public class Game implements State, InputListener {
     private ShadowBox[][] shadowBoxes;
 
     //collisions
-    private Floor floor;
+    private CollisionHandler collisionHandler;
 
     //some variables
     private boolean normalMapping;
@@ -144,7 +144,7 @@ public class Game implements State, InputListener {
         shadowBoxes = new ShadowBox[controllers.size()][shadowDistanceValues.size()-1];
 
         //load floor
-        floor = map.loadFloor();
+        collisionHandler = map.loadCollisions();
 
         //load all game related shaders
         loadShaders();
@@ -468,7 +468,7 @@ public class Game implements State, InputListener {
     /**
      * Get the floor collisions
      */
-    public Floor getFloor() {return floor;}
+    public CollisionHandler getCollisionHandler() {return collisionHandler;}
 
 
     //unneeded most likely as all remove will be in cleanUp

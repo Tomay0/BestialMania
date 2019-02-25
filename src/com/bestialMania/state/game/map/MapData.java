@@ -1,7 +1,7 @@
 package com.bestialMania.state.game.map;
 
 import com.bestialMania.collision.BoundingBox;
-import com.bestialMania.collision.Floor;
+import com.bestialMania.collision.CollisionHandler;
 import com.bestialMania.state.game.Game;
 import org.joml.Vector3f;
 
@@ -20,6 +20,6 @@ public abstract class MapData {
     public abstract void loadShaders(Game game);
     public abstract void loadObjects(Game game);
 
-    public abstract Floor loadFloor();
+    public abstract CollisionHandler loadCollisions();
 
 }

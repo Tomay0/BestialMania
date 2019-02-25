@@ -1,5 +1,6 @@
 package com.bestialMania.collision;
 
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 public class Triangle {
@@ -7,6 +8,8 @@ public class Triangle {
     private float a,b,c,d;//ax +by+cz=d
     private boolean planar = true;
     private BoundingBox boundingBox;
+    private TriangleEdge[] edges = new TriangleEdge[3];//edges
+    private Vector3f[] intersects = new Vector3f[]{new Vector3f(),new Vector3f()};//for calculating intersections
     /*public Triangle(float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3) {
         v1 = new Vector3f(x1,y1,z1);
         v2 = new Vector3f(x2,y2,z2);
@@ -17,10 +20,17 @@ public class Triangle {
      * Floor/Wall triangle of 3 vertices
      */
     public Triangle(Vector3f v1, Vector3f v2, Vector3f v3) {
+        //vertices
         this.v1 = new Vector3f(v1.x,v1.y,v1.z);
         this.v2 = new Vector3f(v2.x,v2.y,v2.z);
         this.v3 = new Vector3f(v3.x,v3.y,v3.z);
+        //edges
+        edges[0] = new TriangleEdge(v1,v2);
+        edges[1] = new TriangleEdge(v1,v3);
+        edges[2] = new TriangleEdge(v3,v2);
+        //bounding box
         calcBoundingBox(v1.x,v1.y,v1.z,v2.x,v2.y,v2.z,v3.x,v3.y,v3.z);
+        //planar equation
         calcPlanarEquation();
     }
 
@@ -60,14 +70,14 @@ public class Triangle {
      * the y must lie within ymin and ymax from the point's y value to be considered close enough
      */
     public float getTriangleY(Vector3f point, float ymin, float ymax) {
-        if(!planar) return Floor.MIN_Y;
+        if(!planar) return CollisionHandler.MIN_Y;
 
         if(onTriangle(point)) {
             float y = getY(point);
             if(y>point.y+ymin && y<point.y+ymax) return y;
 
         }
-        return Floor.MIN_Y;
+        return CollisionHandler.MIN_Y;
     }
 
     /**
@@ -88,9 +98,25 @@ public class Triangle {
      * Get y on the triangle's plane using planar equation
      */
     public float getY(Vector3f point) {
-        if(b==0 || !planar) return Floor.MIN_Y;
+        if(b==0 || !planar) return CollisionHandler.MIN_Y;
 
         return (a*point.x+c*point.z-d)/-b;
+    }
+
+    /**
+     * calculate the intersection between p1 and p2 through the plane.
+     * returns an interpolated value s, which is a linear interpolation between the 2 vectors where the intersection is.
+     * return 2 if there is none
+     */
+    public float getLineIntersection(Vector3f p1,Vector3f p2) {
+        float p = d - (a * p1.x + b * p1.y + c * p1.z);
+        float q = a * (p2.x-p1.x) + b * (p2.y-p1.y) + c * (p2.z-p1.z);
+        if(q==0) return 1;
+
+        float s = p/q;
+        if(s>1||s<0) return 1;
+
+        return s;
     }
 
     /**
@@ -102,5 +128,95 @@ public class Triangle {
 
     public String getEquation() {
         return a + "x + " + b + "y + " + c + "z = " + d;
+    }
+
+    /**
+     * Works out if this triangle intersects the circle at the specified positon and radius
+     * Aligned with the X/Z axis
+     *
+     * Returns null if no such intersection exists
+     */
+    public boolean getIntersectWithCircle(Vector3f position, float radius, Vector2f wallPushVector) {
+        if(a==0 && c==0) return false;//wall is parallel
+        if(position.y<=boundingBox.getY1() || position.y>=boundingBox.getY2()) return false;//out of y range
+        int nIntersects = 0;
+        for(int i = 0;i<3;i++) {
+            TriangleEdge edge = edges[i];
+            if(edge.getIntersection(position.y,intersects[nIntersects])) nIntersects++;
+
+            if(nIntersects==2) break;
+        }
+        //there should be 2 intersections forming a line that the circle collides with at the specified y. Collision follows
+        if(nIntersects<2) {
+            System.err.println("Error with wall intersection calculation");
+            return false;
+        }
+        System.out.println(this);
+        System.out.println(position.x + "," + position.y + "," + position.z);
+        System.out.println("Intersects with plane found");
+        System.out.println(intersects[0].x + "," + intersects[0].z);
+        System.out.println(intersects[1].x + "," + intersects[1].z);
+
+        //Get the closest point to the line from the position
+        Vector3f ab = new Vector3f(intersects[1].x-intersects[0].x,position.y,intersects[1].z-intersects[0].z);
+        Vector3f ap = new Vector3f(position.x-intersects[0].x,position.y,position.z-intersects[0].z);
+        System.out.println(ab.x + "," + ab.z);
+
+        float APdotAB = ab.x*ap.x + ab.z*ap.z;
+        float ABsquare = ab.x*ab.x + ab.z*ab.z;
+        if(ABsquare==0) {
+            System.err.println("Error with wall intersection calculation");
+            return false;
+        }
+
+        float s = APdotAB/ABsquare;
+        System.out.println(s);
+        Vector3f closest = new Vector3f();
+        if(s<0) closest = intersects[0];
+        else if(s>1) closest = intersects[1];
+        else {
+            closest.x = intersects[0].x + s*ab.x;
+            closest.z = intersects[0].z + s*ab.z;
+            closest.y = intersects[0].y;
+        }
+        //check if the closest point is within the circle
+        float dx = closest.x-position.x;
+        float dz = closest.x-position.x;
+        if(dx*dx+dz*dz > radius*radius) return false;//the wall is outside the circle
+        System.out.println("line inside the circle");
+
+        //calculate the vector that the wall should push you back
+        if(s<0||s>1) {
+            closest.x = intersects[0].x + s*ab.x;
+            closest.z = intersects[0].z + s*ab.z;
+            closest.y = intersects[0].y;
+        }
+
+        wallPushVector.x = position.x-closest.x;
+        wallPushVector.y = position.z-closest.z;
+        float len = wallPushVector.length();
+        if(len==0) {
+            System.err.println("inside wall");
+            //somehow your character is in the exact middle of the wall, I won't make any collisions occur in this scenario
+            return false;
+        }
+        float scale = (radius-len)/len;
+        wallPushVector.mul(scale);
+
+        return true;
+        /*DONT REMOVE THIS PLEASE UNTIL I KNOW IT WORKS
+        //line in the form x = h
+        if(c==0) {
+            float h = (d-b*position.y)/a;
+
+        }
+        //line in the form z = mx + h
+        else {
+            float m = -a/c;
+            float h = (d-b*position.y)/c;
+
+
+        }
+        */
     }
 }
