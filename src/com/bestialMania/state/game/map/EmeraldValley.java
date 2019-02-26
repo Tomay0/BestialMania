@@ -57,7 +57,7 @@ public class EmeraldValley extends MapData{
         //normalmap shader
         if(game.usesNormalMapping()) {
             Shader normalmapShader = new Shader("res/shaders/3d/normalmap_v.glsl","res/shaders/3d/normalmap_f.glsl");
-            normalmapShader.bindTextureUnits(Arrays.asList("textureSampler","normalSampler","shadowSampler[0]","shadowSampler[1]","shadowSampler[2]"));
+            normalmapShader.bindTextureUnits(Arrays.asList("textureSampler","normalSampler","shadowSampler0","shadowSampler1","shadowSampler2"));
             game.loadShader(normalmapShader,true,true,true,false);
         }
 
