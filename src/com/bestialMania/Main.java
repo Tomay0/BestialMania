@@ -16,7 +16,7 @@ import static org.lwjgl.openal.AL11.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
-public class Main {
+public class Main implements Runnable{
     public static boolean AUDIO = true;//if audio does not load this will be set to false
     public static final double TICKS_PER_SECOND = 60;//constant tick rate at which the game updates, independent of the render time.
     private long window;// The window handle
@@ -26,7 +26,7 @@ public class Main {
     private State currentState;
     private boolean running = true;
 
-
+    @Override
     public void run() {
         init();
         loop();
@@ -223,6 +223,7 @@ public class Main {
      */
     public static void main(String[] args) {
         Main main = new Main();
-        main.run();
+        Thread thread = new Thread(main);
+        thread.start();
     }
 }
