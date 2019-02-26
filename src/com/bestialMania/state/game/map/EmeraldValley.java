@@ -106,10 +106,6 @@ public class EmeraldValley extends MapData{
         Texture wallTexture = Texture.loadImageTexture3D(game.getMemoryManager(),"res/textures/sexy.png");
         Object3D wallObject = new StaticObject(game,wallModel,new Matrix4f(),wallTexture,0.5f,10.0f);
         game.createObject(wallObject,2,true);
-        //SOME WALL OBJECT
-        Model wallModel2 = Loader.loadOBJ(game.getMemoryManager(), "res/models/wall2.obj");
-        Object3D wallObject2 = new StaticObject(game,wallModel2,new Matrix4f(),wallTexture,0.5f,10.0f);
-        game.createObject(wallObject2,2,true);
 
     }
 
@@ -122,7 +118,10 @@ public class EmeraldValley extends MapData{
         collisionHandler.addFloor(TriangleLoader.loadTrianglesOBJ("res/models/plane.obj"));
         collisionHandler.addFloor(TriangleLoader.loadTrianglesOBJ("res/models/plane2.obj"));
         collisionHandler.addWalls(TriangleLoader.loadTrianglesOBJ("res/models/wall.obj"));
-        collisionHandler.addWalls(TriangleLoader.loadTrianglesOBJ("res/models/wall2.obj"));
+        Matrix4f testObjectMatrix = new Matrix4f();
+        testObjectMatrix.translate(2.0f,0,0.5f);
+        testObjectMatrix.scale(3.0f,3.0f,3.0f);
+        collisionHandler.addWalls(TriangleLoader.loadTrianglesOBJ("res/models/wall2.obj",testObjectMatrix));
 
         return collisionHandler;
     }

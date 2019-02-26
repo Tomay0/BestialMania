@@ -255,20 +255,10 @@ public class Beast extends AnimatedObject {
                 //floor.printHeightAtLocation(positionInterpolate);
             }
         }
-        System.out.println();
         positionInterpolate.y+=0.001f;//slight bias so you slide over the top of walls but not underneath
         if(!collisionHandler.getWallIntersection(positionInterpolate,characterRadius,wallPushVector)) {
             wallPushVector.x=0;
             wallPushVector.y=0;
-            System.out.println("No collision");
-            System.out.println(position.x + "," + position.z);
-            System.out.println(positionInterpolate.x + "," + positionInterpolate.z);
-        }else{
-            System.out.println("Collision");
-            //System.out.println(position.x + "," + position.z);
-            //System.out.println(positionInterpolate.x + "," + positionInterpolate.z);
-            //System.out.println(wallPushVector.x + "," + wallPushVector.y);
-
         }
 
         //FAST TURN AROUND

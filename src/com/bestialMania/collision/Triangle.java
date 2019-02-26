@@ -175,14 +175,8 @@ public class Triangle {
 
         //check if the closest point is within the circle
         float dx = closest.x-position.x;
-        float dz = closest.x-position.x;
-        float dsquare = dx*dx+dz*dz;
-        float rsquare = radius*radius;
-        System.out.println("intersection found");
-        System.out.println(position.x + "," + position.y + "," + position.z);
-        System.out.println(closest.x + "," + closest.z);
-        System.out.println(Math.sqrt(dsquare) + ">" + Math.sqrt(rsquare));
-        if(dsquare > rsquare) return false;//the wall is outside the circle
+        float dz = closest.z-position.z;
+        if(dx*dx+dz*dz > radius*radius) return false;//the wall is outside the circle
 
         //calculate the vector that the wall should push you back
         if(s<0||s>1) {
@@ -202,31 +196,6 @@ public class Triangle {
         float scale = (radius-len)/len;
         wallPushVector.mul(scale);
 
-        /*System.out.println(this);
-        System.out.println(getEquation());
-        System.out.println(intersects[0].x + "," + intersects[0].z);
-        System.out.println(intersects[1].x + "," + intersects[1].z);
-        System.out.println(position.x + "," + position.y + "," + position.z);
-        System.out.println("-");
-        System.out.println("AB:" + ab.x + "," + ab.z);
-        System.out.println("AP:" + ap.x + "," + ap.z);
-        System.out.println("-");
-        System.out.println(radius-ap.x);
-        System.out.println(wallPushVector.x + "," + wallPushVector.y);*/
         return true;
-        /*DONT REMOVE THIS PLEASE UNTIL I KNOW IT WORKS
-        //line in the form x = h
-        if(c==0) {
-            float h = (d-b*position.y)/a;
-
-        }
-        //line in the form z = mx + h
-        else {
-            float m = -a/c;
-            float h = (d-b*position.y)/c;
-
-
-        }
-        */
     }
 }
