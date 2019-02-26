@@ -165,8 +165,8 @@ public class CollisionHandler {
         int minX,maxX,minZ,maxZ;
         minX = (int)Math.floor(position.x-radius) - this.minX;
         maxX = (int)Math.floor(position.x+radius) - this.minX;
-        minZ = (int)Math.floor(position.x-radius) - this.minZ;
-        maxZ = (int)Math.floor(position.x+radius) - this.minZ;
+        minZ = (int)Math.floor(position.z-radius) - this.minZ;
+        maxZ = (int)Math.floor(position.z+radius) - this.minZ;
         for(Triangle triangle : wallsAtArea(minX,maxX,minZ,maxZ)) {
             if(triangle.getIntersectWithCircle(position,radius,wallPushVector)) return true;
         }

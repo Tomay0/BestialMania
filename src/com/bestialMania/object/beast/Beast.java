@@ -48,7 +48,7 @@ public class Beast extends AnimatedObject {
     Your position is located at the bottom centre.
     Collision bounds is a cylinder of specified radius and height below.
      */
-    private float characterRadius = 0.2f;
+    private float characterRadius = 0.3f;
     private float characterHeight = 1.2f;
 
     //PHYSICS
@@ -255,14 +255,21 @@ public class Beast extends AnimatedObject {
                 //floor.printHeightAtLocation(positionInterpolate);
             }
         }
+        System.out.println();
         positionInterpolate.y+=0.001f;//slight bias so you slide over the top of walls but not underneath
         if(!collisionHandler.getWallIntersection(positionInterpolate,characterRadius,wallPushVector)) {
             wallPushVector.x=0;
             wallPushVector.y=0;
+            System.out.println("No collision");
+            System.out.println(position.x + "," + position.z);
+            System.out.println(positionInterpolate.x + "," + positionInterpolate.z);
+        }else{
+            System.out.println("Collision");
+            //System.out.println(position.x + "," + position.z);
+            //System.out.println(positionInterpolate.x + "," + positionInterpolate.z);
+            //System.out.println(wallPushVector.x + "," + wallPushVector.y);
+
         }
-
-
-
 
         //FAST TURN AROUND
         if(getAngleDifference(angle,angleTarget)>FAST_TURN_ANGLE) {
@@ -310,8 +317,8 @@ public class Beast extends AnimatedObject {
         float positionInterpolation = frameInterpolation;
         //if(frameInterpolation > wallIntersect) positionInterpolation = wallIntersect;
         //interpolate position
-        positionInterpolate.x = position.x+movementVector.x*positionInterpolation;
-        positionInterpolate.z = position.z+movementVector.y*positionInterpolation;
+        positionInterpolate.x = position.x+(wallPushVector.x+movementVector.x)*positionInterpolation;
+        positionInterpolate.z = position.z+(wallPushVector.y+movementVector.y)*positionInterpolation;
         positionInterpolate.y = position.y+yspeed*frameInterpolation;
         if(positionInterpolate.y<floorY && yspeed<0) {//landing on the ground
             positionInterpolate.y = floorY;
