@@ -107,6 +107,21 @@ public class EmeraldValley extends MapData{
         Object3D wallObject = new StaticObject(game,wallModel,new Matrix4f(),wallTexture,0.5f,10.0f);
         game.createObject(wallObject,2,true);
 
+        //STAIRS
+        Model stairsModel = Loader.loadOBJ(game.getMemoryManager(),"res/models/stairs.obj");
+        Matrix4f stairMatrix = new Matrix4f();
+        stairMatrix.translate(-10,0,0);
+        stairMatrix.scale(5,1,5);
+        if(game.usesNormalMapping()) {
+            Texture stairsNormalmap = Texture.loadImageTexture3D(game.getMemoryManager(), "res/textures/concrete_normal.png");
+            Object3D object = new StaticObject(game, stairsModel,stairMatrix,poleTexture, stairsNormalmap,0.1f,4.0f);
+            game.createObject(object,3,true);
+        }
+        else{
+            Object3D object = new StaticObject(game, stairsModel,stairMatrix,poleTexture,0.1f,4.0f);
+            game.createObject(object,2,true);
+        }
+
     }
 
     /**
@@ -123,6 +138,11 @@ public class EmeraldValley extends MapData{
         testObjectMatrix.scale(3.0f,3.0f,3.0f);
         collisionHandler.addWalls(TriangleLoader.loadTrianglesOBJ("res/models/wall2.obj",testObjectMatrix));
 
+        Matrix4f stairMatrix = new Matrix4f();
+        stairMatrix.translate(-10,0,0);
+        stairMatrix.scale(5,1,5);
+        collisionHandler.addFloor(TriangleLoader.loadTrianglesOBJ("res/models/stairFloor.obj",stairMatrix));
+        collisionHandler.addWalls(TriangleLoader.loadTrianglesOBJ("res/models/stairWalls.obj",stairMatrix));
         return collisionHandler;
     }
 }

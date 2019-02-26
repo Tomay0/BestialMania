@@ -9,7 +9,10 @@ public class Triangle {
     private boolean planar = true;
     private BoundingBox boundingBox;
     private TriangleEdge[] edges = new TriangleEdge[3];//edges
+
     private Vector3f[] intersects = new Vector3f[]{new Vector3f(),new Vector3f()};//for calculating intersections
+
+
     /*public Triangle(float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3) {
         v1 = new Vector3f(x1,y1,z1);
         v2 = new Vector3f(x2,y2,z2);
@@ -131,14 +134,13 @@ public class Triangle {
     }
 
     /**
-     * Works out if this triangle intersects the circle at the specified positon and radius
-     * Aligned with the X/Z axis
+     * Returns a vector which pushes the circle at least "radius" away from the wall.
      *
-     * Returns null if no such intersection exists
+     * Returns null if the circle does not collide with the wall.
      */
-    public boolean getIntersectWithCircle(Vector3f position, float radius, Vector2f wallPushVector) {
-        if(a==0 && c==0) return false;//wall is parallel
-        if(position.y<=boundingBox.getY1() || position.y>=boundingBox.getY2()) return false;//out of y range
+    public WallCollision getWallCollision(Vector3f position, float radius) {
+        if(a==0 && c==0) return null;//wall is parallel
+        if(position.y<=boundingBox.getY1() || position.y>=boundingBox.getY2()) return null;//out of y range
         int nIntersects = 0;
         for(int i = 0;i<3;i++) {
             TriangleEdge edge = edges[i];
@@ -150,52 +152,63 @@ public class Triangle {
         //there should be 2 intersections forming a line that the circle collides with at the specified y. Collision follows
         if(nIntersects<2) {
             System.err.println("Error with wall intersection calculation");
-            return false;
+            return null;
         }
         //Get the closest point to the line from the position
-        Vector3f ab = new Vector3f(intersects[1].x-intersects[0].x,position.y,intersects[1].z-intersects[0].z);
-        Vector3f ap = new Vector3f(position.x-intersects[0].x,position.y,position.z-intersects[0].z);
+        float abx = intersects[1].x-intersects[0].x;
+        float abz = intersects[1].z-intersects[0].z;
+        float apx = position.x-intersects[0].x;
+        float apz = position.z-intersects[0].z;
 
-        float APdotAB = ab.x*ap.x + ab.z*ap.z;
-        float ABsquare = ab.x*ab.x + ab.z*ab.z;
+        float APdotAB = abx*apx + abz*apz;
+        float ABsquare = abx*abx + abz*abz;
         if(ABsquare==0) {
             System.err.println("Error with wall intersection calculation");
-            return false;
+            return null;
         }
 
         float s = APdotAB/ABsquare;
-        Vector3f closest = new Vector3f();
-        if(s<0) closest = intersects[0];
-        else if(s>1) closest = intersects[1];
+        float cx,cz;
+        if(s<0) {
+            cx = intersects[0].x;
+            cz = intersects[0].z;
+        }
+        else if(s>1) {
+            cx = intersects[1].x;
+            cz = intersects[1].z;
+        }
         else {
-            closest.x = intersects[0].x + s*ab.x;
-            closest.z = intersects[0].z + s*ab.z;
-            closest.y = intersects[0].y;
+            cx = intersects[0].x + s*abx;
+            cz = intersects[0].z + s*abz;
         }
 
         //check if the closest point is within the circle
-        float dx = closest.x-position.x;
-        float dz = closest.z-position.z;
-        if(dx*dx+dz*dz > radius*radius) return false;//the wall is outside the circle
+        float dx = cx-position.x;
+        float dz = cz-position.z;
+        if(dx*dx+dz*dz > radius*radius - 0.001f) return null;//the wall is outside the circle
 
         //calculate the vector that the wall should push you back
         if(s<0||s>1) {
-            closest.x = intersects[0].x + s*ab.x;
-            closest.z = intersects[0].z + s*ab.z;
-            closest.y = intersects[0].y;
+            cx = intersects[0].x + s*abx;
+            cz = intersects[0].z + s*abz;
         }
-
-        wallPushVector.x = position.x-closest.x;
-        wallPushVector.y = position.z-closest.z;
-        float len = wallPushVector.length();
+        float wx = position.x-cx;
+        float wy = position.z-cz;
+        float len = (float)Math.sqrt(wx*wx+wy*wy);
         if(len==0) {
             System.err.println("inside wall");
             //somehow your character is in the exact middle of the wall, I won't make any collisions occur in this scenario
-            return false;
+            return null;
         }
         float scale = (radius-len)/len;
-        wallPushVector.mul(scale);
+        wx*=scale;
+        wy*=scale;
+        float order = 0;
+        if(s<0) order = -s;
+        else if(s>1) order = s-1;
 
-        return true;
+
+
+        return new WallCollision(this,wx,wy,order);
     }
 }

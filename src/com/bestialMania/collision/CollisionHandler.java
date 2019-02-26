@@ -4,8 +4,7 @@ import com.bestialMania.object.beast.Beast;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class CollisionHandler {
 
@@ -167,10 +166,49 @@ public class CollisionHandler {
         maxX = (int)Math.floor(position.x+radius) - this.minX;
         minZ = (int)Math.floor(position.z-radius) - this.minZ;
         maxZ = (int)Math.floor(position.z+radius) - this.minZ;
-        for(Triangle triangle : wallsAtArea(minX,maxX,minZ,maxZ)) {
-            if(triangle.getIntersectWithCircle(position,radius,wallPushVector)) return true;
+        wallPushVector.x = 0;
+        wallPushVector.y = 0;
+
+        List<WallCollision> wallCollisions = new ArrayList<>();
+
+        Set<Triangle> triangleSet = wallsAtArea(minX,maxX,minZ,maxZ);
+
+        for(Triangle triangle : triangleSet) {
+            WallCollision wallCollision = triangle.getWallCollision(position,radius);
+
+            if(wallCollision!=null) {
+                wallCollisions.add(wallCollision);
+            }
         }
 
-        return false;
+        //do all wall collisions in the right order
+        while(wallCollisions.size()>0) {
+
+            Collections.sort(wallCollisions);
+
+            //update wall push vector
+            WallCollision w = wallCollisions.get(0);
+            wallPushVector.x+=w.getX();
+            wallPushVector.y+=w.getY();
+            position.x+=w.getX();
+            position.z+=w.getY();
+
+            //
+            wallCollisions.remove(w);
+            triangleSet.clear();
+            for(WallCollision wallCollision : wallCollisions) triangleSet.add(wallCollision.getTriangle());
+            wallCollisions.clear();
+
+            for(Triangle triangle : triangleSet) {
+                WallCollision wallCollision2 = triangle.getWallCollision(position,radius);
+                if(wallCollision2!=null) {
+                    wallCollisions.add(wallCollision2);
+                }
+            }
+        }
+
+
+        if(wallPushVector.x==0&&wallPushVector.y==0) return false;
+        return true;
     }
 }

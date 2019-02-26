@@ -38,6 +38,7 @@ public class Beast extends AnimatedObject {
 
     public static final float UPHILL_CLIMB_HEIGHT = 0.7f;//how step of an angle you can climb in one movement. Make this larger than terminal velocity to avoid falling through the floor
     public static final float DOWNHILL_CLIMB_HEIGHT = 0.2f;//how step of an angle you can descend in one movement
+    public static final float WALL_CLIMB_BIAS = 0.1f;//your character can go over walls this high
 
     //character constants, these depend on what beast you pick
     private float characterSpeed = 0.1f;
@@ -48,7 +49,7 @@ public class Beast extends AnimatedObject {
     Your position is located at the bottom centre.
     Collision bounds is a cylinder of specified radius and height below.
      */
-    private float characterRadius = 0.3f;
+    private float characterRadius = 0.25f;
     private float characterHeight = 1.2f;
 
     //PHYSICS
@@ -255,7 +256,8 @@ public class Beast extends AnimatedObject {
                 //floor.printHeightAtLocation(positionInterpolate);
             }
         }
-        positionInterpolate.y+=0.001f;//slight bias so you slide over the top of walls but not underneath
+        if(positionInterpolate.y<floorY) positionInterpolate.y = floorY;
+        positionInterpolate.y+=WALL_CLIMB_BIAS;//slight bias so you slide over the top of walls but not underneath
         if(!collisionHandler.getWallIntersection(positionInterpolate,characterRadius,wallPushVector)) {
             wallPushVector.x=0;
             wallPushVector.y=0;
