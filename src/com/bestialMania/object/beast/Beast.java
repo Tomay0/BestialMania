@@ -36,9 +36,9 @@ public class Beast extends AnimatedObject {
     private static final float RUN_MODIFIER = 1.25f;//running speed modifier
     private static final float TERMINAL_VELOCITY = 0.5f;//fastest speed you can fall
 
-    public static final float UPHILL_CLIMB_HEIGHT = 0.7f;//how step of an angle you can climb in one movement. Make this larger than terminal velocity to avoid falling through the floor
+    public static final float UPHILL_CLIMB_HEIGHT = 0.7f;//how step of an angle you can climb in one movement. Make this larger than terminal velocity to avoid falling through the floor. Note that you will not climb this height if there is a wall in the way
     public static final float DOWNHILL_CLIMB_HEIGHT = 0.2f;//how step of an angle you can descend in one movement
-    public static final float WALL_CLIMB_BIAS = 0.1f;//your character can go over walls this high
+    public static final float WALL_CLIMB_BIAS = 0.1f;//your character can go over walls this high, note that if thi
 
     //character constants, these depend on what beast you pick
     private float characterSpeed = 0.1f;
@@ -258,10 +258,7 @@ public class Beast extends AnimatedObject {
         }
         if(positionInterpolate.y<floorY) positionInterpolate.y = floorY;
         positionInterpolate.y+=WALL_CLIMB_BIAS;//slight bias so you slide over the top of walls but not underneath
-        if(!collisionHandler.getWallIntersection(positionInterpolate,characterRadius,wallPushVector)) {
-            wallPushVector.x=0;
-            wallPushVector.y=0;
-        }
+        collisionHandler.calculateWallPush(positionInterpolate,characterRadius,wallPushVector);
 
         //FAST TURN AROUND
         if(getAngleDifference(angle,angleTarget)>FAST_TURN_ANGLE) {
@@ -364,6 +361,9 @@ public class Beast extends AnimatedObject {
     public Model getModel() {return animatedModel.getModel();}
     public Matrix4f getMatrix() {
         return modelMatrix;
+    }
+    public CollisionHandler getCollisionHandler() {
+        return collisionHandler;
     }
 
     /**

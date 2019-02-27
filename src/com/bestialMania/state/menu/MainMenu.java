@@ -2,11 +2,13 @@ package com.bestialMania.state.menu;
 
 import com.bestialMania.Settings;
 import com.bestialMania.InputHandler;
+import com.bestialMania.collision.Triangle;
 import com.bestialMania.gui.Button;
 import com.bestialMania.gui.ButtonListener;
 import com.bestialMania.rendering.MasterRenderer;
 import com.bestialMania.MemoryManager;
 import com.bestialMania.state.State;
+import org.joml.Vector3f;
 
 public class MainMenu implements State, ButtonListener {
     //submenu stuff
@@ -34,6 +36,7 @@ public class MainMenu implements State, ButtonListener {
 
         startButton.addToRenderer(menu.getGuiRender());
         quitButton.addToRenderer(menu.getGuiRender());
+
     }
 
     /**

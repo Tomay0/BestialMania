@@ -41,6 +41,7 @@ public class Game implements State, InputListener {
     private MasterRenderer masterRenderer;
     private MemoryManager memoryManager;
 
+    private static final float MIN_DIST = 0.01f;
     private static final float FAR_DIST = 80.0f;
 
 
@@ -106,7 +107,7 @@ public class Game implements State, InputListener {
         lightDir = map.getLightDirection();
         lightColor = map.getLightColor();
         projection = new Matrix4f();
-        projection.perspective(Settings.FOV,(float)windowWidth/(float)windowHeight,0.1f,FAR_DIST);
+        projection.perspective(Settings.FOV,(float)windowWidth/(float)windowHeight,MIN_DIST,FAR_DIST);
 
         normalMapping = Settings.TEXTURE_DETAIL!= Settings.GraphicsSetting.LOW;
 
@@ -136,7 +137,7 @@ public class Game implements State, InputListener {
         }
 
         //initialize shadow box stuff
-        shadowDistanceValues = Arrays.asList(0.1f,FAR_DIST * 0.125f,FAR_DIST * 0.45f,FAR_DIST);//Currently works for triple shadow boxes, but potentially try 2 or 4 for different settings
+        shadowDistanceValues = Arrays.asList(MIN_DIST,FAR_DIST * 0.125f,FAR_DIST * 0.45f,FAR_DIST);//Currently works for triple shadow boxes, but potentially try 2 or 4 for different settings
 
         shadowRenderers = new Renderer[controllers.size()][shadowDistanceValues.size()-1];
         shadowAnimatedRenderers = new Renderer[controllers.size()][shadowDistanceValues.size()-1];

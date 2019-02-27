@@ -107,6 +107,10 @@ public class EmeraldValley extends MapData{
         Object3D wallObject = new StaticObject(game,wallModel,new Matrix4f(),wallTexture,0.5f,10.0f);
         game.createObject(wallObject,2,true);
 
+        Model wallModel2 = Loader.loadOBJ(game.getMemoryManager(), "res/models/wall2.obj");
+        Object3D wallObject2 = new StaticObject(game,wallModel2,new Matrix4f(),wallTexture,0.5f,10.0f);
+        game.createObject(wallObject2,2,true);
+
         //STAIRS
         Model stairsModel = Loader.loadOBJ(game.getMemoryManager(),"res/models/stairs.obj");
         Matrix4f stairMatrix = new Matrix4f();
@@ -133,10 +137,11 @@ public class EmeraldValley extends MapData{
         collisionHandler.addFloor(TriangleLoader.loadTrianglesOBJ("res/models/plane.obj"));
         collisionHandler.addFloor(TriangleLoader.loadTrianglesOBJ("res/models/plane2.obj"));
         collisionHandler.addWalls(TriangleLoader.loadTrianglesOBJ("res/models/wall.obj"));
+        collisionHandler.addWalls(TriangleLoader.loadTrianglesOBJ("res/models/wall2.obj"));
         Matrix4f testObjectMatrix = new Matrix4f();
         testObjectMatrix.translate(2.0f,0,0.5f);
         testObjectMatrix.scale(3.0f,3.0f,3.0f);
-        collisionHandler.addWalls(TriangleLoader.loadTrianglesOBJ("res/models/wall2.obj",testObjectMatrix));
+        collisionHandler.addWalls(TriangleLoader.loadTrianglesOBJ("res/models/poleWall.obj",testObjectMatrix));
 
         Matrix4f stairMatrix = new Matrix4f();
         stairMatrix.translate(-10,0,0);

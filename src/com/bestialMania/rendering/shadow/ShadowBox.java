@@ -18,7 +18,7 @@ public class ShadowBox {
         return matrix;
     }
 
-    private static final float OFFSET = 50;
+    private static final float OFFSET = 64;
 
     private Matrix4f viewMatrix, inverseViewMatrix, lightViewMatrix, inverseLightViewMatrix, shadowBoxMatrix, biasShadowBoxMatrix, transformationMatrix;
     private Vector4f[] frustumCorners;

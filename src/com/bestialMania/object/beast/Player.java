@@ -12,7 +12,7 @@ import static org.lwjgl.glfw.GLFW.*;
 
 public class Player {
     private static Vector2f SCREEN_CENTER = new Vector2f(Settings.WIDTH/2, Settings.HEIGHT/2);
-    private static final float MIN_PITCH = -(float)Math.PI*0.05f;
+    private static final float MIN_PITCH = -(float)Math.PI*0.4f;
     private static final float MAX_PITCH = (float)Math.PI*0.49f;
     private static final Vector3f ORIGIN = new Vector3f(0,0,0);
     private InputHandler inputHandler;
@@ -199,6 +199,22 @@ public class Player {
         lookLocation.x = beastLocation.x;
         lookLocation.y = beastLocation.y+cameraHeight;
         lookLocation.z = beastLocation.z;
+
+        //calculate if the camera will be behind a wall
+        float collision = beast.getCollisionHandler().getTriangleIntersection(lookLocation,cameraLocation);
+        if(collision<1) {
+            collision-=0.07f;
+            if(collision<=0.001) collision = 0.001f;
+            //camera is behind the wall, move it so you're infront
+            cameraLocation.x = beastLocation.x - cameraDist*yawSinus*pitchCosinus*collision;
+            cameraLocation.z = beastLocation.z + cameraDist*yawCosinus*pitchCosinus*collision;
+            cameraLocation.y = beastLocation.y + cameraDist*pitchSinus*collision + cameraHeight;
+            //
+            // TODO add transparency when you get too close
+            // float newDist = cameraDist*collision;
+            //if(newDist<0.3f) System.out.println("TOO CLOSE!");
+        }
+
 
         //change look to dir
         lookLocation.sub(cameraLocation,dirVector);

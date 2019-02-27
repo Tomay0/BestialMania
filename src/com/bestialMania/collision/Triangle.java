@@ -28,9 +28,9 @@ public class Triangle {
         this.v2 = new Vector3f(v2.x,v2.y,v2.z);
         this.v3 = new Vector3f(v3.x,v3.y,v3.z);
         //edges
-        edges[0] = new TriangleEdge(v1,v2);
-        edges[1] = new TriangleEdge(v1,v3);
-        edges[2] = new TriangleEdge(v3,v2);
+        edges[0] = new TriangleEdge(v1,v2,v3);
+        edges[1] = new TriangleEdge(v1,v3,v2);
+        edges[2] = new TriangleEdge(v3,v2,v1);
         //bounding box
         calcBoundingBox(v1.x,v1.y,v1.z,v2.x,v2.y,v2.z,v3.x,v3.y,v3.z);
         //planar equation
@@ -109,15 +109,26 @@ public class Triangle {
     /**
      * calculate the intersection between p1 and p2 through the plane.
      * returns an interpolated value s, which is a linear interpolation between the 2 vectors where the intersection is.
-     * return 2 if there is none
+     * return 1 if there is no intersection
      */
     public float getLineIntersection(Vector3f p1,Vector3f p2) {
-        float p = d - (a * p1.x + b * p1.y + c * p1.z);
         float q = a * (p2.x-p1.x) + b * (p2.y-p1.y) + c * (p2.z-p1.z);
         if(q==0) return 1;
+        float p = d - (a * p1.x + b * p1.y + c * p1.z);
 
         float s = p/q;
         if(s>1||s<0) return 1;
+        intersects[0].x = p1.x + s*(p2.x-p1.x);
+        intersects[0].y = p1.y + s*(p2.y-p1.y);
+        intersects[0].z = p1.z + s*(p2.z-p1.z);
+        //System.out.println(this);
+        //System.out.println(intersects[0].x + "," + intersects[0].y + "," + intersects[0].z);
+
+        //check if the point is inside the triangle
+        for(int i = 0;i<3;i++) {
+            //System.out.println("line " + i);
+            if(!edges[i].isInsideEdge(intersects[0])) return 1;
+        }
 
         return s;
     }
@@ -203,11 +214,7 @@ public class Triangle {
         float scale = (radius-len)/len;
         wx*=scale;
         wy*=scale;
-        float order = 0;
-        if(s<0) order = -s;
-        else if(s>1) order = s-1;
-
-
+        float order = Math.abs(0.5f-s);
 
         return new WallCollision(this,wx,wy,order);
     }

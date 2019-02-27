@@ -14,6 +14,9 @@ public class CollisionHandler {
     private Chunk[][] chunks;
     private Set<Triangle> tempTriangleSet = new HashSet<>();
 
+    /**
+     * Represents all walls and floors within an environment that can be collided with
+     */
     public CollisionHandler(BoundingBox mapBoundingBox) {
         minX = (int)Math.floor(mapBoundingBox.getX1());
         minZ = (int)Math.floor(mapBoundingBox.getZ1());
@@ -88,7 +91,7 @@ public class CollisionHandler {
     }
 
     /**
-     * Get all floor triangles in the chunk given by the vertex
+     * Get all wall triangles in the chunks by the given area
      */
     private Set<Triangle> wallsAtArea(int minX, int maxX, int minZ, int maxZ) {
         tempTriangleSet.clear();
@@ -97,6 +100,24 @@ public class CollisionHandler {
                 if(x<0 || z<0 || x>=chunks.length || z>=chunks[0].length) continue;
                 if(chunks[x][z]==null) continue;
                 tempTriangleSet.addAll(chunks[x][z].getWalls());
+            }
+        }
+
+        return tempTriangleSet;
+
+    }
+
+    /**
+     * Get all wall and floor triangles in the chunks by the given area
+     */
+    private Set<Triangle> trianglesAtArea(int minX, int maxX, int minZ, int maxZ) {
+        tempTriangleSet.clear();
+        for(int x = minX;x<=maxX;x++) {
+            for (int z = minZ; z <= maxZ; z++) {
+                if(x<0 || z<0 || x>=chunks.length || z>=chunks[0].length) continue;
+                if(chunks[x][z]==null) continue;
+                tempTriangleSet.addAll(chunks[x][z].getWalls());
+                tempTriangleSet.addAll(chunks[x][z].getFloor());
             }
         }
 
@@ -121,7 +142,7 @@ public class CollisionHandler {
     /**
      * Duplicate of the code above but with printing
      */
-    public float printHeightAtLocation(Vector3f position) {
+    /*public float printHeightAtLocation(Vector3f position) {
         System.out.println(position.x + "," + position.y + "," + position.z);
         float maxY = MIN_Y;
         for(Triangle triangle : floorAtPoint(position)) {
@@ -135,32 +156,35 @@ public class CollisionHandler {
         }
         System.out.println(maxY + "\n");
         return maxY;
-    }
+    }*/
 
     /**
-     * Work out the intersection point between a player and the closest wall
-     * Return null if there is no intersection
+     * Returns an interpolation value of the closest triangle intersection to p1 of the line p1->p2
+     * 0 = at p1, 1 = at p2 or no intersection
      */
-    public float getWallIntersection(Vector3f p1, Vector3f p2) {
+    public float getTriangleIntersection(Vector3f p1, Vector3f p2) {
         int minX,maxX,minZ,maxZ;
         minX = (int)Math.floor(Math.min(p1.x,p2.x)) - this.minX;
         maxX = (int)Math.floor(Math.max(p1.x,p2.x)) - this.minX;
         minZ = (int)Math.floor(Math.min(p1.z,p2.z)) - this.minZ;
         maxZ = (int)Math.floor(Math.max(p1.z,p2.z)) - this.minZ;
 
-        for(Triangle triangle : wallsAtArea(minX,maxX,minZ,maxZ)) {
+        //find the clo
+        float minValue = 1;
+
+        for(Triangle triangle : trianglesAtArea(minX,maxX,minZ,maxZ)) {
             float intersection = triangle.getLineIntersection(p1,p2);
-            if(intersection!=1) return intersection;
+            if(intersection<minValue) minValue = intersection;
         }
 
-        return 1;
+        return minValue;
     }
 
     /**
      * Works out the wall push vector, which pushes the beast away from the wall
      * if there is no intersection with walls, return false
      */
-    public boolean getWallIntersection(Vector3f position, float radius, Vector2f wallPushVector) {
+    public boolean calculateWallPush(Vector3f position, float radius, Vector2f wallPushVector) {
         int minX,maxX,minZ,maxZ;
         minX = (int)Math.floor(position.x-radius) - this.minX;
         maxX = (int)Math.floor(position.x+radius) - this.minX;
