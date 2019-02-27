@@ -49,7 +49,7 @@ public class Beast extends AnimatedObject {
     Your position is located at the bottom centre.
     Collision bounds is a cylinder of specified radius and height below.
      */
-    private float characterRadius = 0.25f;
+    private float characterRadius = 0.28f;
     private float characterHeight = 1.2f;
 
     //PHYSICS
@@ -59,6 +59,7 @@ public class Beast extends AnimatedObject {
     private Vector2f movementDirection;//intended direction to move towards
     private Vector2f wallPushVector = new Vector2f();//the vector that a wall pushes you out with
     private float angleTarget;//intended angle to face towards
+    private float angleTargetMidair;//intended angle to face towards
     private float angle;//angle the model is facing TODO possibly animate turning around better
     private float speed;//current intended speed
     private float turnSpeed = TURN_SPEED;//turning speed
@@ -94,6 +95,7 @@ public class Beast extends AnimatedObject {
         movementVector = new Vector2f(0,0);
         intendedMovementVector = new Vector2f();
         angleTarget = angle;
+        angleTargetMidair = angleTarget;
         speed = 0;
         yspeed = 0;
         floorY = collisionHandler.getHeightAtLocation(position);
@@ -137,7 +139,11 @@ public class Beast extends AnimatedObject {
      * Set a new direction
      */
     public void setDirection(Vector2f direction) {
-        angleTarget = (float)Math.atan2(direction.x,direction.y);
+        if(!onGround) {
+            angleTargetMidair = (float)Math.atan2(direction.x,direction.y);
+        }else {
+            angleTarget = (float)Math.atan2(direction.x,direction.y);
+        }
 
         this.movementDirection = direction;
     }
@@ -153,15 +159,33 @@ public class Beast extends AnimatedObject {
     /**
      * Jump
      */
-    public void jump() {
-        if(onGround) {
-            float speedMultiplier = 1;
-            speedMultiplier+=movementVector.length()*SPEED_JUMP_MULTIPLIER;
-            if(yspeed<0) yspeed=0;
-            yspeed += characterJump*speedMultiplier;
+    public boolean jump() {
+        //if(turnSpeed==FAST_TURN_SPEED) yspeed += characterJump*speedMultiplier;//SUPER MARIO BACKFLIP
+        if(!onGround) {
+            //wall jump
+            if(wallPushVector.x!=0 || wallPushVector.y!=0) {
+                float x = wallPushVector.x;
+                float y = wallPushVector.y;
+                float len = (float)Math.sqrt(x*x+y*y);
+                x/=len;
+                y/=len;
+                float dot = x*movementVector.x + y*movementVector.y;
+                dot*=-2;
+                x*=dot;
+                y*=dot;
+                movementVector.x+=x;
+                movementVector.y+=y;
 
-            //if(turnSpeed==FAST_TURN_SPEED) yspeed += characterJump*speedMultiplier;//SUPER MARIO BACKFLIP
+                angleTarget = (float)Math.atan2(movementVector.x,movementVector.y);
+                midairTurn = false;
+            }else return false;//midair so can't jump
         }
+        //jump
+        float speedMultiplier = 1;
+        speedMultiplier+=movementVector.length()*SPEED_JUMP_MULTIPLIER;
+        if(yspeed<0) yspeed=0;
+        yspeed += characterJump*speedMultiplier;
+        return true;
     }
 
     /**
@@ -190,7 +214,10 @@ public class Beast extends AnimatedObject {
             }
             position.y = floorY;
             yspeed = 0;
-            midairTurn = false;
+            if(midairTurn) {
+                midairTurn = false;
+                angleTarget = angleTargetMidair;
+            }
         }
         //crash into a wall
         /*if(wallIntersect!=1) {
@@ -258,7 +285,7 @@ public class Beast extends AnimatedObject {
         }
         if(positionInterpolate.y<floorY) positionInterpolate.y = floorY;
         positionInterpolate.y+=WALL_CLIMB_BIAS;//slight bias so you slide over the top of walls but not underneath
-        collisionHandler.calculateWallPush(positionInterpolate,characterRadius,wallPushVector);
+        collisionHandler.calculateWallPush(positionInterpolate,characterRadius,wallPushVector/*,1,0*/);//more tests seems to result in you getting pushed through walls sometimes
 
         //FAST TURN AROUND
         if(getAngleDifference(angle,angleTarget)>FAST_TURN_ANGLE) {
@@ -267,19 +294,21 @@ public class Beast extends AnimatedObject {
 
         float turnAmount = turnSpeed;
         if(midairTurn) turnAmount *=MIDAIR_TURN_MODIFIER;
+        float targetAngle = angleTarget;
+        if(midairTurn) targetAngle = angleTargetMidair;
 
         //turn to face direction of movement
-        if(getAngleDifference(angle,angleTarget)<turnAmount) {
-            angle = angleTarget;
+        if(getAngleDifference(angle,targetAngle)<turnAmount) {
+            angle = targetAngle;
             turnSpeed = TURN_SPEED;
             if(!onGround) midairTurn = true;
         }
-        else if(angle>angleTarget) {
-            if(angle-angleTarget>Math.PI) angle+=turnAmount;
+        else if(angle>targetAngle) {
+            if(angle-targetAngle>Math.PI) angle+=turnAmount;
             else angle-=turnAmount;
         }
         else {
-            if(angleTarget-angle>Math.PI) angle-=turnAmount;
+            if(targetAngle-angle>Math.PI) angle-=turnAmount;
             else angle+=turnAmount;
         }
 
@@ -316,14 +345,16 @@ public class Beast extends AnimatedObject {
         //interpolate direction
         float angleInterpolate = angle;
         float turnAmount = turnSpeed*frameInterpolation;
+        float targetAngle = angleTarget;
+        if(midairTurn) targetAngle = angleTargetMidair;
         if(midairTurn) turnAmount *=MIDAIR_TURN_MODIFIER;
-        if(getAngleDifference(angle,angleTarget)<turnAmount) angleInterpolate = angleTarget;
-        else if(angle>angleTarget) {
-            if(angle-angleTarget>Math.PI) angleInterpolate+=turnAmount;
+        if(getAngleDifference(angle,targetAngle)<turnAmount) angleInterpolate = targetAngle;
+        else if(angle>targetAngle) {
+            if(angle-targetAngle>Math.PI) angleInterpolate+=turnAmount;
             else angleInterpolate-=turnAmount;
         }
         else {
-            if(angleTarget-angle>Math.PI) angleInterpolate-=turnAmount;
+            if(targetAngle-angle>Math.PI) angleInterpolate-=turnAmount;
             else angleInterpolate+=turnAmount;
         }
 

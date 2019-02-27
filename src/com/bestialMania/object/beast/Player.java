@@ -1,5 +1,6 @@
 package com.bestialMania.object.beast;
 
+import com.bestialMania.InputListener;
 import com.bestialMania.Settings;
 import com.bestialMania.InputHandler;
 import com.bestialMania.rendering.Renderer;
@@ -10,7 +11,7 @@ import org.joml.Vector3f;
 
 import static org.lwjgl.glfw.GLFW.*;
 
-public class Player {
+public class Player implements InputListener {
     private static Vector2f SCREEN_CENTER = new Vector2f(Settings.WIDTH/2, Settings.HEIGHT/2);
     private static final float MIN_PITCH = -(float)Math.PI*0.4f;
     private static final float MAX_PITCH = (float)Math.PI*0.49f;
@@ -18,6 +19,7 @@ public class Player {
     private InputHandler inputHandler;
     private int playerNum;//player number from 1-4 showing the location on the screen
     private int controller;//controller id
+    private int jumpFrames = 0;//you can jump 5 frames before you land
     private Beast beast;
 
     /*
@@ -62,7 +64,14 @@ public class Player {
 
         viewDirMatrix = new Matrix4f();
 
+        inputHandler.addListener(this);
+    }
 
+    /**
+     * Remove this object from the listeners
+     */
+    public void removeListeners() {
+        inputHandler.removeListener(this);
     }
 
     /**
@@ -134,6 +143,13 @@ public class Player {
         Vector2f dir;//direction your controller is pointing RIGHT = POSITIVE X. DOWN = POSITIVE Y
         boolean running=false;//if you are running
 
+        //jumping 1-5 frames before you land
+        if(jumpFrames>0) {
+            jumpFrames++;
+
+            if(beast.jump() || jumpFrames>5) jumpFrames = 0;
+        }
+
         //keyboard
         if(controller==-1) {
             speed = 0;
@@ -143,7 +159,6 @@ public class Player {
             else speed = 1;
 
 
-            if(inputHandler.isKeyPressed(GLFW_KEY_SPACE)) beast.jump();
             if(inputHandler.isKeyPressed(GLFW_KEY_LEFT_SHIFT)) running = true;
         }
         //controller
@@ -151,7 +166,6 @@ public class Player {
             dir = inputHandler.gamepadLeftJoystickPosition(controller);
             speed = dir.length();
 
-            if(inputHandler.isGamepadButtonPressed(controller,0)) beast.jump();
             if(inputHandler.isGamepadButtonPressed(controller,9)) running = true;
         }
         else{
@@ -225,5 +239,48 @@ public class Player {
 
         viewDirMatrix.identity();
         viewDirMatrix.lookAt(ORIGIN,dirVector,upVector);
+    }
+
+
+    /**
+     * Controller button presses
+     */
+    @Override
+    public void controllerEvent(int controller, boolean pressed, int button) {
+        if(controller==this.controller) {
+            if(pressed) {
+                //jump
+                if(button==0) {
+                    if(!beast.jump()) jumpFrames++;
+                }
+            }
+        }
+    }
+
+    /**
+     * Keyboard button presses
+     */
+    @Override
+    public void keyEvent(boolean pressed, int key) {
+        if(controller==-1) {
+            if(pressed) {
+                //jump
+                if(key==GLFW_KEY_SPACE) {
+                    if(!beast.jump()) jumpFrames++;
+                }
+            }
+        }
+    }
+
+    /**
+     * Mouse button presses
+     */
+    @Override
+    public void mouseEvent(boolean pressed, int button) {
+        if(controller==-1) {
+            if(pressed) {
+
+            }
+        }
     }
 }

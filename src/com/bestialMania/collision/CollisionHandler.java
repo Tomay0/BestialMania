@@ -183,8 +183,10 @@ public class CollisionHandler {
     /**
      * Works out the wall push vector, which pushes the beast away from the wall
      * if there is no intersection with walls, return false
+     *
+     * //If nTests is 1, you will only test a flat disc at y = position.y, if you want to test at different y values you can do more tests, with a y increment for each test.
      */
-    public boolean calculateWallPush(Vector3f position, float radius, Vector2f wallPushVector) {
+    public boolean calculateWallPush(Vector3f position, float radius, Vector2f wallPushVector/*, int nTests, float yincrement*/) {
         int minX,maxX,minZ,maxZ;
         minX = (int)Math.floor(position.x-radius) - this.minX;
         maxX = (int)Math.floor(position.x+radius) - this.minX;
@@ -193,43 +195,48 @@ public class CollisionHandler {
         wallPushVector.x = 0;
         wallPushVector.y = 0;
 
-        List<WallCollision> wallCollisions = new ArrayList<>();
+        //for(int i = 0;i<nTests;i++) {
+            List<WallCollision> wallCollisions = new ArrayList<>();
 
-        Set<Triangle> triangleSet = wallsAtArea(minX,maxX,minZ,maxZ);
-
-        for(Triangle triangle : triangleSet) {
-            WallCollision wallCollision = triangle.getWallCollision(position,radius);
-
-            if(wallCollision!=null) {
-                wallCollisions.add(wallCollision);
-            }
-        }
-
-        //do all wall collisions in the right order
-        while(wallCollisions.size()>0) {
-
-            Collections.sort(wallCollisions);
-
-            //update wall push vector
-            WallCollision w = wallCollisions.get(0);
-            wallPushVector.x+=w.getX();
-            wallPushVector.y+=w.getY();
-            position.x+=w.getX();
-            position.z+=w.getY();
-
-            //
-            wallCollisions.remove(w);
-            triangleSet.clear();
-            for(WallCollision wallCollision : wallCollisions) triangleSet.add(wallCollision.getTriangle());
-            wallCollisions.clear();
+            Set<Triangle> triangleSet = wallsAtArea(minX,maxX,minZ,maxZ);
 
             for(Triangle triangle : triangleSet) {
-                WallCollision wallCollision2 = triangle.getWallCollision(position,radius);
-                if(wallCollision2!=null) {
-                    wallCollisions.add(wallCollision2);
+                WallCollision wallCollision = triangle.getWallCollision(position,radius);
+
+                if(wallCollision!=null) {
+                    wallCollisions.add(wallCollision);
                 }
             }
-        }
+
+            //do all wall collisions in the right order
+            while(wallCollisions.size()>0) {
+
+                Collections.sort(wallCollisions);
+
+                //update wall push vector
+                WallCollision w = wallCollisions.get(0);
+                wallPushVector.x+=w.getX();
+                wallPushVector.y+=w.getY();
+                position.x+=w.getX();
+                position.z+=w.getY();
+
+                //
+                wallCollisions.remove(w);
+                triangleSet.clear();
+                for(WallCollision wallCollision : wallCollisions) triangleSet.add(wallCollision.getTriangle());
+                wallCollisions.clear();
+
+                for(Triangle triangle : triangleSet) {
+                    WallCollision wallCollision2 = triangle.getWallCollision(position,radius);
+                    if(wallCollision2!=null) {
+                        wallCollisions.add(wallCollision2);
+                    }
+                }
+            }
+            //position.y += yincrement;
+        //}
+
+
 
 
         if(wallPushVector.x==0&&wallPushVector.y==0) return false;
