@@ -65,7 +65,6 @@ public abstract class AnimatedObject extends Object3D{
         currentAnimations.add(animation);
     }
 
-
     /**
      * Stop a specified animation
      */

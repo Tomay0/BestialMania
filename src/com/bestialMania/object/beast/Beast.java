@@ -2,6 +2,8 @@ package com.bestialMania.object.beast;
 
 import com.bestialMania.animation.AnimatedModel;
 import com.bestialMania.animation.Animation;
+import com.bestialMania.animation.AnimationListener;
+import com.bestialMania.animation.Pose;
 import com.bestialMania.collision.CollisionHandler;
 import com.bestialMania.object.AnimatedObject;
 import com.bestialMania.rendering.Renderer;
@@ -18,7 +20,7 @@ import org.joml.Vector3f;
 
 import java.util.*;
 
-public class Beast extends AnimatedObject {
+public class Beast extends AnimatedObject implements AnimationListener {
     //TEST STUFF
     private static final float songBPM = 150;//PUMPED UP KICKS = 128. Running in the 90s = 159. Spaceghostpurp = 150 Change to make jimmy sync up to the song you pick
     private int t = 0;
@@ -36,7 +38,7 @@ public class Beast extends AnimatedObject {
     private static final float TERMINAL_VELOCITY = 0.5f;//fastest speed you can fall
 
     public static final float UPHILL_CLIMB_HEIGHT = 0.7f;//how step of an angle you can climb in one movement. Make this larger than terminal velocity to avoid falling through the floor. Note that you will not climb this height if there is a wall in the way
-    public static final float DOWNHILL_CLIMB_HEIGHT = 0.2f;//how step of an angle you can descend in one movement
+    public static final float DOWNHILL_CLIMB_HEIGHT = 0.5f;//how step of an angle you can descend in one movement
     public static final float WALL_CLIMB_BIAS = 0.1f;//your character can go over walls this high, note that if thi
 
     //character constants, these depend on what beast you pick
@@ -78,7 +80,18 @@ public class Beast extends AnimatedObject {
     private Texture texture;
 
     //animations
-    private Animation animation,animation2;
+    private int animationID;//ID to distinguish what animations you are currently transitioning into
+    /*
+    1 = still
+    2 = walking
+    3 = land
+    4 = jump
+    5 = crouch
+     */
+    private Animation currentAnimation;
+    private Animation walkingAnimation;//walking animation
+    private Animation landingAnimation;//when you land on the ground, timer on this controlled manually
+
 
     /**
      * Create a beast
@@ -104,7 +117,7 @@ public class Beast extends AnimatedObject {
         if(onGround) position.y=floorY;
 
         //TEST ANIMATION (trying to animation 2 parts separately)
-        Set<String> testAffectedJoints = new HashSet<>(Arrays.asList("Dummy003","Dummy057","Dummy058","Dummy062","Dummy059","Dummy063","Dummy060","Dummy064","Dummy061"));//legs only
+        /*Set<String> testAffectedJoints = new HashSet<>(Arrays.asList("Dummy003","Dummy057","Dummy058","Dummy062","Dummy059","Dummy063","Dummy060","Dummy064","Dummy061"));//legs only
         Set<String> testAffectedJoints2 = animatedModel.getArmature().getJointsExcluding(testAffectedJoints);//rest of the body
 
         animation = new Animation(animatedModel.getArmature(),animatedModel.getPose(0),testAffectedJoints,true);
@@ -130,7 +143,31 @@ public class Beast extends AnimatedObject {
         animation.setCurrentTime(time+beatDuration*0.1f);
         animation2.setCurrentTime(time+beatDuration*0.1f);
         applyAnimation(animation);
-        applyAnimation(animation2);
+        applyAnimation(animation2);*/
+
+        /*
+        Test animation:
+        0 = t pose
+        1 = still
+        2 = walk1
+        3 = walk2
+        4 = jump
+        5 = crouch
+
+         */
+
+        walkingAnimation = new Animation(animatedModel.getArmature(), animatedModel.getPose(2),true);
+        walkingAnimation.addKeyFrame(0.3f,animatedModel.getPose(3));
+        walkingAnimation.addKeyFrame(0.6f,animatedModel.getPose(2));
+
+        landingAnimation = new Animation(animatedModel.getArmature(),animatedModel.getPose(1),false);
+        landingAnimation.addKeyFrame(1,animatedModel.getPose(4));
+        landingAnimation.disableTimer();
+
+        //currently in the still pose
+        animationID = 1;
+        currentAnimation = new Animation(animatedModel.getArmature(),animatedModel.getPose(1),false);
+        applyAnimation(currentAnimation);
 
         oof = new Sound(game.getMemoryManager(),"res/sound/oof2.wav");
 
@@ -155,6 +192,31 @@ public class Beast extends AnimatedObject {
     public void setSpeed(float speed,boolean running) {
         this.speed = speed*characterSpeed;
         if(running) this.speed*=RUN_MODIFIER;
+        if(onGround) {
+            if(speed>0) {
+                //begin walking animation
+                if(animationID!=2) {
+                    animationID = 2;
+                    Animation beginWalk = new Animation(animatedModel.getArmature(),getCurrentPose(),false);
+                    beginWalk.setListener(this,"walk");
+                    beginWalk.addKeyFrame(0.3f,animatedModel.getPose(2));
+                    applyAnimation(beginWalk);
+                    cancelAnimation(currentAnimation);
+                    currentAnimation = beginWalk;
+                }
+            }
+            else {
+                //stop walking animation
+                if(animationID!=1) {
+                    animationID = 1;
+                    Animation stopWalk = new Animation(animatedModel.getArmature(),getCurrentPose(),false);
+                    stopWalk.addKeyFrame(0.3f,animatedModel.getPose(1));
+                    applyAnimation(stopWalk);
+                    cancelAnimation(currentAnimation);
+                    currentAnimation = stopWalk;
+                }
+            }
+        }
     }
 
     /**
@@ -224,6 +286,19 @@ public class Beast extends AnimatedObject {
             //stick to the floor
             position.y = floorY;
             yspeed = 0;
+        }
+        else {
+            //jump animation (more like fall animation LMAO)
+            if(animationID!=4) {
+                if(yspeed>=0 || positionInterpolate.y-floorY>=DOWNHILL_CLIMB_HEIGHT) {
+                    animationID = 4;
+                    Animation jumpAnimation = new Animation(animatedModel.getArmature(),getCurrentPose(),false);
+                    jumpAnimation.addKeyFrame(0.15f,animatedModel.getPose(4));
+                    applyAnimation(jumpAnimation);
+                    cancelAnimation(currentAnimation);
+                    currentAnimation = jumpAnimation;
+                }
+            }
         }
 
         //hitting the ceiling
@@ -333,12 +408,6 @@ public class Beast extends AnimatedObject {
         if(angle>Math.PI) angle-=2*Math.PI;
         if(angle<-Math.PI) angle+=2*Math.PI;
 
-        /*t++;
-        if(t>200) {
-            Pose pose = getCurrentPose();
-            setPose(pose);
-            cancelAnimation(animation2);
-        }*/
         //ANIMATION
         updateAnimation();
     }
@@ -361,6 +430,19 @@ public class Beast extends AnimatedObject {
         }
         if(positionInterpolate.y+characterHeight>ceilY) {//hitting the ceiling
             positionInterpolate.y = ceilY-characterHeight;
+        }
+        //landing animation when you get close to the ground
+        if(!onGround && yspeed<0 && positionInterpolate.y-floorY<DOWNHILL_CLIMB_HEIGHT) {
+            if(animationID!=3) {
+                animationID = 3;
+                cancelAnimation(currentAnimation);
+                applyAnimation(landingAnimation);
+                currentAnimation = landingAnimation;
+
+            }
+
+            float i = (positionInterpolate.y-floorY)/DOWNHILL_CLIMB_HEIGHT;
+            landingAnimation.setCurrentTime(i);
         }
 
         //interpolate direction
@@ -389,6 +471,7 @@ public class Beast extends AnimatedObject {
 
         //scale
         modelMatrix.scale(0.1f,0.1f,0.1f);
+
         interpolateAnimation(frameInterpolation);
 
     }
@@ -425,5 +508,19 @@ public class Beast extends AnimatedObject {
         float dif = Math.abs(angle1-angle2);
         if(dif<=Math.PI) return dif;
         else return ((float)Math.PI * 2.0f) - dif;
+    }
+
+    /**
+     * When an animation transition completes
+     */
+    @Override
+    public void animationOver(String action) {
+        //begin walking animation
+        if(action.equals("walk")) {
+            walkingAnimation.setCurrentTime(0);
+            cancelAnimation(currentAnimation);
+            applyAnimation(walkingAnimation);
+            currentAnimation = walkingAnimation;
+        }
     }
 }

@@ -22,6 +22,6 @@ public class Settings {
     public static GraphicsSetting TEXTURE_DETAIL = GraphicsSetting.HIGH;//LOW = no texture effects. HIGH = normal mapping TODO add more texture detail stuff
     public static GraphicsSetting SHADOW_QUALITY = GraphicsSetting.ULTRA;//will probably optimize this in the future
     public static int SAMPLES = 4;
-    public static boolean VSYNC = true;
+    public static boolean VSYNC = false;
     public static float FOV = (float)Math.toRadians(60);
 }

@@ -195,12 +195,13 @@ public class InputHandler{
         for(int controller = 0;controller<N_CONTROLLERS;controller++) {
             if(glfwJoystickIsGamepad(controller)) {
                 activeControllers.add(controller);
+
                 //identify the type of controller
                 if(controllerTypes[controller]==ControllerType.UNIDENTIFIED) {
                     String name = glfwGetJoystickName(controller);
                     System.out.println("Controller ID " + controller + " connected. Name = " + name);
-                    ControllerType type = ControllerType.PLAYSTATION;//default is playstation, unless the device says that it is an xbox controller
-                    if(name.toLowerCase().contains("xbox")) type = ControllerType.XBOX;//xbox
+                    ControllerType type = ControllerType.PLAYSTATION;//Playstation 4 dualshock simply appears as "Wireless controller" so default configuration is ps4
+                    if(name.toLowerCase().contains("xbox")) type = ControllerType.XBOX;//Xbox 360 controllers all have the word "xbox" somewhere in the controller name
                     controllerTypes[controller] = type;
                 }
 
@@ -288,4 +289,10 @@ public class InputHandler{
     public Set<Integer> getActiveControllers() { return activeControllers; }
 
     public boolean isControllerActive(int joystickId) {return activeControllers.contains(joystickId);}
+
+    /**
+     * Get the controller type for the given controller id
+     * returns UNIDENTIFIED if there is no controller connected in that slot
+     */
+    public ControllerType getControllerType(int joystickId) {return controllerTypes[joystickId];}
 }

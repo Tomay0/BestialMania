@@ -158,7 +158,6 @@ public class Main {
                 currentState.update();
                 delta-=timeInterval;
             }
-
             //render at speed your PC is capable of, for faster machines use a frame interpolation amount.
             currentState.render((float) (delta/timeInterval));
             //calculate fps

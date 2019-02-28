@@ -1,6 +1,7 @@
 package com.bestialMania.animation;
 
 import com.bestialMania.Main;
+import com.bestialMania.object.beast.Beast;
 import org.joml.Matrix4f;
 
 import java.util.*;
@@ -13,6 +14,11 @@ public class Animation {
     private float end;
 
     private Map<String,JointAnimation> jointAnimations = new HashMap<>();
+
+    private AnimationListener listener = null;
+    private String listenerAction = null;
+    private boolean useTimer = true;//if the timer is automatic
+    private boolean finished = false;//only for non-looping animations
 
     /**
      * Create an animation.
@@ -73,12 +79,21 @@ public class Animation {
      * (Called every update())
      */
     public void update() {
+        if(!useTimer) return;
         if(end==0) return;//don't do anything if there is no animation
         currentTime += timeAdvance;
         //loop
         if(loop) {
             while(currentTime > end) {
                 currentTime-=end;
+            }
+        }
+        else if(!finished){
+            if(currentTime+timeAdvance>end) {
+                finished = true;
+                if(listener!=null) {
+                    listener.animationOver(listenerAction);
+                }
             }
         }
     }
@@ -88,13 +103,18 @@ public class Animation {
      * (Called every render())
      */
     public void calculateMatrices(float interpolation) {
-        float actualTime = currentTime + timeAdvance*interpolation;
+        float actualTime = currentTime;
         if(end==0) actualTime = 0;
-        else if(loop){
-            while(actualTime > end) {
-                actualTime-=end;
+        else if(useTimer) {
+            actualTime = currentTime + timeAdvance*interpolation;
+            if(loop){
+                //loop and do animation over event
+                while(actualTime > end) {
+                    actualTime-=end;
+                }
             }
         }
+
 
         for(JointAnimation jointAnimation : jointAnimations.values()) {
             jointAnimation.calculateMatrix(actualTime);
@@ -110,6 +130,19 @@ public class Animation {
 
     public void setCurrentTime(float timestamp) {
         this.currentTime = timestamp;
+    }
+
+    /**
+     * Disable automatic timer
+     */
+    public void disableTimer() {this.useTimer = false;}
+
+    /**
+     * Set a listener that will call an event if the animation finishes
+     */
+    public void setListener(AnimationListener listener, String action) {
+        this.listener = listener;
+        this.listenerAction = action;
     }
 
     public Collection<String> getAffectedJoints() {
