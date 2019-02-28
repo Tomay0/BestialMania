@@ -3,7 +3,6 @@ package com.bestialMania.object.beast;
 import com.bestialMania.animation.AnimatedModel;
 import com.bestialMania.animation.Animation;
 import com.bestialMania.collision.CollisionHandler;
-import com.bestialMania.collision.TriangleEdge;
 import com.bestialMania.object.AnimatedObject;
 import com.bestialMania.rendering.Renderer;
 import com.bestialMania.rendering.ShaderObject;
@@ -21,19 +20,19 @@ import java.util.*;
 
 public class Beast extends AnimatedObject {
     //TEST STUFF
-    private static final float songBPM = 128;//PUMPED UP KICKS = 128. Running in the 90s = 159. Spaceghostpurp = 150 Change to make jimmy sync up to the song you pick
+    private static final float songBPM = 150;//PUMPED UP KICKS = 128. Running in the 90s = 159. Spaceghostpurp = 150 Change to make jimmy sync up to the song you pick
     private int t = 0;
 
     //constants
-    private static final float GRAVITY = 0.006f;//gravity acceleration
-    private static final float ACCELERATION = 0.01f;//lateral movement acceleration
-    private static final float MIDAIR_ACCELERATION_MODIFIER = 0.05f;//multiply your acceleration by this number when midair
-    private static final float MIDAIR_TURN_MODIFIER = 0.2f;//multiply your turning acceleration by this number when midair
+    private static final float GRAVITY = 0.01f;//gravity acceleration
+    private static final float ACCELERATION = 0.007f;//lateral movement acceleration
+    private static final float MIDAIR_ACCELERATION_MODIFIER = 0.2f;//multiply your acceleration by this number when midair
+    private static final float MIDAIR_TURN_MODIFIER = 0.5f;//multiply your turning acceleration by this number when midair
     private static final float TURN_SPEED = 0.1f;//speed your model turns at
     private static final float FAST_TURN_SPEED = 0.2f;//speed you turn when "fast turning"
     private static final float FAST_TURN_ANGLE = (float)Math.PI*0.6f;//you must turn at least this angle amount to do a "fast turn"
     private static final float SPEED_JUMP_MULTIPLIER = 2.0f;//increasing this makes running increase your jump height much more.
-    private static final float RUN_MODIFIER = 1.25f;//running speed modifier
+    private static final float RUN_MODIFIER = 1.4f;//running speed modifier
     private static final float TERMINAL_VELOCITY = 0.5f;//fastest speed you can fall
 
     public static final float UPHILL_CLIMB_HEIGHT = 0.7f;//how step of an angle you can climb in one movement. Make this larger than terminal velocity to avoid falling through the floor. Note that you will not climb this height if there is a wall in the way
@@ -41,8 +40,8 @@ public class Beast extends AnimatedObject {
     public static final float WALL_CLIMB_BIAS = 0.1f;//your character can go over walls this high, note that if thi
 
     //character constants, these depend on what beast you pick
-    private float characterSpeed = 0.1f;
-    private float characterJump = 0.08f;
+    private float characterSpeed = 0.085f;//lowest is ~0.85. Highest is ~1.2
+    private float characterJump = 0.17f;//don't know about these values yet but make slower characters have lower jump
 
     /*
     Collision detection:
@@ -65,6 +64,7 @@ public class Beast extends AnimatedObject {
     private float turnSpeed = TURN_SPEED;//turning speed
     private float yspeed;
     private float floorY;
+    private float ceilY;
     //private float wallIntersect = 1;//If not 1, you will collide into a wall this ratio between ticks. Eg: wallIntersect = 0.5 will stop you at a wall halfway through the frame
     private boolean onGround;
     private boolean midairTurn = false;
@@ -98,7 +98,8 @@ public class Beast extends AnimatedObject {
         angleTargetMidair = angleTarget;
         speed = 0;
         yspeed = 0;
-        floorY = collisionHandler.getHeightAtLocation(position);
+        floorY = collisionHandler.getFloorHeightAtLocation(position);
+        ceilY = CollisionHandler.MAX_Y;
         onGround = position.y<=floorY;
         if(onGround) position.y=floorY;
 
@@ -170,6 +171,7 @@ public class Beast extends AnimatedObject {
                 x/=len;
                 y/=len;
                 float dot = x*movementVector.x + y*movementVector.y;
+                if(Math.abs(dot)<0.05) return false;//don't wall jump if you are really close to being parallel to the wall
                 dot*=-2;
                 x*=dot;
                 y*=dot;
@@ -182,7 +184,8 @@ public class Beast extends AnimatedObject {
         }
         //jump
         float speedMultiplier = 1;
-        speedMultiplier+=movementVector.length()*SPEED_JUMP_MULTIPLIER;
+        float speed = movementVector.length();
+        speedMultiplier+=speed*speed*SPEED_JUMP_MULTIPLIER;
         if(yspeed<0) yspeed=0;
         yspeed += characterJump*speedMultiplier;
         return true;
@@ -198,27 +201,37 @@ public class Beast extends AnimatedObject {
      */
     @Override
     public void update() {
-        //Please update the position BEFORE you change the speed and direction
+        //UPDATE YOUR POSITION - DO THIS FIRST
         position.x+=movementVector.x+wallPushVector.x;
         position.z+=movementVector.y+wallPushVector.y;
         position.y+=yspeed;
+
+
+        //landing on ground
         boolean inAir = !onGround;
         onGround = position.y<floorY+0.0001f;//0.001f is a small bias to prevent floating point rounding errors
-        //land on the ground
         if(onGround) {
+            //previously in air, so play landing on ground sound effect
             if(inAir) {
-                //LAND ON GROUND
                 SoundSource source = new SoundSource(oof,false,-yspeed / TERMINAL_VELOCITY);
                 source.play();
                 sources.add(source);
+                if(midairTurn) {
+                    midairTurn = false;
+                    angleTarget = angleTargetMidair;
+                }
             }
+            //stick to the floor
             position.y = floorY;
             yspeed = 0;
-            if(midairTurn) {
-                midairTurn = false;
-                angleTarget = angleTargetMidair;
-            }
         }
+
+        //hitting the ceiling
+        if(position.y+characterHeight>ceilY-0.0001f) {
+            position.y = ceilY-characterHeight;
+            if(yspeed>0) yspeed = 0;
+        }
+
         //crash into a wall
         /*if(wallIntersect!=1) {
             movementVector.x = 0;
@@ -236,7 +249,7 @@ public class Beast extends AnimatedObject {
             }
         }
 
-        //acceleration towards intended movement
+        //MOVEMENT
         intendedMovementVector.x = movementDirection.x*speed;
         intendedMovementVector.y = movementDirection.y*speed;
 
@@ -259,18 +272,18 @@ public class Beast extends AnimatedObject {
             if(movementVector.y<intendedMovementVector.y) movementVector.y = intendedMovementVector.y;
         }
 
-
-        //Get the height at which the next
+        //GRAVITY
         if(!onGround) yspeed-=GRAVITY;
         if(yspeed<-TERMINAL_VELOCITY) {
             yspeed=-TERMINAL_VELOCITY;
         }
+
+        //FLOOR COLLISIONS
         positionInterpolate.x = position.x+movementVector.x;
         positionInterpolate.z = position.z+movementVector.y;
         positionInterpolate.y = position.y+yspeed;
-
-        floorY = collisionHandler.getHeightAtLocation(positionInterpolate);
-        //change your yspeed when on the ground to be the same as that of the slope
+        floorY = collisionHandler.getFloorHeightAtLocation(positionInterpolate);
+        //stay on top of a slope
         if(onGround) {
             float heightBelowFloor = floorY-position.y;
             if(heightBelowFloor > -DOWNHILL_CLIMB_HEIGHT && heightBelowFloor<UPHILL_CLIMB_HEIGHT) {//stick to the ground if the ground infront of you goes downhill
@@ -279,15 +292,20 @@ public class Beast extends AnimatedObject {
             else{//this occurs if you fall off the edge of a floor triangle
                 onGround = false;
                 yspeed-=GRAVITY;
-                //System.err.println("Fell off floor? Potential collision problems");
-                //floor.printHeightAtLocation(positionInterpolate);
             }
         }
+
+        //CEILING COLLISIONS
+        positionInterpolate.y += characterHeight;
+        ceilY = collisionHandler.getCeilingHeightAtLocation(positionInterpolate);
+
+        //WALL COLLISION
+        positionInterpolate.y = position.y+yspeed;
         if(positionInterpolate.y<floorY) positionInterpolate.y = floorY;
         positionInterpolate.y+=WALL_CLIMB_BIAS;//slight bias so you slide over the top of walls but not underneath
         collisionHandler.calculateWallPush(positionInterpolate,characterRadius,wallPushVector/*,1,0*/);//more tests seems to result in you getting pushed through walls sometimes
 
-        //FAST TURN AROUND
+        //TURNING
         if(getAngleDifference(angle,angleTarget)>FAST_TURN_ANGLE) {
             turnSpeed = FAST_TURN_SPEED;
         }
@@ -321,7 +339,7 @@ public class Beast extends AnimatedObject {
             setPose(pose);
             cancelAnimation(animation2);
         }*/
-
+        //ANIMATION
         updateAnimation();
     }
 
@@ -340,6 +358,9 @@ public class Beast extends AnimatedObject {
         positionInterpolate.y = position.y+yspeed*frameInterpolation;
         if(positionInterpolate.y<floorY && yspeed<0) {//landing on the ground
             positionInterpolate.y = floorY;
+        }
+        if(positionInterpolate.y+characterHeight>ceilY) {//hitting the ceiling
+            positionInterpolate.y = ceilY-characterHeight;
         }
 
         //interpolate direction

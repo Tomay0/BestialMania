@@ -9,6 +9,7 @@ import java.util.*;
 public class CollisionHandler {
 
     public static final float MIN_Y = -1000;
+    public static final float MAX_Y = 1000;
 
     private int minX,minZ;
     private Chunk[][] chunks;
@@ -53,6 +54,30 @@ public class CollisionHandler {
     }
 
     /**
+     * Add a list of ceiling triangles
+     */
+    public void addCeiling(Set<Triangle> triangles) {
+        for(Triangle triangle : triangles) {
+            BoundingBox bb = triangle.getBoundingBox();
+
+            int minX = (int)Math.floor(bb.getX1()) - this.minX;
+            int maxX = (int)Math.ceil(bb.getX2()) - this.minX;
+            int minZ = (int)Math.floor(bb.getZ1()) - this.minZ;
+            int maxZ = (int)Math.ceil(bb.getZ2()) - this.minZ;
+
+            for(int x = minX;x<=maxX;x++) {
+                for(int z = minZ;z<=maxZ;z++) {
+                    if(x<0 || z<0 || x>=chunks.length || z>=chunks[0].length) continue;//out of bounds
+                    if(chunks[x][z]==null) {
+                        chunks[x][z] = new Chunk();
+                    }
+                    chunks[x][z].addCeiling(triangle);
+                }
+            }
+        }
+    }
+
+    /**
      * Add a list of wall triangles
      */
     public void addWalls(Set<Triangle> triangles) {
@@ -89,6 +114,19 @@ public class CollisionHandler {
         return tempTriangleSet;
 
     }
+    /**
+     * Get all floor triangles in the chunk given by the vertex
+     */
+    private Set<Triangle> ceilingAtPoint(Vector3f point) {
+        int x = (int)Math.floor(point.x) - minX;
+        int z = (int)Math.floor(point.z) - minZ;
+        tempTriangleSet.clear();
+        if(x<0 || z<0 || x>=chunks.length || z>=chunks[0].length) return tempTriangleSet;
+        if(chunks[x][z]==null) return tempTriangleSet;
+        tempTriangleSet.addAll(chunks[x][z].getCeilings());
+        return tempTriangleSet;
+
+    }
 
     /**
      * Get all wall triangles in the chunks by the given area
@@ -108,7 +146,7 @@ public class CollisionHandler {
     }
 
     /**
-     * Get all wall and floor triangles in the chunks by the given area
+     * Get all wall, ceiling and floor triangles in the chunks by the given area
      */
     private Set<Triangle> trianglesAtArea(int minX, int maxX, int minZ, int maxZ) {
         tempTriangleSet.clear();
@@ -118,6 +156,7 @@ public class CollisionHandler {
                 if(chunks[x][z]==null) continue;
                 tempTriangleSet.addAll(chunks[x][z].getWalls());
                 tempTriangleSet.addAll(chunks[x][z].getFloor());
+                tempTriangleSet.addAll(chunks[x][z].getCeilings());
             }
         }
 
@@ -130,33 +169,25 @@ public class CollisionHandler {
     /**
      * Get the floor's height at the given location
      */
-    public float getHeightAtLocation(Vector3f position) {
+    public float getFloorHeightAtLocation(Vector3f position) {
         float maxY = MIN_Y;
         for(Triangle triangle : floorAtPoint(position)) {
-            float y = triangle.getTriangleY(position, -Beast.DOWNHILL_CLIMB_HEIGHT,Beast.UPHILL_CLIMB_HEIGHT);
+            float y = triangle.getTriangleY(position, -Beast.DOWNHILL_CLIMB_HEIGHT,Beast.UPHILL_CLIMB_HEIGHT, MIN_Y);
             if(y>maxY) maxY = y;
         }
         return maxY;
     }
-
     /**
-     * Duplicate of the code above but with printing
+     * Get the ceilings's height at the given location
      */
-    /*public float printHeightAtLocation(Vector3f position) {
-        System.out.println(position.x + "," + position.y + "," + position.z);
-        float maxY = MIN_Y;
-        for(Triangle triangle : floorAtPoint(position)) {
-            float y = triangle.getTriangleY(position,-Beast.DOWNHILL_CLIMB_HEIGHT,Beast.UPHILL_CLIMB_HEIGHT);
-            System.out.println(triangle);
-            System.out.println(triangle.onTriangle(position));
-            System.out.println(triangle.getEquation());
-            System.out.println(triangle.getY(position));
-            System.out.println(y + "\n");
-            if(y>maxY) maxY = y;
+    public float getCeilingHeightAtLocation(Vector3f position) {
+        float minY = MAX_Y;
+        for(Triangle triangle : ceilingAtPoint(position)) {
+            float y = triangle.getTriangleY(position, -Beast.DOWNHILL_CLIMB_HEIGHT,Beast.UPHILL_CLIMB_HEIGHT, MAX_Y);
+            if(y<minY) minY = y;
         }
-        System.out.println(maxY + "\n");
-        return maxY;
-    }*/
+        return minY;
+    }
 
     /**
      * Returns an interpolation value of the closest triangle intersection to p1 of the line p1->p2

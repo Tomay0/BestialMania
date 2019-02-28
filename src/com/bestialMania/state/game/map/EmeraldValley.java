@@ -38,7 +38,7 @@ public class EmeraldValley extends MapData{
 
     @Override
     public String getMusic() {
-        return "res/sound/pumped_up_kicks.wav";
+        return "res/sound/spaceghostpurp.wav";
     }
 
     /**
@@ -106,6 +106,10 @@ public class EmeraldValley extends MapData{
         Texture wallTexture = Texture.loadImageTexture3D(game.getMemoryManager(),"res/textures/sexy.png");
         Object3D wallObject = new StaticObject(game,wallModel,new Matrix4f(),wallTexture,0.5f,10.0f);
         game.createObject(wallObject,2,true);
+        //CEILING
+        Model ceilModel = Loader.loadOBJ(game.getMemoryManager(), "res/models/ceil.obj");
+        Object3D ceilObject = new StaticObject(game,ceilModel,new Matrix4f(),wallTexture,0.5f,10.0f);
+        game.createObject(ceilObject,2,true);
 
         /*Model wallModel2 = Loader.loadOBJ(game.getMemoryManager(), "res/models/wall2.obj");
         Object3D wallObject2 = new StaticObject(game,wallModel2,new Matrix4f(),wallTexture,0.5f,10.0f);
@@ -142,6 +146,7 @@ public class EmeraldValley extends MapData{
         collisionHandler.addFloor(TriangleLoader.loadTrianglesOBJ("res/models/plane.obj"));
         collisionHandler.addFloor(TriangleLoader.loadTrianglesOBJ("res/models/plane2.obj"));
         collisionHandler.addWalls(TriangleLoader.loadTrianglesOBJ("res/models/wall.obj"));
+        collisionHandler.addCeiling(TriangleLoader.loadTrianglesOBJ("res/models/ceil.obj"));
         //collisionHandler.addWalls(TriangleLoader.loadTrianglesOBJ("res/models/wall2.obj"));
         Matrix4f testObjectMatrix = new Matrix4f();
         testObjectMatrix.translate(2.0f,0,0.5f);

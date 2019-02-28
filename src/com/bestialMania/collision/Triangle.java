@@ -72,15 +72,15 @@ public class Triangle {
      * If this is not on the triangle or not within the bounds, return Floor.MIN_Y
      * the y must lie within ymin and ymax from the point's y value to be considered close enough
      */
-    public float getTriangleY(Vector3f point, float ymin, float ymax) {
-        if(!planar) return CollisionHandler.MIN_Y;
+    public float getTriangleY(Vector3f point, float ymin, float ymax, float defaultValue) {
+        if(!planar) return defaultValue;
 
         if(onTriangle(point)) {
-            float y = getY(point);
+            float y = getY(point,defaultValue);
             if(y>point.y+ymin && y<point.y+ymax) return y;
 
         }
-        return CollisionHandler.MIN_Y;
+        return defaultValue;
     }
 
     /**
@@ -100,8 +100,8 @@ public class Triangle {
     /**
      * Get y on the triangle's plane using planar equation
      */
-    public float getY(Vector3f point) {
-        if(b==0 || !planar) return CollisionHandler.MIN_Y;
+    public float getY(Vector3f point, float defaultValue) {
+        if(b==0 || !planar) return defaultValue;
 
         return (a*point.x+c*point.z-d)/-b;
     }
