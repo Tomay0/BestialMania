@@ -40,7 +40,7 @@ public class Beast extends AnimatedObject {
     public static final float WALL_CLIMB_BIAS = 0.1f;//your character can go over walls this high, note that if thi
 
     //character constants, these depend on what beast you pick
-    private float characterSpeed = 0.085f;//lowest is ~0.85. Highest is ~1.2
+    private float characterSpeed = 0.1f;//lowest is ~0.85. Highest is ~1.2
     private float characterJump = 0.17f;//don't know about these values yet but make slower characters have lower jump
 
     /*
