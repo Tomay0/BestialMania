@@ -14,6 +14,12 @@ import java.util.*;
 public class InputHandler{
     private static final int N_BUTTONS = 15;//number of buttons on a controller to check
     private static final int N_CONTROLLERS = 16;//number of controller slots available
+
+    //For telling what type of controller is plugged in to show you the correct textures.
+    public enum ControllerType {
+        UNIDENTIFIED, XBOX, PLAYSTATION
+    };
+
     /*
     BUTTONS:
     0 = A/X
@@ -31,16 +37,13 @@ public class InputHandler{
     12 = dpad-right
     13 = dpad-down
     14 = dpad-left
-
-
-
-
      */
 
     //fields
     private long window;
     private Set<Integer> activeControllers = new HashSet<>();
     private GLFWGamepadState[] gamepadStates = new GLFWGamepadState[N_CONTROLLERS];
+    private ControllerType[] controllerTypes = new ControllerType[N_CONTROLLERS];
     private boolean[][] gamepadButtonStates = new boolean[N_CONTROLLERS][N_BUTTONS];//button states. true = pressed (Only have this because controller events aren't a thing in GLFW
 
     //mouse
@@ -61,6 +64,7 @@ public class InputHandler{
         //intialize gamepad state buffers
         for(int i = 0;i<N_CONTROLLERS;i++) {
             gamepadStates[i] = new GLFWGamepadState(BufferUtils.createByteBuffer(40));
+            controllerTypes[i] = ControllerType.UNIDENTIFIED;
         }
 
 
@@ -186,11 +190,19 @@ public class InputHandler{
         mousePos.x = (float)mouseXPos.get();
         mousePos.y = (float)mouseYPos.get();
 
-        //update button states
+        //update controllers
         activeControllers.clear();
         for(int controller = 0;controller<N_CONTROLLERS;controller++) {
             if(glfwJoystickIsGamepad(controller)) {
                 activeControllers.add(controller);
+                //identify the type of controller
+                if(controllerTypes[controller]==ControllerType.UNIDENTIFIED) {
+                    String name = glfwGetJoystickName(controller);
+                    System.out.println("Controller ID " + controller + " connected. Name = " + name);
+                    ControllerType type = ControllerType.PLAYSTATION;//default is playstation, unless the device says that it is an xbox controller
+                    if(name.toLowerCase().contains("xbox")) type = ControllerType.XBOX;//xbox
+                    controllerTypes[controller] = type;
+                }
 
                 //update the gamepad state
                 glfwGetGamepadState(controller, gamepadStates[controller]);
@@ -219,6 +231,8 @@ public class InputHandler{
                         }
                     }
                 }
+            }else {
+                controllerTypes[controller] = ControllerType.UNIDENTIFIED;
             }
         }
     }
