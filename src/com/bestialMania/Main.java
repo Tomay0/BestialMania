@@ -54,7 +54,7 @@ public class Main {
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT,GL_TRUE);
         glfwWindowHint(GLFW_OPENGL_PROFILE,GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_DEPTH_BITS,32);
-        if(Settings.ANTIALIASING) glfwWindowHint(GLFW_SAMPLES, Settings.SAMPLES);
+        if(Settings.ANTIALIASING>0) glfwWindowHint(GLFW_SAMPLES, Settings.ANTIALIASING);
         glfwWindowHint(GLFW_RESIZABLE,GLFW_FALSE);
 
         // Create the window

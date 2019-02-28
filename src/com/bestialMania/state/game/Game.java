@@ -279,7 +279,7 @@ public class Game implements State, InputListener {
      */
     private Framebuffer createPlayerWindow() {
         Framebuffer fbo;
-        if(Settings.ANTIALIASING) {
+        if(Settings.ANTIALIASING>0) {
             fbo = Framebuffer.createMultisampledFramebuffer3Dto2D(memoryManager,windowWidth, windowHeight);
 
         }else{

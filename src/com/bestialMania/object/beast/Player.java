@@ -158,22 +158,27 @@ public class Player implements InputListener {
             if(dir.x==0&&dir.y==0) speed = 0;
             else speed = 1;
 
-
             if(inputHandler.isKeyPressed(GLFW_KEY_LEFT_SHIFT)) running = true;
+            beast.crouch(inputHandler.isKeyPressed(GLFW_KEY_LEFT_CONTROL));
         }
         //controller
         else if(inputHandler.isControllerActive(controller)){
             dir = inputHandler.gamepadLeftJoystickPosition(controller);
             speed = dir.length();
+            speed-=0.4f;//remove noise
+            speed/=0.6;
 
             if(inputHandler.isGamepadButtonPressed(controller,9)) running = true;
+            beast.crouch(inputHandler.isGamepadButtonPressed(controller,1));
         }
+        //no controller connected
         else{
             speed = 0;
             dir = new Vector2f(0,0);
         }
+
         //only move if the speed is high enough (as there may be noise in the analog stick)
-        if(speed>0.4f) {
+        if(speed>0) {
             if(speed>1) speed=1;
             beast.setSpeed(speed,running);
             dir.normalize();

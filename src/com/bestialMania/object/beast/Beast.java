@@ -1,5 +1,6 @@
 package com.bestialMania.object.beast;
 
+import com.bestialMania.Settings;
 import com.bestialMania.animation.AnimatedModel;
 import com.bestialMania.animation.Animation;
 import com.bestialMania.animation.AnimationListener;
@@ -35,6 +36,8 @@ public class Beast extends AnimatedObject implements AnimationListener {
     private static final float FAST_TURN_ANGLE = (float)Math.PI*0.6f;//you must turn at least this angle amount to do a "fast turn"
     private static final float SPEED_JUMP_MULTIPLIER = 2.0f;//increasing this makes running increase your jump height much more.
     private static final float RUN_MODIFIER = 1.4f;//running speed modifier
+    private static final float HIGH_JUMP_MODIFIER = 1.6f;//high jump modifier
+    private static final float CROUCH_MODIFIER = 0.5f;//crouch speed modifier
     private static final float TERMINAL_VELOCITY = 0.5f;//fastest speed you can fall
 
     public static final float UPHILL_CLIMB_HEIGHT = 0.7f;//how step of an angle you can climb in one movement. Make this larger than terminal velocity to avoid falling through the floor. Note that you will not climb this height if there is a wall in the way
@@ -67,7 +70,9 @@ public class Beast extends AnimatedObject implements AnimationListener {
     private float yspeed;
     private float floorY;
     private float ceilY;
-    //private float wallIntersect = 1;//If not 1, you will collide into a wall this ratio between ticks. Eg: wallIntersect = 0.5 will stop you at a wall halfway through the frame
+    private boolean running = false;
+    private boolean crouching = false;
+    private boolean sliding = false;
     private boolean onGround;
     private boolean midairTurn = false;
     private Sound oof;
@@ -87,6 +92,7 @@ public class Beast extends AnimatedObject implements AnimationListener {
     3 = land
     4 = jump
     5 = crouch
+    6 = slide
      */
     private Animation currentAnimation;
     private Animation walkingAnimation;//walking animation
@@ -153,7 +159,7 @@ public class Beast extends AnimatedObject implements AnimationListener {
         3 = walk2
         4 = jump
         5 = crouch
-
+        6 = slide
          */
 
         walkingAnimation = new Animation(animatedModel.getArmature(), animatedModel.getPose(2),true);
@@ -191,8 +197,20 @@ public class Beast extends AnimatedObject implements AnimationListener {
      */
     public void setSpeed(float speed,boolean running) {
         this.speed = speed*characterSpeed;
-        if(running) this.speed*=RUN_MODIFIER;
-        if(onGround) {
+
+        //work out if the character is running based if automatic running is turning on
+        if(running) this.running = true;
+        else if(!Settings.AUTOMATIC_RUNNING) this.running = false;
+        if(speed==0) this.running = false;
+
+        if(this.crouching) {
+            this.speed*=CROUCH_MODIFIER;
+            this.running = false;
+        }
+        else if(this.running) this.speed*=RUN_MODIFIER;
+
+        //animation
+        if(onGround && !crouching) {
             if(speed>0) {
                 //begin walking animation
                 if(animationID!=2) {
@@ -220,10 +238,11 @@ public class Beast extends AnimatedObject implements AnimationListener {
     }
 
     /**
-     * Jump
+     * Jump.
+     * Returns true if a jump took place
      */
     public boolean jump() {
-        //if(turnSpeed==FAST_TURN_SPEED) yspeed += characterJump*speedMultiplier;//SUPER MARIO BACKFLIP
+        float speed = movementVector.length();
         if(!onGround) {
             //wall jump
             if(wallPushVector.x!=0 || wallPushVector.y!=0) {
@@ -233,7 +252,7 @@ public class Beast extends AnimatedObject implements AnimationListener {
                 x/=len;
                 y/=len;
                 float dot = x*movementVector.x + y*movementVector.y;
-                if(Math.abs(dot)<0.05) return false;//don't wall jump if you are really close to being parallel to the wall
+                if(Math.abs(dot/speed)<0.3) return false;//don't wall jump if you are really close to being parallel to the wall
                 dot*=-2;
                 x*=dot;
                 y*=dot;
@@ -246,11 +265,40 @@ public class Beast extends AnimatedObject implements AnimationListener {
         }
         //jump
         float speedMultiplier = 1;
-        float speed = movementVector.length();
         speedMultiplier+=speed*speed*SPEED_JUMP_MULTIPLIER;
+        if(crouching) speedMultiplier*=HIGH_JUMP_MODIFIER;//HIGH JUMP
         if(yspeed<0) yspeed=0;
         yspeed += characterJump*speedMultiplier;
         return true;
+    }
+
+    /**
+     * Start/Stop crouching
+     */
+    public void crouch(boolean crouch) {
+        //initialize the crouch
+        if(!crouching && crouch) {
+            if(speed>characterSpeed*0.8f) {
+                if(onGround) {
+                    //slide
+                    System.out.println("SLIDE");
+                    sliding = true;
+                }
+                else {
+                    //dive
+                    System.out.println("DIVE");
+                }
+            }
+        }
+        this.crouching = crouch;
+        if(this.crouching && onGround && animationID!=5) {
+            animationID = 5;
+            Animation crouchAnimation = new Animation(animatedModel.getArmature(),getCurrentPose(),false);
+            crouchAnimation.addKeyFrame(0.1f,animatedModel.getPose(5));
+            cancelAnimation(currentAnimation);
+            applyAnimation(crouchAnimation);
+            currentAnimation = crouchAnimation;
+        }
     }
 
     /**

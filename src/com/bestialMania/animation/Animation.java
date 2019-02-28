@@ -108,7 +108,6 @@ public class Animation {
         else if(useTimer) {
             actualTime = currentTime + timeAdvance*interpolation;
             if(loop){
-                //loop and do animation over event
                 while(actualTime > end) {
                     actualTime-=end;
                 }

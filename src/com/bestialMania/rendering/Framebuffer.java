@@ -74,7 +74,7 @@ public class Framebuffer {
         for (int i = 0; i < nTextures; i++) {
             int buffer = glGenRenderbuffers();
             glBindRenderbuffer(GL_RENDERBUFFER, buffer);
-            glRenderbufferStorageMultisample(GL_RENDERBUFFER, Settings.SAMPLES, GL_RGBA8, width, height);
+            glRenderbufferStorageMultisample(GL_RENDERBUFFER, Settings.ANTIALIASING, GL_RGBA8, width, height);
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_RENDERBUFFER, buffer);
             buffers.add(buffer);
         }
@@ -97,7 +97,7 @@ public class Framebuffer {
     private void genMultisampledDepthRenderbuffers() {
         int dbuffer = glGenRenderbuffers();
         glBindRenderbuffer(GL_RENDERBUFFER,dbuffer);
-        glRenderbufferStorageMultisample(GL_RENDERBUFFER, Settings.SAMPLES, GL_DEPTH_COMPONENT, width, height);
+        glRenderbufferStorageMultisample(GL_RENDERBUFFER, Settings.ANTIALIASING, GL_DEPTH_COMPONENT, width, height);
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, dbuffer);
         buffers.add(dbuffer);
     }
