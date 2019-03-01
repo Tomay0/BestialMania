@@ -134,7 +134,6 @@ public class EmeraldValley extends MapData{
             Object3D object = new StaticObject(game, stairsModel,stairMatrix,poleTexture,0.1f,4.0f);
             game.createObject(object,2,true);
         }
-
     }
 
     /**

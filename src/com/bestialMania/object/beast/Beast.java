@@ -56,6 +56,8 @@ public class Beast extends AnimatedObject implements AnimationListener {
     public static final float DOWNHILL_CLIMB_HEIGHT = 0.3f;//how step of an angle you can descend in one movement
     public static final float WALL_CLIMB_BIAS = 0.1f;//your character can go over walls this high
 
+    private static final float LANDING_ANIMATION_HEIGHT = 0.7f;//you begin to do a landing animation at this height above ground
+
     //character constants, these depend on what beast you pick
     private float characterSpeed = 0.085f;//lowest is ~0.8. Highest is ~0.09
     private float characterJump = 0.17f;//don't know about these values yet but make slower characters have lower jump
@@ -90,7 +92,8 @@ public class Beast extends AnimatedObject implements AnimationListener {
     private int slidingFrames = 0;
     private boolean onGround;
     private boolean midairTurn = false;
-    private Sound oof;
+    private Sound oof,jump,slide,dive,swampYeet;
+    private SoundSource walkingSound;
     private List<SoundSource> sources = new ArrayList<>();
 
     //collisions
@@ -191,6 +194,12 @@ public class Beast extends AnimatedObject implements AnimationListener {
         applyAnimation(currentAnimation);
 
         oof = new Sound(game.getMemoryManager(),"res/sound/oof2.wav");
+        jump = new Sound(game.getMemoryManager(), "res/sound/jump.wav");
+        slide = new Sound(game.getMemoryManager(), "res/sound/slide.wav");
+        dive = new Sound(game.getMemoryManager(), "res/sound/dive.wav");
+        swampYeet = new Sound(game.getMemoryManager(), "res/sound/swampyeet.wav");
+        Sound walk = new Sound(game.getMemoryManager(), "res/sound/walk.wav");
+        walkingSound = new SoundSource(walk,true);
 
     }
 
@@ -296,6 +305,10 @@ public class Beast extends AnimatedObject implements AnimationListener {
         else if(crouching && slidingFrames==0) speedMultiplier*=HIGH_JUMP_MODIFIER;//HIGH JUMP
         if(yspeed<0) yspeed=0;
         yspeed += characterJump*speedMultiplier;
+        SoundSource source = new SoundSource(jump,false);
+        source.play();
+        sources.add(source);
+
         return true;
     }
 
@@ -328,6 +341,9 @@ public class Beast extends AnimatedObject implements AnimationListener {
                         cancelAnimation(currentAnimation);
                         applyAnimation(slidingAnimation);
                         currentAnimation = slidingAnimation;
+                        SoundSource source = new SoundSource(slide,false);
+                        source.play();
+                        sources.add(source);
                     }
 
                 }
@@ -363,6 +379,9 @@ public class Beast extends AnimatedObject implements AnimationListener {
                         cancelAnimation(currentAnimation);
                         applyAnimation(slidingAnimation);
                         currentAnimation = slidingAnimation;
+                        SoundSource source = new SoundSource(dive,false);
+                        source.play();
+                        sources.add(source);
 
                     }else return;
                 }
@@ -395,6 +414,12 @@ public class Beast extends AnimatedObject implements AnimationListener {
         position.z+=movementVector.y+wallPushVector.y;
         if(yspeed<=0 || !diving) position.y+=yspeed;
 
+
+        if(position.y <-100) {
+            position.x = 0;
+            position.y = 0;
+            position.z = 0;
+        }
 
         //landing on ground
         boolean inAir = !onGround;
@@ -498,7 +523,20 @@ public class Beast extends AnimatedObject implements AnimationListener {
             float gravity = GRAVITY;
             if(longJump) gravity*=LONG_JUMP_GRAVITY_MODIFIER;
             yspeed-=gravity;
+            walkingSound.pause();
         }
+        else {
+            float speed = movementVector.length();
+            if(speed>0) {
+                if(!walkingSound.isPlaying()) {
+                    walkingSound.play();
+                }
+            }
+            else {
+                walkingSound.pause();
+            }
+        }
+
         if(yspeed<-TERMINAL_VELOCITY) {
             yspeed=-TERMINAL_VELOCITY;
         }
@@ -581,7 +619,7 @@ public class Beast extends AnimatedObject implements AnimationListener {
             positionInterpolate.y = ceilY-characterHeight;
         }
         //landing animation when you get close to the ground
-        if(!onGround && yspeed<0 && !diving && slidingFrames<=0 && positionInterpolate.y-floorY<DOWNHILL_CLIMB_HEIGHT) {
+        if(!onGround && yspeed<0 && !diving && slidingFrames<=0 && positionInterpolate.y-floorY<LANDING_ANIMATION_HEIGHT) {
             if(animationID!=3) {
                 animationID = 3;
                 cancelAnimation(currentAnimation);
@@ -590,7 +628,7 @@ public class Beast extends AnimatedObject implements AnimationListener {
 
             }
 
-            float i = (positionInterpolate.y-floorY)/DOWNHILL_CLIMB_HEIGHT;
+            float i = (positionInterpolate.y-floorY)/LANDING_ANIMATION_HEIGHT;
             landingAnimation.setCurrentTime(i);
         }
 
