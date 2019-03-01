@@ -38,7 +38,7 @@ public class EmeraldValley extends MapData{
 
     @Override
     public String getMusic() {
-        return "res/sound/spaceghostpurp.wav";
+        return "res/sound/vsauce.wav";
     }
 
     /**

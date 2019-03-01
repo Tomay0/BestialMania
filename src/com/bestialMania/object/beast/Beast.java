@@ -4,7 +4,6 @@ import com.bestialMania.Settings;
 import com.bestialMania.animation.AnimatedModel;
 import com.bestialMania.animation.Animation;
 import com.bestialMania.animation.AnimationListener;
-import com.bestialMania.animation.Pose;
 import com.bestialMania.collision.CollisionHandler;
 import com.bestialMania.object.AnimatedObject;
 import com.bestialMania.rendering.Renderer;
@@ -23,7 +22,7 @@ import java.util.*;
 
 public class Beast extends AnimatedObject implements AnimationListener {
     //TEST STUFF
-    private static final float songBPM = 150;//PUMPED UP KICKS = 128. Running in the 90s = 159. Spaceghostpurp = 150 Change to make jimmy sync up to the song you pick
+    //private static final float songBPM = 150;//PUMPED UP KICKS = 128. Running in the 90s = 159. Spaceghostpurp = 150 Change to make jimmy sync up to the song you pick
     private int t = 0;
 
     //constants
@@ -34,18 +33,31 @@ public class Beast extends AnimatedObject implements AnimationListener {
     private static final float TURN_SPEED = 0.1f;//speed your model turns at
     private static final float FAST_TURN_SPEED = 0.2f;//speed you turn when "fast turning"
     private static final float FAST_TURN_ANGLE = (float)Math.PI*0.6f;//you must turn at least this angle amount to do a "fast turn"
+
     private static final float SPEED_JUMP_MULTIPLIER = 2.0f;//increasing this makes running increase your jump height much more.
-    private static final float RUN_MODIFIER = 1.4f;//running speed modifier
-    private static final float HIGH_JUMP_MODIFIER = 1.6f;//high jump modifier
+    private static final float HIGH_JUMP_MODIFIER = 1.5f;//high jump modifier
+
+    private static final float RUN_MODIFIER = 1.25f;//running speed modifier
     private static final float CROUCH_MODIFIER = 0.5f;//crouch speed modifier
+
+    private static final float SLIDE_SPEED_MODIFIER = 2.0f;//slide speed modifier - higher than run modifier
+
+    private static final float LONG_JUMP_HEIGHT_MODIFIER = 0.5f;//note that while long jumping, gravity is lower so you still go far
+    private static final float LONG_JUMP_GRAVITY_MODIFIER = 0.5f;//lower gravity while long jumping
+    private static final float LONG_JUMP_ACCELERATION_MODIFIER = 0.2f;//in addition to the midair acceleration modifier
+
+    private static final float DIVE_SPEED = 0.04f;//your y speed will be set to this when you dive, it will make you move with no yspeed for a certain amount of time until the yspeed gets below 0 again
+    private static final float DIVE_MAX_SPEED_MODIFIER = 2.05f;//slightly higher than slide speed
+    private static final float DIVE_SPEED_MODIFIER = 0.9f;//percentage of your velocity that gets added to your current velocity when diving. Less than max dive speed - 1
+
     private static final float TERMINAL_VELOCITY = 0.5f;//fastest speed you can fall
 
     public static final float UPHILL_CLIMB_HEIGHT = 0.7f;//how step of an angle you can climb in one movement. Make this larger than terminal velocity to avoid falling through the floor. Note that you will not climb this height if there is a wall in the way
-    public static final float DOWNHILL_CLIMB_HEIGHT = 0.5f;//how step of an angle you can descend in one movement
-    public static final float WALL_CLIMB_BIAS = 0.1f;//your character can go over walls this high, note that if thi
+    public static final float DOWNHILL_CLIMB_HEIGHT = 0.3f;//how step of an angle you can descend in one movement
+    public static final float WALL_CLIMB_BIAS = 0.1f;//your character can go over walls this high
 
     //character constants, these depend on what beast you pick
-    private float characterSpeed = 0.1f;//lowest is ~0.85. Highest is ~1.2
+    private float characterSpeed = 0.085f;//lowest is ~0.8. Highest is ~0.09
     private float characterJump = 0.17f;//don't know about these values yet but make slower characters have lower jump
 
     /*
@@ -62,8 +74,9 @@ public class Beast extends AnimatedObject implements AnimationListener {
     private Vector2f intendedMovementVector;//intended movement vector to accelerate towards
     private Vector2f movementDirection;//intended direction to move towards
     private Vector2f wallPushVector = new Vector2f();//the vector that a wall pushes you out with
+    private Vector2f slideVector = new Vector2f();
     private float angleTarget;//intended angle to face towards
-    private float angleTargetMidair;//intended angle to face towards
+    private float angleTarget2;//intended angle to face towards
     private float angle;//angle the model is facing TODO possibly animate turning around better
     private float speed;//current intended speed
     private float turnSpeed = TURN_SPEED;//turning speed
@@ -72,7 +85,9 @@ public class Beast extends AnimatedObject implements AnimationListener {
     private float ceilY;
     private boolean running = false;
     private boolean crouching = false;
-    private boolean sliding = false;
+    private boolean diving = false;
+    private boolean longJump = false;
+    private int slidingFrames = 0;
     private boolean onGround;
     private boolean midairTurn = false;
     private Sound oof;
@@ -93,11 +108,10 @@ public class Beast extends AnimatedObject implements AnimationListener {
     4 = jump
     5 = crouch
     6 = slide
+    7 = dive
      */
     private Animation currentAnimation;
-    private Animation walkingAnimation;//walking animation
-    private Animation landingAnimation;//when you land on the ground, timer on this controlled manually
-
+    private Animation walkingAnimation, landingAnimation;
 
     /**
      * Create a beast
@@ -114,7 +128,7 @@ public class Beast extends AnimatedObject implements AnimationListener {
         movementVector = new Vector2f(0,0);
         intendedMovementVector = new Vector2f();
         angleTarget = angle;
-        angleTargetMidair = angleTarget;
+        angleTarget2 = angleTarget;
         speed = 0;
         yspeed = 0;
         floorY = collisionHandler.getFloorHeightAtLocation(position);
@@ -160,6 +174,7 @@ public class Beast extends AnimatedObject implements AnimationListener {
         4 = jump
         5 = crouch
         6 = slide
+        7 = dive
          */
 
         walkingAnimation = new Animation(animatedModel.getArmature(), animatedModel.getPose(2),true);
@@ -183,10 +198,14 @@ public class Beast extends AnimatedObject implements AnimationListener {
      * Set a new direction
      */
     public void setDirection(Vector2f direction) {
-        if(!onGround) {
-            angleTargetMidair = (float)Math.atan2(direction.x,direction.y);
+        if(!onGround || slidingFrames>0) {
+            angleTarget2 = (float)Math.atan2(direction.x,direction.y);
         }else {
             angleTarget = (float)Math.atan2(direction.x,direction.y);
+
+            if (getAngleDifference(angle, angleTarget) > FAST_TURN_ANGLE) {
+                turnSpeed = FAST_TURN_SPEED;
+            }
         }
 
         this.movementDirection = direction;
@@ -210,7 +229,7 @@ public class Beast extends AnimatedObject implements AnimationListener {
         else if(this.running) this.speed*=RUN_MODIFIER;
 
         //animation
-        if(onGround && !crouching) {
+        if(onGround && !crouching && slidingFrames<=0) {
             if(speed>0) {
                 //begin walking animation
                 if(animationID!=2) {
@@ -244,6 +263,7 @@ public class Beast extends AnimatedObject implements AnimationListener {
     public boolean jump() {
         float speed = movementVector.length();
         if(!onGround) {
+            if(diving) return false;
             //wall jump
             if(wallPushVector.x!=0 || wallPushVector.y!=0) {
                 float x = wallPushVector.x;
@@ -261,12 +281,19 @@ public class Beast extends AnimatedObject implements AnimationListener {
 
                 angleTarget = (float)Math.atan2(movementVector.x,movementVector.y);
                 midairTurn = false;
+                longJump = false;
             }else return false;//midair so can't jump
         }
         //jump
         float speedMultiplier = 1;
         speedMultiplier+=speed*speed*SPEED_JUMP_MULTIPLIER;
-        if(crouching) speedMultiplier*=HIGH_JUMP_MODIFIER;//HIGH JUMP
+        if(slidingFrames>0) {
+            //LONG JUMP
+            speedMultiplier*=LONG_JUMP_HEIGHT_MODIFIER;
+            slidingFrames = 0;//stop sliding
+            longJump = true;
+        }
+        else if(crouching) speedMultiplier*=HIGH_JUMP_MODIFIER;//HIGH JUMP
         if(yspeed<0) yspeed=0;
         yspeed += characterJump*speedMultiplier;
         return true;
@@ -278,20 +305,72 @@ public class Beast extends AnimatedObject implements AnimationListener {
     public void crouch(boolean crouch) {
         //initialize the crouch
         if(!crouching && crouch) {
-            if(speed>characterSpeed*0.8f) {
+            if(speed>0) {
                 if(onGround) {
-                    //slide
-                    System.out.println("SLIDE");
-                    sliding = true;
+                    if(slidingFrames<0) return;
+                    float speed = movementVector.length();
+                    //slide only if you're going fast enough or you quickly change direction
+                    if((slidingFrames==0 && (speed>characterSpeed*0.9f || turnSpeed==FAST_TURN_SPEED)) || diving) {
+                        slidingFrames = 15;//slide lasts for 15 frames, animation lasts an extra
+                        diving = false;
+
+                        //slide speed
+                        slideVector.x = movementDirection.x*characterSpeed*SLIDE_SPEED_MODIFIER;
+                        slideVector.y = movementDirection.y*characterSpeed*SLIDE_SPEED_MODIFIER;
+                        turnSpeed = FAST_TURN_SPEED;
+
+                        //begin sliding animation
+                        animationID = 6;
+
+                        Animation slidingAnimation = new Animation(animatedModel.getArmature(),getCurrentPose(),false);
+                        slidingAnimation.addKeyFrame(0.07f,animatedModel.getPose(6));
+                        slidingAnimation.addKeyFrame(0.25f,animatedModel.getPose(6));
+                        cancelAnimation(currentAnimation);
+                        applyAnimation(slidingAnimation);
+                        currentAnimation = slidingAnimation;
+                    }
+
                 }
                 else {
-                    //dive
-                    System.out.println("DIVE");
+                    if(!diving && slidingFrames<=0) {
+                        diving = true;
+                        slidingFrames = 15;
+
+                        //speed up in the direction you are facing, at the minimum you will speed up to your characters normal speed
+                        float diveSpeed = characterSpeed*DIVE_MAX_SPEED_MODIFIER;
+                        float dx = movementDirection.x*diveSpeed - movementVector.x;
+                        float dy = movementDirection.y*diveSpeed - movementVector.y;
+                        float speedChange = (float)Math.sqrt(dx*dx+dy*dy);
+                        diveSpeed-=speedChange;
+                        diveSpeed+=DIVE_SPEED_MODIFIER*characterSpeed;//your dive accelerates you from full walking speed to the full diving speed
+                        if(diveSpeed<characterSpeed*(1+DIVE_SPEED_MODIFIER)) diveSpeed = characterSpeed*(1+DIVE_SPEED_MODIFIER);
+
+
+                        slideVector.x = movementDirection.x*diveSpeed;
+                        slideVector.y = movementDirection.y*diveSpeed;
+                        turnSpeed = FAST_TURN_SPEED;
+                        angleTarget = angleTarget2;
+                        midairTurn = false;
+                        longJump = false;
+
+                        yspeed=DIVE_SPEED;
+
+                        //begin diving animation
+                        animationID = 7;
+
+                        Animation slidingAnimation = new Animation(animatedModel.getArmature(),getCurrentPose(),false);
+                        slidingAnimation.addKeyFrame(0.1f,animatedModel.getPose(7));
+                        cancelAnimation(currentAnimation);
+                        applyAnimation(slidingAnimation);
+                        currentAnimation = slidingAnimation;
+
+                    }else return;
                 }
-            }
+            }else if(!onGround) return;
         }
         this.crouching = crouch;
-        if(this.crouching && onGround && animationID!=5) {
+        //crouching on ground animation
+        if(this.crouching && onGround && animationID!=5 && slidingFrames<=0) {
             animationID = 5;
             Animation crouchAnimation = new Animation(animatedModel.getArmature(),getCurrentPose(),false);
             crouchAnimation.addKeyFrame(0.1f,animatedModel.getPose(5));
@@ -314,7 +393,7 @@ public class Beast extends AnimatedObject implements AnimationListener {
         //UPDATE YOUR POSITION - DO THIS FIRST
         position.x+=movementVector.x+wallPushVector.x;
         position.z+=movementVector.y+wallPushVector.y;
-        position.y+=yspeed;
+        if(yspeed<=0 || !diving) position.y+=yspeed;
 
 
         //landing on ground
@@ -328,24 +407,23 @@ public class Beast extends AnimatedObject implements AnimationListener {
                 sources.add(source);
                 if(midairTurn) {
                     midairTurn = false;
-                    angleTarget = angleTargetMidair;
+                    angleTarget = angle;
                 }
             }
             //stick to the floor
             position.y = floorY;
             yspeed = 0;
+            longJump = false;
         }
         else {
             //jump animation (more like fall animation LMAO)
-            if(animationID!=4) {
-                if(yspeed>=0 || positionInterpolate.y-floorY>=DOWNHILL_CLIMB_HEIGHT) {
-                    animationID = 4;
-                    Animation jumpAnimation = new Animation(animatedModel.getArmature(),getCurrentPose(),false);
-                    jumpAnimation.addKeyFrame(0.15f,animatedModel.getPose(4));
-                    applyAnimation(jumpAnimation);
-                    cancelAnimation(currentAnimation);
-                    currentAnimation = jumpAnimation;
-                }
+            if(animationID!=4 && slidingFrames<=0 && !diving && (yspeed>=0 || positionInterpolate.y-floorY>=DOWNHILL_CLIMB_HEIGHT)) {
+                animationID = 4;
+                Animation jumpAnimation = new Animation(animatedModel.getArmature(),getCurrentPose(),false);
+                jumpAnimation.addKeyFrame(0.15f,animatedModel.getPose(4));
+                applyAnimation(jumpAnimation);
+                cancelAnimation(currentAnimation);
+                currentAnimation = jumpAnimation;
             }
         }
 
@@ -372,31 +450,55 @@ public class Beast extends AnimatedObject implements AnimationListener {
             }
         }
 
-        //MOVEMENT
-        intendedMovementVector.x = movementDirection.x*speed;
-        intendedMovementVector.y = movementDirection.y*speed;
-
-        float accel = ACCELERATION;
-        if(!onGround) accel*=MIDAIR_ACCELERATION_MODIFIER;
-
-        if(movementVector.x<intendedMovementVector.x) {
-            movementVector.x+=accel;
-            if(movementVector.x>intendedMovementVector.x) movementVector.x = intendedMovementVector.x;
-        }else if(movementVector.x>intendedMovementVector.x) {
-            movementVector.x-=accel;
-            if(movementVector.x<intendedMovementVector.x) movementVector.x = intendedMovementVector.x;
+        //SLIDING
+        if(slidingFrames>0) {
+            slidingFrames--;
+            movementVector.x = slideVector.x;
+            movementVector.y = slideVector.y;
+            if(slidingFrames==0 && !diving) {
+                slidingFrames = -10;//slight cooldown between slides
+            }
         }
+        //REGULAR MOVEMENT
+        else {
+            if(slidingFrames<0) slidingFrames++;
+            intendedMovementVector.x = movementDirection.x*speed;
+            intendedMovementVector.y = movementDirection.y*speed;
 
-        if(movementVector.y<intendedMovementVector.y) {
-            movementVector.y+=accel;
-            if(movementVector.y>intendedMovementVector.y) movementVector.y = intendedMovementVector.y;
-        }else if(movementVector.y>intendedMovementVector.y) {
-            movementVector.y-=accel;
-            if(movementVector.y<intendedMovementVector.y) movementVector.y = intendedMovementVector.y;
+            float accel = ACCELERATION;
+            if(!onGround) accel*=MIDAIR_ACCELERATION_MODIFIER;
+            if(longJump) accel*=LONG_JUMP_ACCELERATION_MODIFIER;
+            if(onGround && diving) {
+                //landing from a dive will lower your speed
+                diving = false;
+                slidingFrames = 0;
+                float currentSpeed = movementVector.length();
+                if(currentSpeed>speed) accel = currentSpeed-speed;
+            }
+
+            if(movementVector.x<intendedMovementVector.x) {
+                movementVector.x+=accel;
+                if(movementVector.x>intendedMovementVector.x) movementVector.x = intendedMovementVector.x;
+            }else if(movementVector.x>intendedMovementVector.x) {
+                movementVector.x-=accel;
+                if(movementVector.x<intendedMovementVector.x) movementVector.x = intendedMovementVector.x;
+            }
+
+            if(movementVector.y<intendedMovementVector.y) {
+                movementVector.y+=accel;
+                if(movementVector.y>intendedMovementVector.y) movementVector.y = intendedMovementVector.y;
+            }else if(movementVector.y>intendedMovementVector.y) {
+                movementVector.y-=accel;
+                if(movementVector.y<intendedMovementVector.y) movementVector.y = intendedMovementVector.y;
+            }
         }
 
         //GRAVITY
-        if(!onGround) yspeed-=GRAVITY;
+        if(!onGround) {
+            float gravity = GRAVITY;
+            if(longJump) gravity*=LONG_JUMP_GRAVITY_MODIFIER;
+            yspeed-=gravity;
+        }
         if(yspeed<-TERMINAL_VELOCITY) {
             yspeed=-TERMINAL_VELOCITY;
         }
@@ -404,7 +506,7 @@ public class Beast extends AnimatedObject implements AnimationListener {
         //FLOOR COLLISIONS
         positionInterpolate.x = position.x+movementVector.x;
         positionInterpolate.z = position.z+movementVector.y;
-        positionInterpolate.y = position.y+yspeed;
+        if(yspeed<=0 || !diving) positionInterpolate.y = position.y+yspeed;
         floorY = collisionHandler.getFloorHeightAtLocation(positionInterpolate);
         //stay on top of a slope
         if(onGround) {
@@ -428,33 +530,32 @@ public class Beast extends AnimatedObject implements AnimationListener {
         positionInterpolate.y+=WALL_CLIMB_BIAS;//slight bias so you slide over the top of walls but not underneath
         collisionHandler.calculateWallPush(positionInterpolate,characterRadius,wallPushVector/*,1,0*/);//more tests seems to result in you getting pushed through walls sometimes
 
-        //TURNING
-        if(getAngleDifference(angle,angleTarget)>FAST_TURN_ANGLE) {
-            turnSpeed = FAST_TURN_SPEED;
-        }
+        //TURNING (don't turn while sliding)
+        if(turnSpeed==FAST_TURN_SPEED || slidingFrames<=0 || !diving) {
+            float turnAmount = turnSpeed;
+            float targetAngle = angleTarget;
+            if (midairTurn) {
+                turnAmount *= MIDAIR_TURN_MODIFIER;
+                targetAngle = angleTarget2;
+            }
 
-        float turnAmount = turnSpeed;
-        if(midairTurn) turnAmount *=MIDAIR_TURN_MODIFIER;
-        float targetAngle = angleTarget;
-        if(midairTurn) targetAngle = angleTargetMidair;
 
-        //turn to face direction of movement
-        if(getAngleDifference(angle,targetAngle)<turnAmount) {
-            angle = targetAngle;
-            turnSpeed = TURN_SPEED;
-            if(!onGround) midairTurn = true;
-        }
-        else if(angle>targetAngle) {
-            if(angle-targetAngle>Math.PI) angle+=turnAmount;
-            else angle-=turnAmount;
-        }
-        else {
-            if(targetAngle-angle>Math.PI) angle-=turnAmount;
-            else angle+=turnAmount;
-        }
+            //turn to face direction of movement
+            if (getAngleDifference(angle, targetAngle) < turnAmount) {
+                angle = targetAngle;
+                turnSpeed = TURN_SPEED;
+                if (!onGround) midairTurn = true;
+            } else if (angle > targetAngle) {
+                if (angle - targetAngle > Math.PI) angle += turnAmount;
+                else angle -= turnAmount;
+            } else {
+                if (targetAngle - angle > Math.PI) angle -= turnAmount;
+                else angle += turnAmount;
+            }
 
-        if(angle>Math.PI) angle-=2*Math.PI;
-        if(angle<-Math.PI) angle+=2*Math.PI;
+            if (angle > Math.PI) angle -= 2 * Math.PI;
+            if (angle < -Math.PI) angle += 2 * Math.PI;
+        }
 
         //ANIMATION
         updateAnimation();
@@ -480,7 +581,7 @@ public class Beast extends AnimatedObject implements AnimationListener {
             positionInterpolate.y = ceilY-characterHeight;
         }
         //landing animation when you get close to the ground
-        if(!onGround && yspeed<0 && positionInterpolate.y-floorY<DOWNHILL_CLIMB_HEIGHT) {
+        if(!onGround && yspeed<0 && !diving && slidingFrames<=0 && positionInterpolate.y-floorY<DOWNHILL_CLIMB_HEIGHT) {
             if(animationID!=3) {
                 animationID = 3;
                 cancelAnimation(currentAnimation);
@@ -493,20 +594,22 @@ public class Beast extends AnimatedObject implements AnimationListener {
             landingAnimation.setCurrentTime(i);
         }
 
-        //interpolate direction
+        //interpolate facing direction
         float angleInterpolate = angle;
-        float turnAmount = turnSpeed*frameInterpolation;
-        float targetAngle = angleTarget;
-        if(midairTurn) targetAngle = angleTargetMidair;
-        if(midairTurn) turnAmount *=MIDAIR_TURN_MODIFIER;
-        if(getAngleDifference(angle,targetAngle)<turnAmount) angleInterpolate = targetAngle;
-        else if(angle>targetAngle) {
-            if(angle-targetAngle>Math.PI) angleInterpolate+=turnAmount;
-            else angleInterpolate-=turnAmount;
-        }
-        else {
-            if(targetAngle-angle>Math.PI) angleInterpolate-=turnAmount;
-            else angleInterpolate+=turnAmount;
+        if(turnSpeed==FAST_TURN_SPEED || slidingFrames<=0 || !diving) {
+            float turnAmount = turnSpeed*frameInterpolation;
+            float targetAngle = angleTarget;
+            if(midairTurn) targetAngle = angleTarget2;
+            if(midairTurn) turnAmount *=MIDAIR_TURN_MODIFIER;
+            if(getAngleDifference(angle,targetAngle)<turnAmount) angleInterpolate = targetAngle;
+            else if(angle>targetAngle) {
+                if(angle-targetAngle>Math.PI) angleInterpolate+=turnAmount;
+                else angleInterpolate-=turnAmount;
+            }
+            else {
+                if(targetAngle-angle>Math.PI) angleInterpolate-=turnAmount;
+                else angleInterpolate+=turnAmount;
+            }
         }
 
         //recalculate matrix
