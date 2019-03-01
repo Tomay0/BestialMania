@@ -287,13 +287,13 @@ public class Beast extends AnimatedObject implements AnimationListener {
         //jump
         float speedMultiplier = 1;
         speedMultiplier+=speed*speed*SPEED_JUMP_MULTIPLIER;
-        if(slidingFrames>0) {
+        if(slidingFrames!=0) {//LONG JUMP - STILL WORKS DURING THE COOLDOWN
             //LONG JUMP
             speedMultiplier*=LONG_JUMP_HEIGHT_MODIFIER;
             slidingFrames = 0;//stop sliding
             longJump = true;
         }
-        else if(crouching) speedMultiplier*=HIGH_JUMP_MODIFIER;//HIGH JUMP
+        else if(crouching && slidingFrames==0) speedMultiplier*=HIGH_JUMP_MODIFIER;//HIGH JUMP
         if(yspeed<0) yspeed=0;
         yspeed += characterJump*speedMultiplier;
         return true;

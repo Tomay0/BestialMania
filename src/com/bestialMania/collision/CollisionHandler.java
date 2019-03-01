@@ -172,7 +172,7 @@ public class CollisionHandler {
     public float getFloorHeightAtLocation(Vector3f position) {
         float maxY = MIN_Y;
         for(Triangle triangle : floorAtPoint(position)) {
-            float y = triangle.getTriangleY(position, -Beast.DOWNHILL_CLIMB_HEIGHT,Beast.UPHILL_CLIMB_HEIGHT, MIN_Y);
+            float y = triangle.getTriangleY(position, -1.0f,Beast.UPHILL_CLIMB_HEIGHT, MIN_Y);
             if(y>maxY) maxY = y;
         }
         return maxY;
@@ -183,7 +183,7 @@ public class CollisionHandler {
     public float getCeilingHeightAtLocation(Vector3f position) {
         float minY = MAX_Y;
         for(Triangle triangle : ceilingAtPoint(position)) {
-            float y = triangle.getTriangleY(position, -Beast.DOWNHILL_CLIMB_HEIGHT,Beast.UPHILL_CLIMB_HEIGHT, MAX_Y);
+            float y = triangle.getTriangleY(position, -1.0f,Beast.UPHILL_CLIMB_HEIGHT, MAX_Y);
             if(y<minY) minY = y;
         }
         return minY;
