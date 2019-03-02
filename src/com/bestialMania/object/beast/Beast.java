@@ -56,6 +56,8 @@ public class Beast extends AnimatedObject implements AnimationListener {
     public static final float DOWNHILL_CLIMB_HEIGHT = 0.3f;//how step of an angle you can descend in one movement
     public static final float WALL_CLIMB_BIAS = 0.1f;//your character can go over walls this high
 
+    private static final float LEDGE_GRAB_CLIMB_SPEED = 0.05f;//how fast you climb up onto a ledge
+
     private static final float LANDING_ANIMATION_HEIGHT = 0.7f;//you begin to do a landing animation at this height above ground
 
     //character constants, these depend on what beast you pick
@@ -84,10 +86,12 @@ public class Beast extends AnimatedObject implements AnimationListener {
     private float yspeed;
     private float floorY;
     private float ceilY;
+    private float grabY;
     private boolean running = false;
     private boolean crouching = false;
     private boolean diving = false;
     private boolean longJump = false;
+    private int ledgeGrabFrames = 0;
     private int slidingFrames = 0;
     private boolean onGround;
     private boolean midairTurn = false;
@@ -135,6 +139,7 @@ public class Beast extends AnimatedObject implements AnimationListener {
         yspeed = 0;
         floorY = collisionHandler.getFloorHeightAtLocation(position);
         ceilY = CollisionHandler.MAX_Y;
+        grabY = CollisionHandler.MIN_Y;
         onGround = position.y<=floorY;
         if(onGround) position.y=floorY;
 
@@ -178,7 +183,7 @@ public class Beast extends AnimatedObject implements AnimationListener {
      */
     public void setDirection(Vector2f direction) {
         //sliding or being in midair will make you spin towards its direction quickly but then slowly turn after reaching that direction
-        if(!onGround || slidingFrames>0) {
+        if(!onGround || slidingFrames>0 || ledgeGrabFrames>0) {
             angleTarget2 = (float)Math.atan2(direction.x,direction.y);
         }else {
             angleTarget = (float)Math.atan2(direction.x,direction.y);
@@ -205,8 +210,8 @@ public class Beast extends AnimatedObject implements AnimationListener {
         else if(!Settings.AUTOMATIC_RUNNING) this.running = false;
         if(speed==0) this.running = false;
 
-        //slow your speed if you are crouching (doesn't include sliding or diving
-        if(this.crouching && slidingFrames==0 && onGround) {
+        //slow your speed if you are crouching (doesn't include sliding or diving or climbing a ledge)
+        if(this.crouching && slidingFrames==0 && onGround && ledgeGrabFrames==0) {
             this.speed*=CROUCH_MODIFIER;
             this.running = false;
         }
@@ -214,7 +219,7 @@ public class Beast extends AnimatedObject implements AnimationListener {
         else if(this.running) this.speed*=RUN_MODIFIER;
 
         //walking/idle animations. Must be on ground for this to occur, however this does not occur while sliding or crouching.
-        if(onGround && !crouching && slidingFrames<=0) {
+        if(onGround && !crouching && slidingFrames<=0 && ledgeGrabFrames==0) {
             if(speed>0) playTransitionAnimation(2,0.3f,"walk");
             else playTransitionAnimation(1,0.3f,null);
         }
@@ -246,9 +251,29 @@ public class Beast extends AnimatedObject implements AnimationListener {
                 angleTarget = (float)Math.atan2(movementVector.x,movementVector.y);
                 midairTurn = false;
                 longJump = false;
+                turnSpeed = FAST_TURN_SPEED;
             }else return false;//midair so can't jump
 
         }
+        //stop climbing the ledge if you jump while climbing
+        else if(ledgeGrabFrames>0) {
+            ledgeGrabFrames = 0;
+            yspeed = 0;
+            //jump forward if 3/4 of your body is over the ledge
+            if(position.y+characterHeight/4.0f>grabY) {
+                movementVector.x = movementDirection.x*characterSpeed;
+                movementVector.y = movementDirection.y*characterSpeed;
+
+                angleTarget = (float)Math.atan2(movementVector.x,movementVector.y);
+            }
+            //otherwise, wall jump away
+            else {
+                movementVector.x = -intendedMovementVector.x*characterSpeed/LEDGE_GRAB_CLIMB_SPEED;
+                movementVector.y = -intendedMovementVector.y*characterSpeed/LEDGE_GRAB_CLIMB_SPEED;
+                angleTarget = (float)Math.atan2(movementVector.x,movementVector.y);
+            }
+        }
+
         //jump
         float speedMultiplier = 1;
         speedMultiplier+=speed*speed*SPEED_JUMP_MULTIPLIER;
@@ -273,8 +298,8 @@ public class Beast extends AnimatedObject implements AnimationListener {
      * Start/Stop crouching
      */
     public void crouch(boolean crouch) {
-        //initialize the crouch
-        if(!crouching && crouch) {
+        //initialize either a slide or a dive (can't do this while grabbing on a ledge)
+        if(!crouching && crouch && ledgeGrabFrames==0) {
             if(speed>0) {
                 if(onGround) {
                     //SLIDE
@@ -335,6 +360,9 @@ public class Beast extends AnimatedObject implements AnimationListener {
                 }
             }else if(!onGround) return;
         }
+        //stop grabbing onto a ledge if you press crouch
+        else if(ledgeGrabFrames>0 && crouch) ledgeGrabFrames = 0;
+
         this.crouching = crouch;
         //crouching on ground animation
         if(this.crouching && onGround && slidingFrames<=0) {
@@ -344,7 +372,7 @@ public class Beast extends AnimatedObject implements AnimationListener {
 
     /**
      * Update method 1 - this update method is used by all beast objects and simply updates their position each frame based on the previously determined vectors
-     * This method also determines if you are on the ground for the use in physics
+     * This method also determines if you are on the ground for the use in physics, updates the animation and deletes sound memory
      */
     @Override
     public void update() {
@@ -352,35 +380,37 @@ public class Beast extends AnimatedObject implements AnimationListener {
         position.x+=movementVector.x+wallPushVector.x;
         position.z+=movementVector.y+wallPushVector.y;
         if(yspeed<=0 || !diving) position.y+=yspeed;//while diving your yspeed will remain at 0 for a certain amount of time
-
         //respawn if you fall off the map
         if(position.y <-100) {
             position.x = 0;
             position.y = 0;
             position.z = 0;
         }
-
-        //landing on ground
-        boolean inAir = !onGround;
-        onGround = position.y<floorY+0.0001f;//0.001f is a small bias to prevent floating point rounding errors
-        if(onGround) {
-            //previously in air, so play landing on ground sound effect
-            if(inAir) {
-                playSound(oof);
-                if(midairTurn) {
-                    midairTurn = false;
-                    angleTarget = angle;
+        if(ledgeGrabFrames==0) {
+            //landing on ground
+            boolean inAir = !onGround;
+            onGround = position.y<floorY+0.0001f;//0.001f is a small bias to prevent floating point rounding errors
+            if(onGround) {
+                //previously in air, so play landing on ground sound effect
+                if(inAir) {
+                    playSound(oof);
+                    if(midairTurn) {
+                        midairTurn = false;
+                        angleTarget = angle;
+                    }
                 }
+                //stick to the floor
+                position.y = floorY;
+                yspeed = 0;
             }
-            //stick to the floor
-            position.y = floorY;
-            yspeed = 0;
+            //hitting the ceiling
+            if(position.y+characterHeight>ceilY-0.0001f) {
+                position.y = ceilY-characterHeight;
+                if(yspeed>0) yspeed = 0;
+            }
         }
-        //hitting the ceiling
-        if(position.y+characterHeight>ceilY-0.0001f) {
-            position.y = ceilY-characterHeight;
-            if(yspeed>0) yspeed = 0;
-        }
+        else if(position.y>grabY) position.y = grabY;
+
 
         //clear memory for sounds that are not playing
         for(SoundSource source : new ArrayList<>(sources)) {
@@ -399,143 +429,190 @@ public class Beast extends AnimatedObject implements AnimationListener {
      * Update which is only called by the player object after all
      */
     public void updatePhysics() {
-        /*
-
-        ACCELERATION - LATERAL
-
-         */
-
-        //SLIDING MOVEMENT - your speed is locked to one direction and there is no friction
-        if(slidingFrames>0) {
-            slidingFrames--;
-            //do a 10 frame cooldown after the slide has completed
-            if(slidingFrames==0 && !diving) {
-                slidingFrames = -10;
-            }
-        }
-        //REGULAR MOVEMENT
-        else {
-            //countdown the slide cooldown
-            if(slidingFrames<0) slidingFrames++;
-
-            //get your intended movement vector
-            intendedMovementVector.x = movementDirection.x*speed;
-            intendedMovementVector.y = movementDirection.y*speed;
-
-            //work out how fast you will accelerate towards the intended movement. Being in midair will slow your acceleration/deceleration
-            float accel = ACCELERATION;
-            if(!onGround) {
-                accel*=MIDAIR_ACCELERATION_MODIFIER;
-                //diving or long jumping will slow your acceleration/deceleration even more
-                if(longJump || diving) accel*=LONG_JUMP_ACCELERATION_MODIFIER;
-            }
-            //if you have just landed on the ground from a dive, your speed will be immediately reduced to walking/running speed
-            else if(diving || longJump) {
-                diving = false;
-                longJump = false;
-                slidingFrames = 0;
-                float currentSpeed = movementVector.length();
-                if(currentSpeed>speed) accel = currentSpeed-speed;
-            }
-
-            //change your xspeed
-            if(movementVector.x<intendedMovementVector.x) {
-                movementVector.x+=accel;
-                if(movementVector.x>intendedMovementVector.x) movementVector.x = intendedMovementVector.x;
-            }else if(movementVector.x>intendedMovementVector.x) {
-                movementVector.x-=accel;
-                if(movementVector.x<intendedMovementVector.x) movementVector.x = intendedMovementVector.x;
-            }
-
-            //change your yspeed
-            if(movementVector.y<intendedMovementVector.y) {
-                movementVector.y+=accel;
-                if(movementVector.y>intendedMovementVector.y) movementVector.y = intendedMovementVector.y;
-            }else if(movementVector.y>intendedMovementVector.y) {
-                movementVector.y-=accel;
-                if(movementVector.y<intendedMovementVector.y) movementVector.y = intendedMovementVector.y;
-            }
-        }
-        /*
-
-        ACCELERATION - VERTICAL
-
-         */
-
-        //GRAVITY - only occurs if you're above ground. Long jumping will
-        if(!onGround) {
-            float gravity = GRAVITY;
-            if(longJump) gravity*=LONG_JUMP_GRAVITY_MODIFIER;
-            yspeed-=gravity;
-            //stop the walking sound effect while midair
-            walkingSound.pause();
-            //animation for jumping/moving in midair. Does not occur when sliding, diving.
-            //This animation swaps to a landing animation when you get close to the ground, so it doesn't occur there either.
-            if(slidingFrames<=0 && !diving && (yspeed>=0 || positionInterpolate.y-floorY>=LANDING_ANIMATION_HEIGHT)) {
-                playTransitionAnimation(4,0.15f,null);
-            }
-        }
-        //When you're on the ground - play the walking sound effect while moving
-        else {
-            float speed = movementVector.length();
-            if(speed>0) {
-                if(!walkingSound.isPlaying()) {
-                    walkingSound.play();
+        //grabbing and climbing onto a ledge - skips all code after this
+        if (ledgeGrabFrames > 0) {
+            if (position.y < grabY) {
+                movementVector.x = 0;
+                movementVector.y = 0;
+                wallPushVector.x = 0;
+                wallPushVector.y = 0;
+                yspeed = LEDGE_GRAB_CLIMB_SPEED;
+            } else {
+                movementVector.x = intendedMovementVector.x;
+                movementVector.y = intendedMovementVector.y;
+                ledgeGrabFrames++;
+                if (ledgeGrabFrames > characterRadius / LEDGE_GRAB_CLIMB_SPEED * 2) {
+                    //finish climbing the ledge
+                    ledgeGrabFrames = 0;
                 }
             }
+        }
+
+        if (ledgeGrabFrames == 0) {
+
+
+            /*
+
+            ACCELERATION - LATERAL
+
+             */
+
+            //SLIDING MOVEMENT - your speed is locked to one direction and there is no friction
+            if (slidingFrames > 0) {
+                slidingFrames--;
+                //do a 10 frame cooldown after the slide has completed
+                if (slidingFrames == 0 && !diving) {
+                    slidingFrames = -10;
+                }
+            }
+            //REGULAR MOVEMENT
             else {
+                //countdown the slide cooldown
+                if (slidingFrames < 0) slidingFrames++;
+
+                //get your intended movement vector
+                intendedMovementVector.x = movementDirection.x * speed;
+                intendedMovementVector.y = movementDirection.y * speed;
+
+                //work out how fast you will accelerate towards the intended movement. Being in midair will slow your acceleration/deceleration
+                float accel = ACCELERATION;
+                if (!onGround) {
+                    accel *= MIDAIR_ACCELERATION_MODIFIER;
+                    //diving or long jumping will slow your acceleration/deceleration even more
+                    if (longJump || diving) accel *= LONG_JUMP_ACCELERATION_MODIFIER;
+                }
+                //if you have just landed on the ground from a dive, your speed will be immediately reduced to walking/running speed
+                else if (diving || longJump) {
+                    diving = false;
+                    longJump = false;
+                    slidingFrames = 0;
+                    float currentSpeed = movementVector.length();
+                    if (currentSpeed > speed) accel = currentSpeed - speed;
+                }
+
+                //change your xspeed
+                if (movementVector.x < intendedMovementVector.x) {
+                    movementVector.x += accel;
+                    if (movementVector.x > intendedMovementVector.x) movementVector.x = intendedMovementVector.x;
+                } else if (movementVector.x > intendedMovementVector.x) {
+                    movementVector.x -= accel;
+                    if (movementVector.x < intendedMovementVector.x) movementVector.x = intendedMovementVector.x;
+                }
+
+                //change your yspeed
+                if (movementVector.y < intendedMovementVector.y) {
+                    movementVector.y += accel;
+                    if (movementVector.y > intendedMovementVector.y) movementVector.y = intendedMovementVector.y;
+                } else if (movementVector.y > intendedMovementVector.y) {
+                    movementVector.y -= accel;
+                    if (movementVector.y < intendedMovementVector.y) movementVector.y = intendedMovementVector.y;
+                }
+            }
+            //your new movementSpeed
+            float movementSpeed = movementVector.length();
+                /*
+
+                ACCELERATION - VERTICAL
+
+                 */
+
+            //GRAVITY - only occurs if you're above ground. Long jumping will
+            if (!onGround) {
+                float gravity = GRAVITY;
+                if (longJump) gravity *= LONG_JUMP_GRAVITY_MODIFIER;
+                yspeed -= gravity;
+                //stop the walking sound effect while midair
                 walkingSound.pause();
+                //animation for jumping/moving in midair. Does not occur when sliding, diving.
+                //This animation swaps to a landing animation when you get close to the ground, so it doesn't occur there either.
+                if (slidingFrames <= 0 && !diving && (yspeed >= 0 || positionInterpolate.y - floorY >= LANDING_ANIMATION_HEIGHT)) {
+                    playTransitionAnimation(4, 0.15f, null);
+                }
+            }
+            //When you're on the ground - play the walking sound effect while moving
+            else {
+                if (movementSpeed > 0) {
+                    if (!walkingSound.isPlaying()) {
+                        walkingSound.play();
+                    }
+                } else {
+                    walkingSound.pause();
+                }
+            }
+
+            //Lock your y speed below terminal velocity
+            if (yspeed < -TERMINAL_VELOCITY) {
+                yspeed = -TERMINAL_VELOCITY;
+            }
+
+                /*
+
+                COLLISIONS
+
+                 */
+
+            //FLOOR COLLISIONS
+            positionInterpolate.x = position.x + movementVector.x;
+            positionInterpolate.z = position.z + movementVector.y;
+
+            //remember your y doesn't increase for a little bit while diving
+            positionInterpolate.y = position.y;
+            if (yspeed <= 0 || !diving) positionInterpolate.y += yspeed;
+
+            //Where the floor will be at the next frame given your calculated movement vector
+            floorY = collisionHandler.getFloorHeightAtLocation(positionInterpolate);
+
+            //If you're on the ground, your y will lock to the floor's location
+            if (onGround) {
+                float heightBelowFloor = floorY - position.y;
+                //stick to the floor if the distance to the floor is close enough
+                if (heightBelowFloor > -DOWNHILL_CLIMB_HEIGHT && heightBelowFloor < UPHILL_CLIMB_HEIGHT) {
+                    yspeed = heightBelowFloor;
+                }
+                //distance to the ground is too large, you will simply fall.
+                else {
+                    onGround = false;
+                    yspeed -= GRAVITY;
+                }
+            }
+
+            //CEILING COLLISIONS
+            positionInterpolate.y += characterHeight;
+            ceilY = collisionHandler.getCeilingHeightAtLocation(positionInterpolate);
+
+            //WALL COLLISION
+            positionInterpolate.y = position.y + yspeed;
+            if (positionInterpolate.y < floorY) positionInterpolate.y = floorY;
+            positionInterpolate.y += WALL_CLIMB_BIAS;//slight bias so you slide over the top of walls but not underneath
+            collisionHandler.calculateWallPush(positionInterpolate, characterRadius, wallPushVector/*,1,0*/);//more tests seems to result in you getting pushed through walls sometimes
+
+            //Check if you can grab onto a ledge. Holding the crouch button will cancel it
+            if ((wallPushVector.x != 0 || wallPushVector.y != 0) && yspeed <= 0 && !onGround && !crouching) {
+                float dx = movementVector.x / movementSpeed;
+                float dz = movementVector.y / movementSpeed;
+                //check if in front of you there is a floor
+                positionInterpolate.x += dx * characterRadius * 2;
+                positionInterpolate.z += dz * characterRadius * 2;
+                positionInterpolate.y += characterHeight;
+                float frontY = collisionHandler.getFloorHeightAtLocation(positionInterpolate);
+                float dy = positionInterpolate.y - frontY;
+                if (dy > 0 && dy < characterHeight / 2.0f) {
+                    grabY = frontY;
+                    angleTarget = angleTarget2 = (float) Math.atan2(dx, dz);
+                    turnSpeed = FAST_TURN_SPEED;
+                    midairTurn = false;
+                    longJump = false;
+                    diving = false;
+                    onGround = true;
+                    ledgeGrabFrames = 1;
+                    intendedMovementVector.x = dx * LEDGE_GRAB_CLIMB_SPEED;
+                    intendedMovementVector.y = dz * LEDGE_GRAB_CLIMB_SPEED;
+                }
             }
         }
-
-        //Lock your y speed below terminal velocity
-        if(yspeed<-TERMINAL_VELOCITY) {
-            yspeed=-TERMINAL_VELOCITY;
-        }
-
-        /*
-
-        COLLISIONS
-
-         */
-
-        //FLOOR COLLISIONS
-        positionInterpolate.x = position.x+movementVector.x;
-        positionInterpolate.z = position.z+movementVector.y;
-
-        //remember your y doesn't increase for a little bit while diving
-        positionInterpolate.y = position.y;
-        if(yspeed<=0 || !diving) positionInterpolate.y += yspeed;
-
-        //Where the floor will be at the next frame given your calculated movement vector
-        floorY = collisionHandler.getFloorHeightAtLocation(positionInterpolate);
-
-        //If you're on the ground, your y will lock to the floor's location
-        if(onGround) {
-            float heightBelowFloor = floorY-position.y;
-            //stick to the floor if the distance to the floor is close enough
-            if(heightBelowFloor > -DOWNHILL_CLIMB_HEIGHT && heightBelowFloor<UPHILL_CLIMB_HEIGHT) {
-                yspeed = heightBelowFloor;
-            }
-            //distance to the ground is too large, you will simply fall.
-            else{
-                onGround = false;
-                yspeed-=GRAVITY;
-            }
-        }
-
-        //CEILING COLLISIONS
-        positionInterpolate.y += characterHeight;
-        ceilY = collisionHandler.getCeilingHeightAtLocation(positionInterpolate);
-
-        //WALL COLLISION
-        positionInterpolate.y = position.y+yspeed;
-        if(positionInterpolate.y<floorY) positionInterpolate.y = floorY;
-        positionInterpolate.y+=WALL_CLIMB_BIAS;//slight bias so you slide over the top of walls but not underneath
-        collisionHandler.calculateWallPush(positionInterpolate,characterRadius,wallPushVector/*,1,0*/);//more tests seems to result in you getting pushed through walls sometimes
 
         //TURNING (don't turn if you are sliding)
-        if(turnSpeed==FAST_TURN_SPEED || slidingFrames<=0) {
+        if(turnSpeed==FAST_TURN_SPEED || (slidingFrames<=0 && ledgeGrabFrames==0)) {
             float turnAmount = turnSpeed;
             float targetAngle = angleTarget;
 
@@ -576,30 +653,36 @@ public class Beast extends AnimatedObject implements AnimationListener {
         positionInterpolate.z = position.z+(wallPushVector.y+movementVector.y)*frameInterpolation;
         positionInterpolate.y = position.y+yspeed*frameInterpolation;
 
-        if(positionInterpolate.y<floorY && yspeed<0) {//landing on the ground
-            positionInterpolate.y = floorY;
-        }
-        if(positionInterpolate.y+characterHeight>ceilY) {//hitting the ceiling
-            positionInterpolate.y = ceilY-characterHeight;
-        }
-
-
-        //LANDING ANIMATION - when you get close to the ground.
-        // Only occurs if you are:
-        // - above the ground, moving downwards, not diving or sliding and you're below a certain distance above the ground
-        if(!onGround && yspeed<0 && !diving && slidingFrames<=0 && positionInterpolate.y-floorY<LANDING_ANIMATION_HEIGHT) {
-            if(animationID!=3) {
-                animationID = 3;
-                playAnimation(landingAnimation);
+        if(ledgeGrabFrames==0) {
+            if(positionInterpolate.y<floorY && yspeed<0) {//landing on the ground
+                positionInterpolate.y = floorY;
+            }
+            if(positionInterpolate.y+characterHeight>ceilY) {//hitting the ceiling
+                positionInterpolate.y = ceilY-characterHeight;
             }
 
-            float i = (positionInterpolate.y-floorY)/LANDING_ANIMATION_HEIGHT;
-            landingAnimation.setCurrentTime(i);
+
+            //LANDING ANIMATION - when you get close to the ground.
+            // Only occurs if you are:
+            // - above the ground, moving downwards, not diving or sliding and you're below a certain distance above the ground
+            if(!onGround && yspeed<0 && !diving && slidingFrames<=0 && positionInterpolate.y-floorY<LANDING_ANIMATION_HEIGHT) {
+                if(animationID!=3) {
+                    animationID = 3;
+                    playAnimation(landingAnimation);
+                }
+
+                float i = (positionInterpolate.y-floorY)/LANDING_ANIMATION_HEIGHT;
+                landingAnimation.setCurrentTime(i);
+            }
+        }
+        else {
+            if(positionInterpolate.y>grabY) positionInterpolate.y = grabY;
         }
 
         //ROTATE THE CHARACTER
         float angleInterpolate = angle;
-        if(turnSpeed==FAST_TURN_SPEED || slidingFrames<=0) {
+
+        if(turnSpeed==FAST_TURN_SPEED || (slidingFrames<=0 && ledgeGrabFrames==0)) {
             float turnAmount = turnSpeed*frameInterpolation;
             float targetAngle = angleTarget;
             if(midairTurn) targetAngle = angleTarget2;

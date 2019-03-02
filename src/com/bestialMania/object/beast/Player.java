@@ -144,7 +144,7 @@ public class Player implements InputListener {
         Vector2f dir;//direction your controller is pointing RIGHT = POSITIVE X. DOWN = POSITIVE Y
         boolean running=false;//if you are running
 
-        //jump occurs within 5 frames of pressing the jump button
+        //JUMP
         if(jumpFrames>0) {
             jumpFrames++;
 
@@ -159,7 +159,9 @@ public class Player implements InputListener {
             if(dir.x==0&&dir.y==0) speed = 0;
             else speed = 1;
 
+            //run
             if(inputHandler.isKeyPressed(GLFW_KEY_LEFT_SHIFT)) running = true;
+            //crouch
             beast.crouch(inputHandler.isKeyPressed(GLFW_KEY_LEFT_CONTROL));
         }
         //controller
@@ -169,7 +171,9 @@ public class Player implements InputListener {
             speed-=0.4f;//remove noise
             speed/=0.6;
 
+            //run
             if(inputHandler.isGamepadButtonPressed(controller,9)) running = true;
+            //crouch
             beast.crouch(inputHandler.isGamepadButtonPressed(controller,1));
         }
         //no controller connected
