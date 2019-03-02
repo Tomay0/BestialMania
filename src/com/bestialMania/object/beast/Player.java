@@ -70,8 +70,9 @@ public class Player implements InputListener {
     /**
      * Remove this object from the listeners
      */
-    public void removeListeners() {
+    public void cleanUp() {
         inputHandler.removeListener(this);
+        beast.cleanUp();
     }
 
     /**
@@ -143,7 +144,7 @@ public class Player implements InputListener {
         Vector2f dir;//direction your controller is pointing RIGHT = POSITIVE X. DOWN = POSITIVE Y
         boolean running=false;//if you are running
 
-        //jumping 1-5 frames before you land
+        //jump occurs within 5 frames of pressing the jump button
         if(jumpFrames>0) {
             jumpFrames++;
 
@@ -190,6 +191,9 @@ public class Player implements InputListener {
             rotatedDir.y = dir.x*yawSinus+dir.y*yawCosinus;
             beast.setDirection(rotatedDir);
         }else beast.setSpeed(0,false);
+
+        //update the beast's physics
+        beast.updatePhysics();
     }
 
     /**
@@ -256,7 +260,7 @@ public class Player implements InputListener {
             if(pressed) {
                 //jump
                 if(button==0) {
-                    if(!beast.jump()) jumpFrames++;
+                    jumpFrames++;
                 }
             }
         }
@@ -271,7 +275,7 @@ public class Player implements InputListener {
             if(pressed) {
                 //jump
                 if(key==GLFW_KEY_SPACE) {
-                    if(!beast.jump()) jumpFrames++;
+                    jumpFrames++;
                 }
             }
         }

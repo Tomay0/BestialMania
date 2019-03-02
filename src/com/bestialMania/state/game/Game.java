@@ -451,7 +451,7 @@ public class Game implements State, InputListener {
         musicSource.stop();
         musicSource.cleanUp();
         for(Player player :players) {
-            player.removeListeners();
+            player.cleanUp();
         }
     }
 
