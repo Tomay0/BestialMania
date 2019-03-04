@@ -13,11 +13,9 @@ public class Triangle {
     private Vector3f[] intersects = new Vector3f[]{new Vector3f(),new Vector3f()};//for calculating intersections
 
 
-    /*public Triangle(float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3) {
-        v1 = new Vector3f(x1,y1,z1);
-        v2 = new Vector3f(x2,y2,z2);
-        v3 = new Vector3f(x3,y3,z3);
-    }*/
+    public Vector3f getV1() {return v1;}
+    public Vector3f getV2() {return v2;}
+    public Vector3f getV3() {return v3;}
 
     /**
      * Floor/Wall triangle of 3 vertices

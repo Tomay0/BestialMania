@@ -2,6 +2,8 @@ package com.bestialMania.state.game;
 
 import com.bestialMania.*;
 import com.bestialMania.collision.CollisionHandler;
+import com.bestialMania.collision.CollisionLoader;
+import com.bestialMania.rendering.model.loader.ModelLoader;
 import com.bestialMania.state.game.map.MapData;
 import com.bestialMania.animation.AnimatedModel;
 import com.bestialMania.object.AnimatedObject;
@@ -11,7 +13,6 @@ import com.bestialMania.object.beast.Player;
 import com.bestialMania.gui.Object2D;
 import com.bestialMania.rendering.*;
 import com.bestialMania.rendering.model.Model;
-import com.bestialMania.rendering.model.loader.Loader;
 import com.bestialMania.rendering.model.Skybox;
 import com.bestialMania.rendering.shader.Shader;
 import com.bestialMania.rendering.shadow.ShadowBox;
@@ -145,7 +146,7 @@ public class Game implements State, InputListener {
         shadowBoxes = new ShadowBox[controllers.size()][shadowDistanceValues.size()-1];
 
         //load floor
-        collisionHandler = map.loadCollisions();
+        collisionHandler = CollisionLoader.loadCollisionHandler(map.getCollisions());
 
         //load all game related shaders
         loadShaders();
@@ -228,7 +229,7 @@ public class Game implements State, InputListener {
 
         //create the beast you play as (JIMMY)
         Texture jimmyTexture = Texture.loadImageTexture3D(memoryManager,"res/textures/jimmy_tex.png");
-        AnimatedModel jimmy = Loader.loadAnimatedModel(memoryManager,"res/models/dae/jimmy.dae");
+        AnimatedModel jimmy = ModelLoader.loadAnimatedModel(memoryManager,"res/models/dae/jimmy.dae");
 
         //Create a window, renderer and character for each player
         for(int i = 0;i<controllers.size();i++) {

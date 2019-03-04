@@ -11,10 +11,172 @@ import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 
-import java.io.File;
+import java.io.*;
 import java.util.*;
 
-public class Loader {
+public class ModelLoader {
+
+    /**
+     * Load a model in the BMM format
+     */
+    public static Model loadModel(MemoryManager mm, String fileName) {
+        try {
+            FileInputStream inputStream = new FileInputStream(fileName);
+            ObjectInputStream ois = new ObjectInputStream(inputStream);
+
+            //get the header
+            char[] chars = new char[3];
+            for (int i = 0; i < 3; i++) chars[i] = ois.readChar();
+            if (chars[0] != 'B' || chars[1] != 'M' || chars[1] != 'M') {
+                System.err.println("Invalid format for the model " + fileName + " must be bmm!");
+                return null;
+            }
+
+            //Start building the Model
+            Model model = new Model(mm);
+            char sectionHeader = ois.readChar();
+
+            //Work out the indices. Tne next character should say 'i' if they exist
+            if(sectionHeader=='i') {
+                //start with size of indices
+                int indexCount = ois.readInt();
+
+                //build indices array
+                int[] indices = new int[indexCount];
+                for(int i = 0;i<indexCount;i++) {
+                    indices[i] = ois.readInt();
+                }
+                model.bindIndices(indices);
+
+                sectionHeader = ois.readChar();
+            }
+
+            //Work out the vertices, etc. The next character should say 'v'
+            if(sectionHeader=='v') {
+                //number of attributes to read from
+                int nAttributes = ois.readInt();
+                //number of vertices
+                int vertexCount = ois.readInt();
+
+                //loop through all the attributes
+                for(int n = 0;n<nAttributes;n++) {
+                    int position = ois.readInt();
+                    int size = ois.readInt();
+                    boolean isFloat = ois.readBoolean();
+
+                    //float data
+                    if(isFloat) {
+                        float[] data = new float[vertexCount*size];
+                        for(int i=0;i<data.length;i++) {
+                            data[i] = ois.readFloat();
+                        }
+                        model.genFloatAttribute(position,size,data);
+                    }
+                    //integer data
+                    else {
+                        int[] data = new int[vertexCount*size];
+                        for(int i=0;i<data.length;i++) {
+                            data[i] = ois.readInt();
+                        }
+                        model.genIntAttribute(position,size,data);
+
+                    }
+                }
+                sectionHeader = ois.readChar();
+            }
+            if(sectionHeader=='e') {
+                System.out.println("Loaded model: " + fileName + " successfully!");
+            }
+
+            ois.close();
+            inputStream.close();
+
+            return model;
+
+        }catch(FileNotFoundException e) {
+            System.err.println("Could not find the file for the model: " + fileName);
+            return null;
+        }catch(EOFException  e) {
+            System.err.println("Model file " + fileName + " appears to be incomplete, end of file reached.");
+            e.printStackTrace();
+            return null;
+        }catch(IOException e) {
+            System.err.println("Unable to load model: " + fileName);
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
+
+    /**
+     * Loads a model from an OBJ file format
+     */
+    public static void convertOBJ(String objFile, String bmmFile) {
+        try {
+            Scanner scan = new Scanner(new File(objFile));
+
+            List<Vector3f> vertices = new ArrayList<>();
+            List<Vector2f> uvs = new ArrayList<>();
+            List<Vector3f> normals = new ArrayList<>();
+            List<Vector3i> indices = new ArrayList<>();
+
+            Map<String, ModelVertex> vertexMap = new HashMap<>();//map of vertex/uv/normals sets by a string to identify them
+            List<ModelVertex> vertexList = new ArrayList<>();//list of the vertex/uv/normal sets in order
+            List<VertexWeightData> vertexWeightData = new ArrayList<>();//empty list
+
+            while(scan.hasNext()) {
+                String head = scan.next();
+                //vertices
+                if(head.equals("v")) {
+                    float x = scan.nextFloat();
+                    float y = scan.nextFloat();
+                    float z = scan.nextFloat();
+                    vertices.add(new Vector3f(x,y,z));
+                }
+                //uvs
+                else if(head.equals("vt")) {
+                    float x = scan.nextFloat();
+                    float y = scan.nextFloat();
+                    uvs.add(new Vector2f(x,y));
+                }
+                //normals
+                else if(head.equals("vn")) {
+                    float x = scan.nextFloat();
+                    float y = scan.nextFloat();
+                    float z = scan.nextFloat();
+                    normals.add(new Vector3f(x,y,z));
+                }
+                //faces
+                else if(head.equals("f")) {
+                    int id1 = processVertex(scan.next(),vertexMap,vertexList,vertices,uvs,normals,vertexWeightData);
+                    int id2 = processVertex(scan.next(),vertexMap,vertexList,vertices,uvs,normals,vertexWeightData);
+                    int id3 = processVertex(scan.next(),vertexMap,vertexList,vertices,uvs,normals,vertexWeightData);
+
+                    //calculate tangent vectors if uvs and normals are both present
+                    if(uvs.size()>0 && normals.size()>0) {
+                        processTangents(vertexList.get(id1),vertexList.get(id2),vertexList.get(id3));
+                    }
+                    //face using ids of vertices
+                    Vector3i face = new Vector3i(id1,id2,id3);
+                    indices.add(face);
+                }
+                else {
+                    scan.nextLine();
+                }
+            }
+
+            scan.close();
+
+            //build the model
+            buildModelBMM(bmmFile,indices,vertexList,uvs.size()>0,normals.size()>0,false);
+
+        }catch(Exception e) {
+            System.err.println("Unable to load model: " + objFile);
+            e.printStackTrace();
+        }
+    }
+
     /**
      * Loads a model from an OBJ file format
      */
@@ -430,6 +592,121 @@ public class Loader {
 
 
         return model;
+    }
+
+
+    /**
+     * Builds a BMM file
+     */
+    private static void buildModelBMM(String fileName, List<Vector3i> indices,List<ModelVertex> vertexList, boolean hasUvs, boolean hasNormals, boolean hasArmature) {
+        try {
+            FileOutputStream outputStream = new FileOutputStream(fileName);
+            ObjectOutputStream oos = new ObjectOutputStream(outputStream);
+
+            oos.writeChars("BMMi");
+            oos.writeInt(indices.size()*3);
+            //write indices
+            for(int i = 0;i<indices.size();i++) {
+                Vector3i v = indices.get(i);
+                oos.writeInt(v.x);
+                oos.writeInt(v.y);
+                oos.writeInt(v.z);
+            }
+
+            /*
+            WRITE ALL ATTRIBUTES
+             */
+            oos.writeChar('v');
+            int nAttributes = 1;
+            if(hasUvs) nAttributes++;
+            if(hasNormals) nAttributes++;
+            if(hasUvs&&hasNormals) nAttributes++;
+            if(hasArmature) nAttributes+=2;
+            oos.writeInt(nAttributes);
+            oos.writeInt(vertexList.size());
+
+            //build vertices
+            oos.writeInt(0);
+            oos.writeInt(3);
+            oos.writeBoolean(true);
+            for(int i = 0;i<vertexList.size();i++) {
+                ModelVertex v = vertexList.get(i);
+                oos.writeFloat(v.getVertex().x);
+                oos.writeFloat(v.getVertex().y);
+                oos.writeFloat(v.getVertex().z);
+            }
+
+            //build uvs
+            if(hasUvs) {
+                //build uvs
+                oos.writeInt(1);
+                oos.writeInt(2);
+                oos.writeBoolean(true);
+                for(int i = 0;i<vertexList.size();i++) {
+                    ModelVertex v = vertexList.get(i);
+                    oos.writeFloat(v.getUV().x);
+                    oos.writeFloat(v.getUV().y);
+                }
+            }
+
+            //build normals
+            if(hasNormals) {
+                oos.writeInt(2);
+                oos.writeInt(3);
+                oos.writeBoolean(true);
+                for(int i = 0;i<vertexList.size();i++) {
+                    ModelVertex v = vertexList.get(i);
+                    oos.writeFloat(v.getNormal().x);
+                    oos.writeFloat(v.getNormal().y);
+                    oos.writeFloat(v.getNormal().z);
+                }
+            }
+
+            //tangents
+            if(hasUvs && hasNormals) {
+                oos.writeInt(3);
+                oos.writeInt(3);
+                oos.writeBoolean(true);
+                for(int i = 0;i<vertexList.size();i++) {
+                    ModelVertex v = vertexList.get(i);
+                    oos.writeFloat(v.getTangent().x);
+                    oos.writeFloat(v.getTangent().y);
+                    oos.writeFloat(v.getTangent().z);
+                }
+            }
+
+            //vertex weight data
+            if(hasArmature) {
+                oos.writeInt(4);
+                oos.writeInt(3);
+                oos.writeBoolean(false);
+                for(int i = 0;i<vertexList.size();i++) {
+                    ModelVertex v = vertexList.get(i);
+                    oos.writeInt(v.getVertexWeightData().getJointId(0));
+                    oos.writeInt(v.getVertexWeightData().getJointId(1));
+                    oos.writeInt(v.getVertexWeightData().getJointId(2));
+                }
+
+                oos.writeInt(5);
+                oos.writeInt(3);
+                oos.writeBoolean(true);
+                for(int i = 0;i<vertexList.size();i++) {
+                    ModelVertex v = vertexList.get(i);
+                    oos.writeFloat(v.getVertexWeightData().getWeight(0));
+                    oos.writeFloat(v.getVertexWeightData().getWeight(1));
+                    oos.writeFloat(v.getVertexWeightData().getWeight(2));
+                }
+            }
+            oos.writeChar('e');
+
+            oos.close();
+            outputStream.close();
+        }catch(Exception e) {
+            System.err.println("Unable to write to file: " + fileName);
+            e.printStackTrace();
+        }
+
+
     }
 
     /**

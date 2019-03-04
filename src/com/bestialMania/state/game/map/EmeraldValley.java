@@ -1,13 +1,12 @@
 package com.bestialMania.state.game.map;
 
 import com.bestialMania.collision.BoundingBox;
-import com.bestialMania.collision.CollisionHandler;
-import com.bestialMania.collision.TriangleLoader;
+import com.bestialMania.collision.CollisionLoader;
 import com.bestialMania.object.Object3D;
 import com.bestialMania.object.StaticObject;
 import com.bestialMania.rendering.Texture;
 import com.bestialMania.rendering.model.Model;
-import com.bestialMania.rendering.model.loader.Loader;
+import com.bestialMania.rendering.model.loader.ModelLoader;
 import com.bestialMania.rendering.shader.Shader;
 import com.bestialMania.state.game.Game;
 import org.joml.Matrix4f;
@@ -41,6 +40,12 @@ public class EmeraldValley extends MapData{
         return "res/sound/vsauce.wav";
     }
 
+    @Override
+    public String getCollisions() {
+        return "res/collisions/emeraldValley.bmc";
+
+    }
+
     /**
      * Load shaders into the game
      * 2 = regular renderer
@@ -68,7 +73,7 @@ public class EmeraldValley extends MapData{
     @Override
     public void loadObjects(Game game) {
         //SOME POLE OBJECT
-        Model poleModel = Loader.loadOBJ(game.getMemoryManager(),"res/models/pole.obj");
+        Model poleModel = ModelLoader.loadModel(game.getMemoryManager(),"res/models/pole.bmm");
         Texture poleTexture = Texture.loadImageTexture3D(game.getMemoryManager(),"res/textures/concrete.png");
         Matrix4f testObjectMatrix = new Matrix4f();
         testObjectMatrix.translate(2.0f,0,0.5f);
@@ -83,8 +88,8 @@ public class EmeraldValley extends MapData{
         }
 
         //SOME FLOOR OBJECT
-        Model planeModel = Loader.loadOBJ(game.getMemoryManager(),"res/models/plane.obj");
-        Model planeModel2 = Loader.loadOBJ(game.getMemoryManager(), "res/models/plane2.obj");
+        Model planeModel = ModelLoader.loadModel(game.getMemoryManager(),"res/models/plane.bmm");
+        Model planeModel2 = ModelLoader.loadModel(game.getMemoryManager(), "res/models/plane2.bmm");
         Matrix4f planeMatrix = new Matrix4f();
         Texture planeTexture = Texture.loadImageTexture3D(game.getMemoryManager(),"res/textures/rocky.png");
         if(game.usesNormalMapping()) {
@@ -102,12 +107,12 @@ public class EmeraldValley extends MapData{
         }
 
         //SOME WALL OBJECT
-        Model wallModel = Loader.loadOBJ(game.getMemoryManager(), "res/models/wall.obj");
+        Model wallModel = ModelLoader.loadModel(game.getMemoryManager(), "res/models/wall.bmm");
         Texture wallTexture = Texture.loadImageTexture3D(game.getMemoryManager(),"res/textures/sexy.png");
         Object3D wallObject = new StaticObject(game,wallModel,new Matrix4f(),wallTexture,0.5f,10.0f);
         game.createObject(wallObject,2,true);
         //CEILING
-        Model ceilModel = Loader.loadOBJ(game.getMemoryManager(), "res/models/ceil.obj");
+        Model ceilModel = ModelLoader.loadModel(game.getMemoryManager(), "res/models/ceil.bmm");
         Object3D ceilObject = new StaticObject(game,ceilModel,new Matrix4f(),wallTexture,0.5f,10.0f);
         game.createObject(ceilObject,2,true);
 
@@ -121,7 +126,7 @@ public class EmeraldValley extends MapData{
         game.createObject(wallObject3,2,true);*/
 
         //STAIRS
-        Model stairsModel = Loader.loadOBJ(game.getMemoryManager(),"res/models/stairs.obj");
+        Model stairsModel = ModelLoader.loadModel(game.getMemoryManager(),"res/models/stairs.bmm");
         Matrix4f stairMatrix = new Matrix4f();
         stairMatrix.translate(-10,0,0);
         stairMatrix.scale(5,2,5);
@@ -138,28 +143,30 @@ public class EmeraldValley extends MapData{
 
     /**
      * Loads the floor and wall collisions
+     * TEMPORARY
      */
     @Override
-    public CollisionHandler loadCollisions() {
-        CollisionHandler collisionHandler = new CollisionHandler(boundingBox);
-        collisionHandler.addFloor(TriangleLoader.loadTrianglesOBJ("res/models/plane.obj"));
-        collisionHandler.addFloor(TriangleLoader.loadTrianglesOBJ("res/models/plane2.obj"));
-        collisionHandler.addWalls(TriangleLoader.loadTrianglesOBJ("res/models/wall.obj"));
-        collisionHandler.addCeiling(TriangleLoader.loadTrianglesOBJ("res/models/ceil.obj"));
-        //collisionHandler.addWalls(TriangleLoader.loadTrianglesOBJ("res/models/wall2.obj"));
+    public CollisionLoader loadCollisions() {
+        CollisionLoader collisionLoader = new CollisionLoader();
+        collisionLoader.loadFloors("res/collisions/toConvert/plane.obj", new Matrix4f());
+        collisionLoader.loadFloors("res/collisions/toConvert/plane2.obj", new Matrix4f());
+        collisionLoader.loadWalls("res/collisions/toConvert/wall.obj", new Matrix4f());
+        collisionLoader.loadCeilings("res/collisions/toConvert/ceil.obj", new Matrix4f());
+        //collisionHandler.addWalls(TriangleLoader.loadTrianglesOBJ("res/collisions/toConvert/wall2.obj"));
         Matrix4f testObjectMatrix = new Matrix4f();
         testObjectMatrix.translate(2.0f,0,0.5f);
         testObjectMatrix.scale(3.0f,3.0f,3.0f);
-        collisionHandler.addWalls(TriangleLoader.loadTrianglesOBJ("res/models/poleWall.obj",testObjectMatrix));
+        collisionLoader.loadWalls("res/collisions/toConvert/poleWall.obj",testObjectMatrix);
 
         Matrix4f stairMatrix = new Matrix4f();
         stairMatrix.translate(-10,0,0);
         stairMatrix.scale(5,2,5);
-        collisionHandler.addFloor(TriangleLoader.loadTrianglesOBJ("res/models/stairFloor.obj",stairMatrix));
-        collisionHandler.addWalls(TriangleLoader.loadTrianglesOBJ("res/models/stairWalls.obj",stairMatrix));
+        collisionLoader.loadFloors("res/collisions/toConvert/stairFloor.obj",stairMatrix);
+        collisionLoader.loadWalls("res/collisions/toConvert/stairWalls.obj",stairMatrix);
         //Matrix4f wallMatrix = new Matrix4f();
         //wallMatrix.translate(-10,1.2f,-20);
-        //collisionHandler.addWalls(TriangleLoader.loadTrianglesOBJ("res/models/wall3.obj",wallMatrix));
-        return collisionHandler;
+        //collisionHandler.addWalls(TriangleLoader.loadTrianglesOBJ("res/collisions/toConvert/wall3.obj",wallMatrix));
+        return collisionLoader;
     }
+
 }

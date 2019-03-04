@@ -2,12 +2,15 @@ package com.bestialMania.state.menu;
 
 import com.bestialMania.Settings;
 import com.bestialMania.InputHandler;
+import com.bestialMania.collision.CollisionHandler;
+import com.bestialMania.collision.CollisionLoader;
 import com.bestialMania.collision.Triangle;
 import com.bestialMania.gui.Button;
 import com.bestialMania.gui.ButtonListener;
 import com.bestialMania.rendering.MasterRenderer;
 import com.bestialMania.MemoryManager;
 import com.bestialMania.state.State;
+import com.bestialMania.state.game.map.MapData;
 import org.joml.Vector3f;
 
 public class MainMenu implements State, ButtonListener {
@@ -18,7 +21,7 @@ public class MainMenu implements State, ButtonListener {
     private MemoryManager memoryManager;
 
     //buttons
-    private Button startButton,quitButton;
+    private Button startButton,quitButton,collisionsButton;
 
     /**
      * Setup the main menu
@@ -33,9 +36,11 @@ public class MainMenu implements State, ButtonListener {
         //buttons
         startButton = new Button(memoryManager,inputHandler,this, Settings.WIDTH/2-60, Settings.HEIGHT/2,"res/textures/ui/start.png","Start","start");
         quitButton = new Button(memoryManager,inputHandler,this, Settings.WIDTH/2-60, Settings.HEIGHT/2+100,"res/textures/ui/quit.png","Quit","quit");
+        collisionsButton = new Button(memoryManager,inputHandler,this,Settings.WIDTH-180,Settings.HEIGHT-160,"res/textures/ui/collisions.png","Reload collisions","rc");
 
         startButton.addToRenderer(menu.getGuiRender());
         quitButton.addToRenderer(menu.getGuiRender());
+        collisionsButton.addToRenderer(menu.getGuiRender());
 
     }
 
@@ -61,10 +66,12 @@ public class MainMenu implements State, ButtonListener {
         //delete buttons from the renderer
         startButton.removeFromRenderer(menu.getGuiRender());
         quitButton.removeFromRenderer(menu.getGuiRender());
+        collisionsButton.removeFromRenderer(menu.getGuiRender());
 
         //delete buttons from inputhandler
         startButton.removeListener();
         quitButton.removeListener();
+        collisionsButton.removeListener();
 
         //delete buttons from memory
         memoryManager.cleanUp();
@@ -85,6 +92,12 @@ public class MainMenu implements State, ButtonListener {
             menu.setCurrentState(Menu.MenuState.PLAYER_SELECT);
         }else if(action.equals("quit")) {
             menu.quitGame();
+        }else if(action.equals("rc")) {
+            for(MapData mapData : Menu.MAPS) {
+                String fileName = mapData.getCollisions();
+                CollisionLoader loader = mapData.loadCollisions();
+                loader.saveToFile(fileName);
+            }
         }
     }
 }

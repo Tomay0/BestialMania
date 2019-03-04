@@ -24,7 +24,7 @@ public class Menu {
     //Menu state enum, used for easy switching between menus.
     public enum MenuState {PLAYER_SELECT,MAIN_MENU};
 
-    private static final MapData[] MAPS = {new EmeraldValley()};
+    public static final MapData[] MAPS = {new EmeraldValley()};
 
     private MasterRenderer renderer;//the renderer
     private MemoryManager memoryManager;//memory manager

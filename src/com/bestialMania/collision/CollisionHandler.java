@@ -273,4 +273,6 @@ public class CollisionHandler {
         if(wallPushVector.x==0&&wallPushVector.y==0) return false;
         return true;
     }
+
+
 }

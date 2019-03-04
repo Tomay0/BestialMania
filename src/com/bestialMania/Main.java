@@ -1,5 +1,6 @@
 package com.bestialMania;
 
+import com.bestialMania.rendering.model.loader.ModelLoader;
 import com.bestialMania.state.State;
 import com.bestialMania.state.menu.Menu;
 import org.lwjgl.glfw.*;
@@ -8,6 +9,8 @@ import org.lwjgl.openal.ALC;
 import org.lwjgl.openal.ALCCapabilities;
 import org.lwjgl.openal.ALCapabilities;
 import org.lwjgl.opengl.*;
+
+import java.io.File;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
@@ -131,6 +134,55 @@ public class Main {
             alListenerfv(AL_ORIENTATION, orientation);
         }
 
+        /*
+        //Convert some of the files
+        Loader.convertOBJ("res/models/shrek.obj","res/models/shrek.bmm");
+
+        //test the improved efficiency of the loading
+        MemoryManager mm = new MemoryManager();
+        double avg = 0;
+        for(int i = 0;i<10;i++) {
+            double timer = glfwGetTime();
+            Model model = Loader.loadOBJ(mm,"res/models/shrek.obj");
+            timer = glfwGetTime()-timer;
+            System.out.println(timer + "s");
+            avg+=timer;
+        }
+        avg/=10;
+        System.out.println("avg: " + avg + "s");
+        avg = 0;
+        for(int i = 0;i<10;i++) {
+            double timer = glfwGetTime();
+            Model model = Loader.loadModel(mm,"res/models/shrek.bmm");
+            timer = glfwGetTime()-timer;
+            System.out.println(timer + "s");
+            avg+=timer;
+        }
+        avg/=10;
+        System.out.println("avg: " + avg + "s");
+
+        mm.cleanUp();
+        */
+        convertAllModels();
+    }
+
+
+    private void convertAllModels() {
+        try {
+            //look through all files in the "toConvert" folder
+            File dir = new File("res/models/toConvert");
+            for(File file : dir.listFiles()) {
+                String name = file.getName();
+                //obj file
+                if(name.endsWith(".obj")) {
+                    String newName = name.replace(".obj",".bmm");
+                    ModelLoader.convertOBJ("res/models/toConvert/" + name,"res/models/" + newName);
+                }
+            }
+        }catch(Exception e) {
+            System.err.println("Could not convert models");
+            e.printStackTrace();
+        }
     }
 
     /**
