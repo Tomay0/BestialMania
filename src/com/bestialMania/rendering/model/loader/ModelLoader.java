@@ -12,9 +12,15 @@ import org.joml.Vector3f;
 import org.joml.Vector3i;
 
 import java.io.*;
+import java.nio.FloatBuffer;
 import java.util.*;
 
 public class ModelLoader {
+    /*
+
+    BMM format
+
+     */
 
     /**
      * Load a model in the BMM format
@@ -107,319 +113,199 @@ public class ModelLoader {
         }
     }
 
-
-
-    /**
-     * Loads a model from an OBJ file format
-     */
-    public static void convertOBJ(String objFile, String bmmFile) {
-        try {
-            Scanner scan = new Scanner(new File(objFile));
-
-            List<Vector3f> vertices = new ArrayList<>();
-            List<Vector2f> uvs = new ArrayList<>();
-            List<Vector3f> normals = new ArrayList<>();
-            List<Vector3i> indices = new ArrayList<>();
-
-            Map<String, ModelVertex> vertexMap = new HashMap<>();//map of vertex/uv/normals sets by a string to identify them
-            List<ModelVertex> vertexList = new ArrayList<>();//list of the vertex/uv/normal sets in order
-            List<VertexWeightData> vertexWeightData = new ArrayList<>();//empty list
-
-            while(scan.hasNext()) {
-                String head = scan.next();
-                //vertices
-                if(head.equals("v")) {
-                    float x = scan.nextFloat();
-                    float y = scan.nextFloat();
-                    float z = scan.nextFloat();
-                    vertices.add(new Vector3f(x,y,z));
-                }
-                //uvs
-                else if(head.equals("vt")) {
-                    float x = scan.nextFloat();
-                    float y = scan.nextFloat();
-                    uvs.add(new Vector2f(x,y));
-                }
-                //normals
-                else if(head.equals("vn")) {
-                    float x = scan.nextFloat();
-                    float y = scan.nextFloat();
-                    float z = scan.nextFloat();
-                    normals.add(new Vector3f(x,y,z));
-                }
-                //faces
-                else if(head.equals("f")) {
-                    int id1 = processVertex(scan.next(),vertexMap,vertexList,vertices,uvs,normals,vertexWeightData);
-                    int id2 = processVertex(scan.next(),vertexMap,vertexList,vertices,uvs,normals,vertexWeightData);
-                    int id3 = processVertex(scan.next(),vertexMap,vertexList,vertices,uvs,normals,vertexWeightData);
-
-                    //calculate tangent vectors if uvs and normals are both present
-                    if(uvs.size()>0 && normals.size()>0) {
-                        processTangents(vertexList.get(id1),vertexList.get(id2),vertexList.get(id3));
-                    }
-                    //face using ids of vertices
-                    Vector3i face = new Vector3i(id1,id2,id3);
-                    indices.add(face);
-                }
-                else {
-                    scan.nextLine();
-                }
-            }
-
-            scan.close();
-
-            //build the model
-            buildModelBMM(bmmFile,indices,vertexList,uvs.size()>0,normals.size()>0,false);
-
-        }catch(Exception e) {
-            System.err.println("Unable to load model: " + objFile);
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Loads a model from an OBJ file format
-     */
-    public static Model loadOBJ(MemoryManager mm, String file) {
-        try {
-            Scanner scan = new Scanner(new File(file));
-
-            List<Vector3f> vertices = new ArrayList<>();
-            List<Vector2f> uvs = new ArrayList<>();
-            List<Vector3f> normals = new ArrayList<>();
-            List<Vector3i> indices = new ArrayList<>();
-
-            Map<String, ModelVertex> vertexMap = new HashMap<>();//map of vertex/uv/normals sets by a string to identify them
-            List<ModelVertex> vertexList = new ArrayList<>();//list of the vertex/uv/normal sets in order
-            List<VertexWeightData> vertexWeightData = new ArrayList<>();//empty list
-
-            while(scan.hasNext()) {
-                String head = scan.next();
-                //vertices
-                if(head.equals("v")) {
-                    float x = scan.nextFloat();
-                    float y = scan.nextFloat();
-                    float z = scan.nextFloat();
-                    vertices.add(new Vector3f(x,y,z));
-                }
-                //uvs
-                else if(head.equals("vt")) {
-                    float x = scan.nextFloat();
-                    float y = scan.nextFloat();
-                    uvs.add(new Vector2f(x,y));
-                }
-                //normals
-                else if(head.equals("vn")) {
-                    float x = scan.nextFloat();
-                    float y = scan.nextFloat();
-                    float z = scan.nextFloat();
-                    normals.add(new Vector3f(x,y,z));
-                }
-                //faces
-                else if(head.equals("f")) {
-                    int id1 = processVertex(scan.next(),vertexMap,vertexList,vertices,uvs,normals,vertexWeightData);
-                    int id2 = processVertex(scan.next(),vertexMap,vertexList,vertices,uvs,normals,vertexWeightData);
-                    int id3 = processVertex(scan.next(),vertexMap,vertexList,vertices,uvs,normals,vertexWeightData);
-
-                    //calculate tangent vectors if uvs and normals are both present
-                    if(uvs.size()>0 && normals.size()>0) {
-                        processTangents(vertexList.get(id1),vertexList.get(id2),vertexList.get(id3));
-                    }
-                    //face using ids of vertices
-                    Vector3i face = new Vector3i(id1,id2,id3);
-                    indices.add(face);
-                }
-                else {
-                    scan.nextLine();
-                }
-            }
-
-            scan.close();
-
-            //build the model
-            Model model = buildModel(mm,indices,vertexList,uvs.size()>0,normals.size()>0,false);
-
-
-            return model;
-        }catch(Exception e) {
-            System.err.println("Unable to load model: " + file);
-            e.printStackTrace();
-            System.exit(-1);
-        }
-
-        return null;
-    }
-    /**
-     * Loads an animated DAE Model
-     */
     public static AnimatedModel loadAnimatedModel(MemoryManager mm, String fileName) {
         try {
+            FileInputStream inputStream = new FileInputStream(fileName);
+            ObjectInputStream ois = new ObjectInputStream(inputStream);
 
-            XmlNode rootNode = XmlParser.loadXmlFile(new File(fileName));
-
-            List<VertexWeightData> vertexWeightData = new ArrayList<>();
-            Armature armature = loadArmature(rootNode, vertexWeightData);
-
-            if(armature==null) {
-                System.err.println("Could not load armature information for " + fileName);
-                System.exit(-1);
+            //get the header
+            char[] chars = new char[3];
+            for (int i = 0; i < 3; i++) chars[i] = ois.readChar();
+            if (chars[0] != 'B' || chars[1] != 'M' || chars[1] != 'M') {
+                System.err.println("Invalid format for the model " + fileName + " must be bmm!");
+                return null;
             }
 
-            Model model = loadMesh(mm,rootNode,vertexWeightData);
+            //Build the armature
+            Armature armature = null;
+            char sectionHeader = ois.readChar();
+            if(sectionHeader=='j') {
+                //build a list of all the joint names
+                int nJoints = ois.readInt();
+                Map<String,Joint> jointMap = new HashMap<>();
+                Joint[] jointArray = new Joint[nJoints];
+                for(int i = 0;i<nJoints;i++) {
+                    //get the name
+                    char[] charArray = new char[ois.readInt()];
+                    for(int j=0;j<charArray.length;j++) {
+                        charArray[j] = ois.readChar();
+                    }
+                    String jointName = new String(charArray);
 
-            if(model==null) {
-                System.err.println("Could not load model: " + fileName + ". Invalid format.");
-                System.exit(-1);
+                    //get the inverse bind transform
+                    FloatBuffer fbuffer = FloatBuffer.allocate(16);
+                    for(int j=0;j<16;j++) {
+                        fbuffer.put(ois.readFloat());
+                    }
+                    Matrix4f invBindTransform = new Matrix4f(fbuffer);
+
+                    //build the joint object
+                    Joint joint = new Joint(jointName,i,invBindTransform);
+
+                    jointMap.put(jointName,joint);
+                    jointArray[i] = joint;
+                }
+                //build the joint hierarchy
+                int rootJointID = ois.readInt();
+                Joint rootJoint = jointArray[rootJointID];
+                parseJointHierarchy(ois,rootJointID,jointArray,1);
+
+                //create the armature object
+                armature = new Armature(jointMap,jointArray,rootJoint);
+
+                sectionHeader = ois.readChar();
             }
 
-            AnimatedModel object = new AnimatedModel(model,armature);
-            loadPoses(rootNode,object);
 
-            return object;
-        }catch(Exception e) {
+            //Build the model
+            Model model = new Model(mm);
+
+            //Work out the indices. Tne next character should say 'i' if they exist
+            if(sectionHeader=='i') {
+                //start with size of indices
+                int indexCount = ois.readInt();
+
+                //build indices array
+                int[] indices = new int[indexCount];
+                for(int i = 0;i<indexCount;i++) {
+                    indices[i] = ois.readInt();
+                }
+                model.bindIndices(indices);
+
+                sectionHeader = ois.readChar();
+            }
+
+            //Work out the vertices, etc. The next character should say 'v'
+            if(sectionHeader=='v') {
+                //number of attributes to read from
+                int nAttributes = ois.readInt();
+                //number of vertices
+                int vertexCount = ois.readInt();
+
+                //loop through all the attributes
+                for(int n = 0;n<nAttributes;n++) {
+                    int position = ois.readInt();
+                    int size = ois.readInt();
+                    boolean isFloat = ois.readBoolean();
+
+                    //float data
+                    if(isFloat) {
+                        float[] data = new float[vertexCount*size];
+                        for(int i=0;i<data.length;i++) {
+                            data[i] = ois.readFloat();
+                        }
+                        model.genFloatAttribute(position,size,data);
+                    }
+                    //integer data
+                    else {
+                        int[] data = new int[vertexCount*size];
+                        for(int i=0;i<data.length;i++) {
+                            data[i] = ois.readInt();
+                        }
+                        model.genIntAttribute(position,size,data);
+
+                    }
+                }
+                sectionHeader = ois.readChar();
+            }
+
+            //build the animated model
+            AnimatedModel animatedModel = new AnimatedModel(model,armature);
+
+
+            if(sectionHeader=='e') {
+                System.out.println("Loaded model: " + fileName + " successfully!");
+            }
+
+            ois.close();
+            inputStream.close();
+
+            return animatedModel;
+
+        }catch(FileNotFoundException e) {
+            System.err.println("Could not find the file for the model: " + fileName);
+            return null;
+        }catch(EOFException  e) {
+            System.err.println("Model file " + fileName + " appears to be incomplete, end of file reached.");
+            e.printStackTrace();
+            return null;
+        }catch(IOException e) {
             System.err.println("Unable to load model: " + fileName);
             e.printStackTrace();
-            System.exit(-1);
             return null;
         }
     }
 
     /**
-     * Loads a regular DAE Model without armature information
+     * Recursively build the joint hierarchy
      */
-    public static Model loadDAEModel(MemoryManager mm, String fileName) {
-        XmlNode rootNode = XmlParser.loadXmlFile(new File(fileName));
-
-        Model model = loadMesh(mm,rootNode,new ArrayList<>());
-
-        if(model==null) {
-            System.err.println("Could not load model: " + fileName + ". Invalid format.");
-            System.exit(-1);
+    private static void parseJointHierarchy(ObjectInputStream ois, int root, Joint[] jointArray, int jointCount) throws IOException{
+        int nextChild = root;
+        while(jointCount<jointArray.length) {
+            int nextInt = ois.readInt();
+            if(nextInt==-2) return;//close of list of children
+            // parse children of the child
+            else if(nextInt==-1) {
+                jointCount++;
+                parseJointHierarchy(ois,nextChild,jointArray,jointCount);
+            }
+            //add the child to the root
+            else jointCount++;
+            nextChild = nextInt;
+            jointArray[root].addChild(jointArray[nextChild]);
         }
 
-        return model;
     }
+    /*private static Joint parseJointHierarchy(int root, Joint[] jointArray) {
+        String id = root.getAttribute("id");
+        if(!jointMap.containsKey(id)) return null;
+        Joint joint = jointMap.get(id);
 
-    /**
-     * Loads the model from a DAE file
+        //set the matrix
+        float[] floats = new float[16];
+        Scanner matrixScan = new Scanner(root.getChild("matrix").getData());
+        for(int i = 0;i<16;i++) {
+            floats[i] = matrixScan.nextFloat();
+        }
+        Matrix4f matrix = new Matrix4f(
+                floats[0],floats[4],floats[8],floats[12],
+                floats[1],floats[5],floats[9],floats[13],
+                floats[2],floats[6],floats[10],floats[14],
+                floats[3],floats[7],floats[11],floats[15]);
+        joint.setLocalBindTransform(matrix);
+
+        //add children recursively
+        for(XmlNode child : root.getChildren("node")) {
+            Joint j = parseJointHierarchy(child,jointMap);
+            if(j!=null) joint.addChild(j);
+        }
+
+        return joint;
+    }*/
+
+
+    /*
+
+    DAE/BMM -- TODO remove all this and only use the conversion methods
+
      */
-    private static Model loadMesh(MemoryManager mm, XmlNode rootNode, List<VertexWeightData> vertexWeightData){
-        XmlNode meshNode = rootNode.getChild("library_geometries");
-        if(meshNode==null) return null;
-        meshNode = meshNode.getChild("geometry");
-        if(meshNode==null) return null;
-        meshNode = meshNode.getChild("mesh");
-        if(meshNode==null) return null;
 
-        //get the sources of the texture coords and normals
-        XmlNode polyList = meshNode.getChild("polylist");
-        if(polyList==null) polyList = meshNode.getChild("triangles");
-        if(polyList==null) return null;
-
-        String verticesSource = meshNode.getChild("vertices").getChild("input").getAttribute("source").substring(1);
-        String normalSource = null, texSource = null;
-        for(XmlNode input : polyList.getChildren("input")) {
-            if(input.getAttribute("semantic").equals("NORMAL")) normalSource = input.getAttribute("source").substring(1);
-            else if(input.getAttribute("semantic").equals("TEXCOORD")) texSource = input.getAttribute("source").substring(1);
-        }
-
-        //get all vertices, uvs and normals
-        List<Vector3f> vertices = new ArrayList<>();
-        List<Vector2f> uvs = new ArrayList<>();
-        List<Vector3f> normals = new ArrayList<>();
-
-        for(XmlNode source : meshNode.getChildren("source")) {
-            //vertices
-            if(source.getAttribute("id").equals(verticesSource)) {
-                Scanner scan = new Scanner(source.getChild("float_array").getData());
-                while(scan.hasNextFloat()) {
-                    float x = scan.nextFloat();
-                    float y = scan.nextFloat();
-                    float z = scan.nextFloat();
-                    vertices.add(new Vector3f(x,y,z));
-                }
-                scan.close();
-            }
-            //uvs
-            else if(source.getAttribute("id").equals(texSource)) {
-                Scanner scan = new Scanner(source.getChild("float_array").getData());
-                while(scan.hasNextFloat()) {
-                    float x = scan.nextFloat();
-                    float y = scan.nextFloat();
-                    uvs.add(new Vector2f(x,y));
-                }
-                scan.close();
-            }
-            //normals
-            else if(source.getAttribute("id").equals(normalSource)) {
-                Scanner scan = new Scanner(source.getChild("float_array").getData());
-                while(scan.hasNextFloat()) {
-                    float x = scan.nextFloat();
-                    float y = scan.nextFloat();
-                    float z = scan.nextFloat();
-                    normals.add(new Vector3f(x,y,z));
-                }
-                scan.close();
-            }
-
-        }
-
-
-        //process indices
-        List<Vector3i> indices = new ArrayList<>();
-        Map<String, ModelVertex> vertexMap = new HashMap<>();//map of vertex/uv/normals sets by a string to identify them
-        List<ModelVertex> vertexList = new ArrayList<>();//list of the vertex/uv/normal sets in order
-
-        XmlNode p = polyList.getChild("p");
-        Scanner scan = new Scanner(p.getData());
-        while(scan.hasNextInt()) {
-            //3 vertex ids
-            int ids[] = new int[3];
-
-            for(int i = 0;i<3;i++) {
-                int vertex = scan.nextInt()+1;
-                int normal = -1;
-                if(normals.size()>0) normal = scan.nextInt()+1;
-                int uv = -1;
-                if(uvs.size()>0) uv = scan.nextInt()+1;
-
-                //Create a string in the format used by OBJs to use the processVertex method.
-                String string = vertex + "";
-                if(uv!=-1 || normal!=-1) {
-                    string+="/";
-                    if(uv!=-1) {
-                        string += uv;
-                    }
-                    if(normal!=-1) {
-                        string += "/" + normal;
-                    }
-                }
-                ids[i] = processVertex(string,vertexMap,vertexList,vertices,uvs,normals,vertexWeightData);
-            }
-
-            //calculate tangent vectors if uvs and normals are both present
-            if(uvs.size()>0 && normals.size()>0) {
-                processTangents(vertexList.get(ids[0]),vertexList.get(ids[1]),vertexList.get(ids[2]));
-            }
-            //face using ids of vertices
-            Vector3i face = new Vector3i(ids[0],ids[1],ids[2]);
-            indices.add(face);
-
-        }
-
-        //build the model
-        Model model = buildModel(mm,indices,vertexList,uvs.size()>0,normals.size()>0, vertexWeightData.size()>0);
-
-
-
-        return model;
-    }
 
     /**
      * Processes a string which represents some vertex/uv/normal set on a model.
      * Adds to the vertexMap/vertexList collections if not already in them.
      */
-    private static int processVertex(String string, Map<String, ModelVertex> vertexMap, List<ModelVertex> vertexList,
+    public static int processVertex(String string, Map<String, ModelVertex> vertexMap, List<ModelVertex> vertexList,
                                     List<Vector3f> vertices, List<Vector2f> uvs, List<Vector3f> normals, List<VertexWeightData> vertexWeightData) {
         int id;
 
@@ -478,7 +364,7 @@ public class ModelLoader {
      * Calculate tangent vectors for a given face
      *
      */
-    private static void processTangents(ModelVertex mv1, ModelVertex mv2, ModelVertex mv3) {
+    public static void processTangents(ModelVertex mv1, ModelVertex mv2, ModelVertex mv3) {
         //Ugly code that I don't really understand
         Vector3f v1 = mv1.getVertex();
         Vector3f v2 = mv2.getVertex();
@@ -594,119 +480,255 @@ public class ModelLoader {
         return model;
     }
 
+    /*
+
+    OBJ
+
+     */
 
     /**
-     * Builds a BMM file
+     * Loads a model from an OBJ file format
      */
-    private static void buildModelBMM(String fileName, List<Vector3i> indices,List<ModelVertex> vertexList, boolean hasUvs, boolean hasNormals, boolean hasArmature) {
+    public static Model loadOBJ(MemoryManager mm, String file) {
         try {
-            FileOutputStream outputStream = new FileOutputStream(fileName);
-            ObjectOutputStream oos = new ObjectOutputStream(outputStream);
+            Scanner scan = new Scanner(new File(file));
 
-            oos.writeChars("BMMi");
-            oos.writeInt(indices.size()*3);
-            //write indices
-            for(int i = 0;i<indices.size();i++) {
-                Vector3i v = indices.get(i);
-                oos.writeInt(v.x);
-                oos.writeInt(v.y);
-                oos.writeInt(v.z);
-            }
+            List<Vector3f> vertices = new ArrayList<>();
+            List<Vector2f> uvs = new ArrayList<>();
+            List<Vector3f> normals = new ArrayList<>();
+            List<Vector3i> indices = new ArrayList<>();
 
-            /*
-            WRITE ALL ATTRIBUTES
-             */
-            oos.writeChar('v');
-            int nAttributes = 1;
-            if(hasUvs) nAttributes++;
-            if(hasNormals) nAttributes++;
-            if(hasUvs&&hasNormals) nAttributes++;
-            if(hasArmature) nAttributes+=2;
-            oos.writeInt(nAttributes);
-            oos.writeInt(vertexList.size());
+            Map<String, ModelVertex> vertexMap = new HashMap<>();//map of vertex/uv/normals sets by a string to identify them
+            List<ModelVertex> vertexList = new ArrayList<>();//list of the vertex/uv/normal sets in order
+            List<VertexWeightData> vertexWeightData = new ArrayList<>();//empty list
 
-            //build vertices
-            oos.writeInt(0);
-            oos.writeInt(3);
-            oos.writeBoolean(true);
-            for(int i = 0;i<vertexList.size();i++) {
-                ModelVertex v = vertexList.get(i);
-                oos.writeFloat(v.getVertex().x);
-                oos.writeFloat(v.getVertex().y);
-                oos.writeFloat(v.getVertex().z);
-            }
+            while(scan.hasNext()) {
+                String head = scan.next();
+                //vertices
+                if(head.equals("v")) {
+                    float x = scan.nextFloat();
+                    float y = scan.nextFloat();
+                    float z = scan.nextFloat();
+                    vertices.add(new Vector3f(x,y,z));
+                }
+                //uvs
+                else if(head.equals("vt")) {
+                    float x = scan.nextFloat();
+                    float y = scan.nextFloat();
+                    uvs.add(new Vector2f(x,y));
+                }
+                //normals
+                else if(head.equals("vn")) {
+                    float x = scan.nextFloat();
+                    float y = scan.nextFloat();
+                    float z = scan.nextFloat();
+                    normals.add(new Vector3f(x,y,z));
+                }
+                //faces
+                else if(head.equals("f")) {
+                    int id1 = processVertex(scan.next(),vertexMap,vertexList,vertices,uvs,normals,vertexWeightData);
+                    int id2 = processVertex(scan.next(),vertexMap,vertexList,vertices,uvs,normals,vertexWeightData);
+                    int id3 = processVertex(scan.next(),vertexMap,vertexList,vertices,uvs,normals,vertexWeightData);
 
-            //build uvs
-            if(hasUvs) {
-                //build uvs
-                oos.writeInt(1);
-                oos.writeInt(2);
-                oos.writeBoolean(true);
-                for(int i = 0;i<vertexList.size();i++) {
-                    ModelVertex v = vertexList.get(i);
-                    oos.writeFloat(v.getUV().x);
-                    oos.writeFloat(v.getUV().y);
+                    //calculate tangent vectors if uvs and normals are both present
+                    if(uvs.size()>0 && normals.size()>0) {
+                        processTangents(vertexList.get(id1),vertexList.get(id2),vertexList.get(id3));
+                    }
+                    //face using ids of vertices
+                    Vector3i face = new Vector3i(id1,id2,id3);
+                    indices.add(face);
+                }
+                else {
+                    scan.nextLine();
                 }
             }
 
-            //build normals
-            if(hasNormals) {
-                oos.writeInt(2);
-                oos.writeInt(3);
-                oos.writeBoolean(true);
-                for(int i = 0;i<vertexList.size();i++) {
-                    ModelVertex v = vertexList.get(i);
-                    oos.writeFloat(v.getNormal().x);
-                    oos.writeFloat(v.getNormal().y);
-                    oos.writeFloat(v.getNormal().z);
-                }
-            }
+            scan.close();
 
-            //tangents
-            if(hasUvs && hasNormals) {
-                oos.writeInt(3);
-                oos.writeInt(3);
-                oos.writeBoolean(true);
-                for(int i = 0;i<vertexList.size();i++) {
-                    ModelVertex v = vertexList.get(i);
-                    oos.writeFloat(v.getTangent().x);
-                    oos.writeFloat(v.getTangent().y);
-                    oos.writeFloat(v.getTangent().z);
-                }
-            }
+            //build the model
+            Model model = buildModel(mm,indices,vertexList,uvs.size()>0,normals.size()>0,false);
 
-            //vertex weight data
-            if(hasArmature) {
-                oos.writeInt(4);
-                oos.writeInt(3);
-                oos.writeBoolean(false);
-                for(int i = 0;i<vertexList.size();i++) {
-                    ModelVertex v = vertexList.get(i);
-                    oos.writeInt(v.getVertexWeightData().getJointId(0));
-                    oos.writeInt(v.getVertexWeightData().getJointId(1));
-                    oos.writeInt(v.getVertexWeightData().getJointId(2));
-                }
 
-                oos.writeInt(5);
-                oos.writeInt(3);
-                oos.writeBoolean(true);
-                for(int i = 0;i<vertexList.size();i++) {
-                    ModelVertex v = vertexList.get(i);
-                    oos.writeFloat(v.getVertexWeightData().getWeight(0));
-                    oos.writeFloat(v.getVertexWeightData().getWeight(1));
-                    oos.writeFloat(v.getVertexWeightData().getWeight(2));
-                }
-            }
-            oos.writeChar('e');
-
-            oos.close();
-            outputStream.close();
+            return model;
         }catch(Exception e) {
-            System.err.println("Unable to write to file: " + fileName);
+            System.err.println("Unable to load model: " + file);
             e.printStackTrace();
+            System.exit(-1);
+        }
+
+        return null;
+    }
+
+    /*
+    DAE
+     */
+
+    /**
+     * Loads a regular DAE Model without armature information
+     */
+    public static Model loadDAEModel(MemoryManager mm, String fileName) {
+        XmlNode rootNode = XmlParser.loadXmlFile(new File(fileName));
+
+        Model model = loadMesh(mm,rootNode,new ArrayList<>());
+
+        if(model==null) {
+            System.err.println("Could not load model: " + fileName + ". Invalid format.");
+            System.exit(-1);
+        }
+
+        return model;
+    }
+
+
+    /**
+     * Loads an animated DAE Model
+     */
+    public static AnimatedModel loadAnimatedDAE(MemoryManager mm, String fileName) {
+        try {
+
+            XmlNode rootNode = XmlParser.loadXmlFile(new File(fileName));
+
+            List<VertexWeightData> vertexWeightData = new ArrayList<>();
+            Armature armature = loadArmature(rootNode, vertexWeightData);
+
+            if(armature==null) {
+                System.err.println("Could not load armature information for " + fileName);
+                System.exit(-1);
+            }
+
+            Model model = loadMesh(mm,rootNode,vertexWeightData);
+
+            if(model==null) {
+                System.err.println("Could not load model: " + fileName + ". Invalid format.");
+                System.exit(-1);
+            }
+
+            AnimatedModel object = new AnimatedModel(model,armature);
+            loadPoses(rootNode,object);
+
+            return object;
+        }catch(Exception e) {
+            System.err.println("Unable to load model: " + fileName);
+            e.printStackTrace();
+            System.exit(-1);
+            return null;
+        }
+    }
+
+
+    /**
+     * Loads the model from a DAE file
+     */
+    private static Model loadMesh(MemoryManager mm, XmlNode rootNode, List<VertexWeightData> vertexWeightData){
+        XmlNode meshNode = rootNode.getChild("library_geometries");
+        if(meshNode==null) return null;
+        meshNode = meshNode.getChild("geometry");
+        if(meshNode==null) return null;
+        meshNode = meshNode.getChild("mesh");
+        if(meshNode==null) return null;
+
+        //get the sources of the texture coords and normals
+        XmlNode polyList = meshNode.getChild("polylist");
+        if(polyList==null) polyList = meshNode.getChild("triangles");
+        if(polyList==null) return null;
+
+        String verticesSource = meshNode.getChild("vertices").getChild("input").getAttribute("source").substring(1);
+        String normalSource = null, texSource = null;
+        for(XmlNode input : polyList.getChildren("input")) {
+            if(input.getAttribute("semantic").equals("NORMAL")) normalSource = input.getAttribute("source").substring(1);
+            else if(input.getAttribute("semantic").equals("TEXCOORD")) texSource = input.getAttribute("source").substring(1);
+        }
+
+        //get all vertices, uvs and normals
+        List<Vector3f> vertices = new ArrayList<>();
+        List<Vector2f> uvs = new ArrayList<>();
+        List<Vector3f> normals = new ArrayList<>();
+
+        for(XmlNode source : meshNode.getChildren("source")) {
+            //vertices
+            if(source.getAttribute("id").equals(verticesSource)) {
+                Scanner scan = new Scanner(source.getChild("float_array").getData());
+                while(scan.hasNextFloat()) {
+                    float x = scan.nextFloat();
+                    float y = scan.nextFloat();
+                    float z = scan.nextFloat();
+                    vertices.add(new Vector3f(x,y,z));
+                }
+                scan.close();
+            }
+            //uvs
+            else if(source.getAttribute("id").equals(texSource)) {
+                Scanner scan = new Scanner(source.getChild("float_array").getData());
+                while(scan.hasNextFloat()) {
+                    float x = scan.nextFloat();
+                    float y = scan.nextFloat();
+                    uvs.add(new Vector2f(x,y));
+                }
+                scan.close();
+            }
+            //normals
+            else if(source.getAttribute("id").equals(normalSource)) {
+                Scanner scan = new Scanner(source.getChild("float_array").getData());
+                while(scan.hasNextFloat()) {
+                    float x = scan.nextFloat();
+                    float y = scan.nextFloat();
+                    float z = scan.nextFloat();
+                    normals.add(new Vector3f(x,y,z));
+                }
+                scan.close();
+            }
+
         }
 
 
+        //process indices
+        List<Vector3i> indices = new ArrayList<>();
+        Map<String, ModelVertex> vertexMap = new HashMap<>();//map of vertex/uv/normals sets by a string to identify them
+        List<ModelVertex> vertexList = new ArrayList<>();//list of the vertex/uv/normal sets in order
+
+        XmlNode p = polyList.getChild("p");
+        Scanner scan = new Scanner(p.getData());
+        while(scan.hasNextInt()) {
+            //3 vertex ids
+            int ids[] = new int[3];
+
+            for(int i = 0;i<3;i++) {
+                int vertex = scan.nextInt()+1;
+                int normal = -1;
+                if(normals.size()>0) normal = scan.nextInt()+1;
+                int uv = -1;
+                if(uvs.size()>0) uv = scan.nextInt()+1;
+
+                //Create a string in the format used by OBJs to use the processVertex method.
+                String string = vertex + "";
+                if(uv!=-1 || normal!=-1) {
+                    string+="/";
+                    if(uv!=-1) {
+                        string += uv;
+                    }
+                    if(normal!=-1) {
+                        string += "/" + normal;
+                    }
+                }
+                ids[i] = ModelLoader.processVertex(string,vertexMap,vertexList,vertices,uvs,normals,vertexWeightData);
+            }
+
+            //calculate tangent vectors if uvs and normals are both present
+            if(uvs.size()>0 && normals.size()>0) {
+                ModelLoader.processTangents(vertexList.get(ids[0]),vertexList.get(ids[1]),vertexList.get(ids[2]));
+            }
+            //face using ids of vertices
+            Vector3i face = new Vector3i(ids[0],ids[1],ids[2]);
+            indices.add(face);
+
+        }
+
+        //build the model
+        Model model = buildModel(mm,indices,vertexList,uvs.size()>0,normals.size()>0, vertexWeightData.size()>0);
+
+
+
+        return model;
     }
 
     /**
@@ -729,7 +751,7 @@ public class ModelLoader {
         if(jointSource==null && weightSource==null) return null;//not found
 
         //load information from sources
-        Map<String,Joint> joints = new HashMap<>();
+        Map<String, Joint> joints = new HashMap<>();
         List<Float> weights = new ArrayList<>();
 
         for(XmlNode source : skinNode.getChildren("source")) {

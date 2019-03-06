@@ -21,6 +21,11 @@ public class Joint implements Iterable<Joint> {
         this.name = name;
         this.id = id;
     }
+    public Joint(String name, int id,Matrix4f inverseBindTransform) {
+        this.name = name;
+        this.id = id;
+        this.inverseBindTransform = inverseBindTransform;
+    }
 
 
     public String getName() {

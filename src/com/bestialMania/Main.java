@@ -1,5 +1,6 @@
 package com.bestialMania;
 
+import com.bestialMania.rendering.model.loader.ModelConverter;
 import com.bestialMania.rendering.model.loader.ModelLoader;
 import com.bestialMania.state.State;
 import com.bestialMania.state.menu.Menu;
@@ -176,7 +177,7 @@ public class Main {
                 //obj file
                 if(name.endsWith(".obj")) {
                     String newName = name.replace(".obj",".bmm");
-                    ModelLoader.convertOBJ("res/models/toConvert/" + name,"res/models/" + newName);
+                    ModelConverter.convertOBJ("res/models/toConvert/" + name,"res/models/" + newName);
                 }
             }
         }catch(Exception e) {

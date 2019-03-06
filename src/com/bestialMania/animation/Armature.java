@@ -25,6 +25,11 @@ public class Armature implements Iterable<Joint>{
             jointArray[j.getId()] = j;
         }
     }
+    public Armature(Map<String, Joint> joints, Joint[] jointArray, Joint rootJoint) {
+        this.rootJoint = rootJoint;
+        this.joints = joints;
+        this.jointArray = jointArray;
+    }
 
     /**
      * Get a joint by its name
