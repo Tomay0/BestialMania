@@ -164,49 +164,6 @@ public class Main {
 
         mm.cleanUp();
         */
-        convertAllModels();
-    }
-
-
-    private void convertAllModels() {
-        try {
-            //look through all files in the "toConvert" folder
-            File dir = new File("res/models/toConvert");
-            for(File file : dir.listFiles()) {
-                String name = file.getName();
-                //obj file
-                if(name.endsWith(".obj")) {
-                    String newName = name.replace(".obj",".bmm");
-                    ModelConverter.convertOBJ("res/models/toConvert/" + name,"res/models/" + newName);
-                }
-                else if(name.endsWith(".dae")) {
-                    String newName = name.replace(".dae",".bmma");
-                    ModelConverter.convertDAE("res/models/toConvert/" + name, "res/models/" + newName);
-                }
-            }
-        }catch(Exception e) {
-            System.err.println("Could not convert models");
-            e.printStackTrace();
-        }
-
-        //Test to see how fast loading of animated models has improved
-        /*double time = glfwGetTime();
-        MemoryManager mm = new MemoryManager();
-        System.out.println("DAE format");
-        for(int i= 0;i<10;i++) {
-            ModelLoader.loadAnimatedDAE(mm,"res/models/toConvert/jimmy.dae");
-            time = glfwGetTime()-time;
-            System.out.println(time);
-            time = glfwGetTime();
-        }
-        System.out.println("BMMA format");
-        for(int i= 0;i<10;i++) {
-            ModelLoader.loadAnimatedModel(mm,"res/models/jimmy.bmma");
-            time = glfwGetTime()-time;
-            System.out.println(time);
-            time = glfwGetTime();
-        }
-        */
     }
 
     /**

@@ -312,106 +312,18 @@ public class ModelLoader {
         ois.readInt();
     }
 
-
-    /*
+/*
+    *//*
 
     DAE/BMM -- TODO remove all this and only use the conversion methods
 
-     */
+     *//*
 
 
-    /**
-     * Processes a string which represents some vertex/uv/normal set on a model.
-     * Adds to the vertexMap/vertexList collections if not already in them.
-     */
-    public static int processVertex(String string, Map<String, ModelVertex> vertexMap, List<ModelVertex> vertexList,
-                                    List<Vector3f> vertices, List<Vector2f> uvs, List<Vector3f> normals, List<VertexWeightData> vertexWeightData) {
-        int id;
 
-        //vertex already exists
-        if(vertexMap.containsKey(string)) {
-            id = vertexMap.get(string).getID();
-
-        }
-        //create new vertex/uv/normal set
-        else{
-            id = vertexList.size();
-            ModelVertex mv = null;
-
-            int vIndex = 0;
-            /*
-             * Formats:
-             * v/t/n
-             * v//n
-             * v/t
-             * v
-             */
-            if(!string.contains("/")) {
-                vIndex = Integer.parseInt(string)-1;
-                mv = new ModelVertex(id,vertices.get(vIndex));
-            }
-            else if(string.contains("//")) {
-                String[] split = string.split("//");
-                vIndex = Integer.parseInt(split[0])-1;
-                mv = new ModelVertex(id,vertices.get(vIndex),normals.get(Integer.parseInt(split[1])-1));
-            }
-            else{
-                String[] split = string.split("/");
-                vIndex = Integer.parseInt(split[0])-1;
-                if(split.length==2) {
-                    mv = new ModelVertex(id,vertices.get(vIndex),uvs.get(Integer.parseInt(split[1])-1));
-                }
-                else if(split.length==3) {
-                    mv = new ModelVertex(id,vertices.get(vIndex),
-                            uvs.get(Integer.parseInt(split[1])-1),
-                            normals.get(Integer.parseInt(split[2])-1));
-                }
-            }
-            //add vertex weight data if it exists
-            if(vertexWeightData.size()>0) {
-                mv.setVertexWeightData(vertexWeightData.get(vIndex));
-            }
-
-            vertexMap.put(string,mv);
-            vertexList.add(mv);
-        }
-
-        return id;
-    }
-
-    /**
-     * Calculate tangent vectors for a given face
-     *
-     */
-    public static void processTangents(ModelVertex mv1, ModelVertex mv2, ModelVertex mv3) {
-        //Ugly code that I don't really understand
-        Vector3f v1 = mv1.getVertex();
-        Vector3f v2 = mv2.getVertex();
-        Vector3f v3 = mv3.getVertex();
-        Vector2f uv1 = mv1.getUV();
-        Vector2f uv2 = mv2.getUV();
-        Vector2f uv3 = mv3.getUV();
-        Vector3f dv1 = new Vector3f(v2.x-v1.x,v2.y-v1.y,v2.z-v1.z);
-        Vector3f dv2 = new Vector3f(v3.x-v1.x,v3.y-v1.y,v3.z-v1.z);
-        Vector2f duv1 = new Vector2f(uv2.x-uv1.x,uv2.y-uv1.y);
-        Vector2f duv2 = new Vector2f(uv3.x-uv1.x,uv3.y-uv1.y);
-
-        dv1.mul(duv2.y);
-        dv2.mul(duv1.y);
-
-        Vector3f tangent = new Vector3f();
-        dv1.sub(dv2,tangent);
-        tangent.mul(1.0f / (duv1.x * duv2.y - duv1.y * duv2.x));
-
-        mv1.setTangent(tangent);
-        mv2.setTangent(tangent);
-        mv3.setTangent(tangent);
-    }
-
-
-    /**
+    *//**
      * Builds the model from the given data
-     */
+     *//*
     private static Model buildModel(MemoryManager mm, List<Vector3i> indices,List<ModelVertex> vertexList, boolean hasUvs, boolean hasNormals, boolean hasArmature) {
         Model model = new Model(mm);
 
@@ -499,15 +411,15 @@ public class ModelLoader {
         return model;
     }
 
-    /*
+    *//*
 
     OBJ
 
-     */
+     *//*
 
-    /**
+    *//**
      * Loads a model from an OBJ file format
-     */
+     *//*
     public static Model loadOBJ(MemoryManager mm, String file) {
         try {
             Scanner scan = new Scanner(new File(file));
@@ -578,13 +490,13 @@ public class ModelLoader {
         return null;
     }
 
-    /*
+    *//*
     DAE
-     */
+     *//*
 
-    /**
+    *//**
      * Loads a regular DAE Model without armature information
-     */
+     *//*
     public static Model loadDAEModel(MemoryManager mm, String fileName) {
         XmlNode rootNode = XmlParser.loadXmlFile(new File(fileName));
 
@@ -599,9 +511,9 @@ public class ModelLoader {
     }
 
 
-    /**
+    *//**
      * Loads an animated DAE Model
-     */
+     *//*
     public static AnimatedModel loadAnimatedDAE(MemoryManager mm, String fileName) {
         try {
 
@@ -635,9 +547,9 @@ public class ModelLoader {
     }
 
 
-    /**
+    *//**
      * Loads the model from a DAE file
-     */
+     *//*
     private static Model loadMesh(MemoryManager mm, XmlNode rootNode, List<VertexWeightData> vertexWeightData){
         XmlNode meshNode = rootNode.getChild("library_geometries");
         if(meshNode==null) return null;
@@ -750,9 +662,9 @@ public class ModelLoader {
         return model;
     }
 
-    /**
+    *//**
      * Load armature from a DAE model
-     */
+     *//*
     private static Armature loadArmature(XmlNode rootNode, List<VertexWeightData> vertexWeightData) {
         XmlNode skinNode = rootNode.getChild("library_controllers");
         if(skinNode==null) return null;
@@ -839,9 +751,9 @@ public class ModelLoader {
 
     }
 
-    /**
+    *//**
      * Recursively build the joint hierarchy
-     */
+     *//*
     private static Joint parseJointHierarchy(XmlNode root, Map<String,Joint> jointMap) {
         String id = root.getAttribute("id");
         if(!jointMap.containsKey(id)) return null;
@@ -869,12 +781,12 @@ public class ModelLoader {
         return joint;
     }
 
-    /**
+    *//**
      * Load poses
      *
      * Each "pose" is one keyframe of the animation in the DAE file. These may not necessarily be in order or at useful timestamp values.
      * Each pose is given an ID which is not guaranteed to be in order of time.
-     */
+     *//*
     private static void loadPoses(XmlNode root, AnimatedModel object) {
         XmlNode node = root.getChild("library_animations");
         if(node==null) return;
@@ -934,5 +846,5 @@ public class ModelLoader {
             }
             scan.close();
         }
-    }
+    }*/
 }

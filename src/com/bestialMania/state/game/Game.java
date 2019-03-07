@@ -229,7 +229,6 @@ public class Game implements State, InputListener {
 
         //create the beast you play as (JIMMY)
         Texture jimmyTexture = Texture.loadImageTexture3D(memoryManager,"res/textures/jimmy_tex.png");
-        System.out.println("got this far");
         AnimatedModel jimmy = ModelLoader.loadAnimatedModel(memoryManager,"res/models/jimmy.bmma");
 
         //Create a window, renderer and character for each player

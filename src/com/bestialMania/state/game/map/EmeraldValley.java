@@ -142,30 +142,30 @@ public class EmeraldValley extends MapData{
     }
 
     /**
-     * Loads the floor and wall collisions
-     * TEMPORARY
+     * Create a collision loader with several OBJ files
+     * This collision loader can be used to
      */
     @Override
     public CollisionLoader loadCollisions() {
         CollisionLoader collisionLoader = new CollisionLoader();
-        collisionLoader.loadFloors("res/collisions/toConvert/plane.obj", new Matrix4f());
-        collisionLoader.loadFloors("res/collisions/toConvert/plane2.obj", new Matrix4f());
-        collisionLoader.loadWalls("res/collisions/toConvert/wall.obj", new Matrix4f());
-        collisionLoader.loadCeilings("res/collisions/toConvert/ceil.obj", new Matrix4f());
-        //collisionHandler.addWalls(TriangleLoader.loadTrianglesOBJ("res/collisions/toConvert/wall2.obj"));
+        collisionLoader.loadFloors("toConvert/collisions/plane.obj", new Matrix4f());
+        collisionLoader.loadFloors("toConvert/collisions/plane2.obj", new Matrix4f());
+        collisionLoader.loadWalls("toConvert/collisions/wall.obj", new Matrix4f());
+        collisionLoader.loadCeilings("toConvert/collisions/ceil.obj", new Matrix4f());
+        //collisionHandler.addWalls(TriangleLoader.loadTrianglesOBJ("toConvert/collisions/wall2.obj"));
         Matrix4f testObjectMatrix = new Matrix4f();
         testObjectMatrix.translate(2.0f,0,0.5f);
         testObjectMatrix.scale(3.0f,3.0f,3.0f);
-        collisionLoader.loadWalls("res/collisions/toConvert/poleWall.obj",testObjectMatrix);
+        collisionLoader.loadWalls("toConvert/collisions/poleWall.obj",testObjectMatrix);
 
         Matrix4f stairMatrix = new Matrix4f();
         stairMatrix.translate(-10,0,0);
         stairMatrix.scale(5,2,5);
-        collisionLoader.loadFloors("res/collisions/toConvert/stairFloor.obj",stairMatrix);
-        collisionLoader.loadWalls("res/collisions/toConvert/stairWalls.obj",stairMatrix);
+        collisionLoader.loadFloors("toConvert/collisions/stairFloor.obj",stairMatrix);
+        collisionLoader.loadWalls("toConvert/collisions/stairWalls.obj",stairMatrix);
         //Matrix4f wallMatrix = new Matrix4f();
         //wallMatrix.translate(-10,1.2f,-20);
-        //collisionHandler.addWalls(TriangleLoader.loadTrianglesOBJ("res/collisions/toConvert/wall3.obj",wallMatrix));
+        //collisionHandler.addWalls(TriangleLoader.loadTrianglesOBJ("toConvert/collisions/wall3.obj",wallMatrix));
         return collisionLoader;
     }
 
