@@ -1,9 +1,13 @@
 package com.bestialMania.animation;
 
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class Pose {
     private int id;
@@ -32,4 +36,11 @@ public class Pose {
     public JointTransform getTransform(String jointName) {
         return jointTransforms.get(jointName);
     }
+
+    public void addTransform(Joint joint, Vector3f position, Vector4f rotation, Matrix4f matrix) {
+        JointTransform transform = new JointTransform(joint,position,rotation,matrix);
+        jointTransforms.put(joint.getName(),transform);
+    }
+
+    public Collection<JointTransform> getJointTransforms() {return jointTransforms.values();}
 }

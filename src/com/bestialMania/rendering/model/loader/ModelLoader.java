@@ -6,10 +6,8 @@ import com.bestialMania.animation.AnimatedModel;
 import com.bestialMania.rendering.model.Model;
 import com.bestialMania.xml.XmlNode;
 import com.bestialMania.xml.XmlParser;
-import org.joml.Matrix4f;
-import org.joml.Vector2f;
-import org.joml.Vector3f;
-import org.joml.Vector3i;
+import org.joml.*;
+import org.lwjgl.BufferUtils;
 
 import java.io.*;
 import java.nio.FloatBuffer;
@@ -143,20 +141,22 @@ public class ModelLoader {
                     String jointName = new String(charArray);
 
                     //get the inverse bind transform
-                    FloatBuffer fbuffer = FloatBuffer.allocate(16);
-                    for(int j=0;j<16;j++) {
-                        fbuffer.put(ois.readFloat());
-                    }
-                    Matrix4f invBindTransform = new Matrix4f(fbuffer);
+                    float[] matrixArray = new float[16];
+                    for(int j=0;j<16;j++) matrixArray[j] = ois.readFloat();
+
+                    Matrix4f invBindTransform = new Matrix4f(matrixArray[0],matrixArray[1],matrixArray[2],matrixArray[3],
+                            matrixArray[4],matrixArray[5],matrixArray[6],matrixArray[7],
+                            matrixArray[8],matrixArray[9],matrixArray[10],matrixArray[11],
+                            matrixArray[12],matrixArray[13],matrixArray[14],matrixArray[15]);
 
                     //build the joint object
                     Joint joint = new Joint(jointName,i,invBindTransform);
-
                     jointMap.put(jointName,joint);
                     jointArray[i] = joint;
                 }
                 //build the joint hierarchy
                 int rootJointID = ois.readInt();
+                ois.readInt();
                 Joint rootJoint = jointArray[rootJointID];
                 parseJointHierarchy(ois,rootJointID,jointArray,1);
 
@@ -164,6 +164,7 @@ public class ModelLoader {
                 armature = new Armature(jointMap,jointArray,rootJoint);
 
                 sectionHeader = ois.readChar();
+
             }
 
 
@@ -222,6 +223,48 @@ public class ModelLoader {
             //build the animated model
             AnimatedModel animatedModel = new AnimatedModel(model,armature);
 
+            //add the poses
+            if(sectionHeader=='p') {
+                int nPoses = ois.readInt();
+                for(int i = 0;i<nPoses;i++) {
+                    Pose pose = new Pose(i);
+                    //add joints to the pose
+                    int nJoints = ois.readInt();
+                    for(int j=0;j<nJoints;j++) {
+                        int jointID = ois.readInt();
+                        Joint joint = armature.getJoint(jointID);
+
+                        //position
+                        float x = ois.readFloat();
+                        float y = ois.readFloat();
+                        float z = ois.readFloat();
+                        Vector3f position = new Vector3f(x,y,z);
+
+                        //rotation
+                        float rx = ois.readFloat();
+                        float ry = ois.readFloat();
+                        float rz = ois.readFloat();
+                        float rw = ois.readFloat();
+                        Vector4f rotation = new Vector4f(rx,ry,rz,rw);
+
+                        //matrix
+                        float[] matrixArray = new float[16];
+                        for(int k=0;k<16;k++) matrixArray[k] = ois.readFloat();
+
+                        Matrix4f matrix = new Matrix4f(matrixArray[0],matrixArray[1],matrixArray[2],matrixArray[3],
+                                matrixArray[4],matrixArray[5],matrixArray[6],matrixArray[7],
+                                matrixArray[8],matrixArray[9],matrixArray[10],matrixArray[11],
+                                matrixArray[12],matrixArray[13],matrixArray[14],matrixArray[15]);
+
+                        pose.addTransform(joint,position, rotation, matrix);
+
+                    }
+
+                    animatedModel.addPose(pose);
+                }
+
+                sectionHeader = ois.readChar();
+            }
 
             if(sectionHeader=='e') {
                 System.out.println("Loaded model: " + fileName + " successfully!");
@@ -260,38 +303,14 @@ public class ModelLoader {
                 parseJointHierarchy(ois,nextChild,jointArray,jointCount);
             }
             //add the child to the root
-            else jointCount++;
-            nextChild = nextInt;
-            jointArray[root].addChild(jointArray[nextChild]);
+            else {
+                jointCount++;
+                nextChild = nextInt;
+                jointArray[root].addChild(jointArray[nextChild]);
+            }
         }
-
+        ois.readInt();
     }
-    /*private static Joint parseJointHierarchy(int root, Joint[] jointArray) {
-        String id = root.getAttribute("id");
-        if(!jointMap.containsKey(id)) return null;
-        Joint joint = jointMap.get(id);
-
-        //set the matrix
-        float[] floats = new float[16];
-        Scanner matrixScan = new Scanner(root.getChild("matrix").getData());
-        for(int i = 0;i<16;i++) {
-            floats[i] = matrixScan.nextFloat();
-        }
-        Matrix4f matrix = new Matrix4f(
-                floats[0],floats[4],floats[8],floats[12],
-                floats[1],floats[5],floats[9],floats[13],
-                floats[2],floats[6],floats[10],floats[14],
-                floats[3],floats[7],floats[11],floats[15]);
-        joint.setLocalBindTransform(matrix);
-
-        //add children recursively
-        for(XmlNode child : root.getChildren("node")) {
-            Joint j = parseJointHierarchy(child,jointMap);
-            if(j!=null) joint.addChild(j);
-        }
-
-        return joint;
-    }*/
 
 
     /*

@@ -23,6 +23,18 @@ public class JointTransform {
         this.matrix = matrix;
         calculatePositionAndRotation();
     }
+
+    public JointTransform(Joint joint, Vector3f position, Vector4f rotation, Matrix4f matrix) {
+        this.joint = joint;
+        this.matrix = matrix;
+        this.position = position;
+        this.rotation = rotation;
+    }
+
+    public Joint getJoint() {return joint;}
+    public Vector3f getPosition() {return position;}
+    public Vector4f getRotation() {return rotation;}
+
     /**
      * Recalculate the position and rotation from the
      */

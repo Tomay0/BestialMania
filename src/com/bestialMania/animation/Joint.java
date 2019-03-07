@@ -65,4 +65,6 @@ public class Joint implements Iterable<Joint> {
     public Matrix4f getInverseBindTransform() {
         return inverseBindTransform;
     }
+
+    public int nChildren() {return children.size();}
 }

@@ -1,17 +1,11 @@
 package com.bestialMania.rendering.model.loader;
 
 import com.bestialMania.MemoryManager;
-import com.bestialMania.animation.AnimatedModel;
-import com.bestialMania.animation.Armature;
-import com.bestialMania.animation.Joint;
-import com.bestialMania.animation.Pose;
+import com.bestialMania.animation.*;
 import com.bestialMania.rendering.model.Model;
 import com.bestialMania.xml.XmlNode;
 import com.bestialMania.xml.XmlParser;
-import org.joml.Matrix4f;
-import org.joml.Vector2f;
-import org.joml.Vector3f;
-import org.joml.Vector3i;
+import org.joml.*;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -228,17 +222,20 @@ public class ModelConverter {
             FileOutputStream outputStream = new FileOutputStream(bmmFile);
             ObjectOutputStream oos = new ObjectOutputStream(outputStream);
 
-            oos.writeChars("BMMa");
+            oos.writeChars("BMM");
 
             XmlNode rootNode = XmlParser.loadXmlFile(new File(daeFile));
             List<VertexWeightData> vertexWeightData = new ArrayList<>();
 
-            if(!loadArmature(oos, rootNode, vertexWeightData)) {
+            Armature armature = loadArmature(oos,rootNode,vertexWeightData);
+            if(armature==null) {
                 System.err.println("Could not load armature information for " + daeFile);
                 return;
             }
             loadMesh(oos,rootNode,vertexWeightData);
-            loadPoses(oos,rootNode,null);
+            loadPoses(oos,rootNode,armature);
+
+            oos.writeChar('e');
 
             oos.close();
             outputStream.close();
@@ -365,11 +362,11 @@ public class ModelConverter {
     /**
      * Load armature from a DAE model
      */
-    private static boolean loadArmature(ObjectOutputStream oos, XmlNode rootNode, List<VertexWeightData> vertexWeightData) throws IOException {
+    private static Armature loadArmature(ObjectOutputStream oos, XmlNode rootNode, List<VertexWeightData> vertexWeightData) throws IOException {
         XmlNode skinNode = rootNode.getChild("library_controllers");
-        if(skinNode==null) return false;
+        if(skinNode==null) return null;
         skinNode = skinNode.getChild("controller");
-        if(skinNode==null) return false;
+        if(skinNode==null) return null;
         skinNode = skinNode.getChild("skin");//only the first skin
 
         //figure out the source locations of the joints and weights
@@ -379,7 +376,7 @@ public class ModelConverter {
             if(input.getAttribute("semantic").equals("JOINT")) jointSource = input.getAttribute("source").substring(1);
             else if(input.getAttribute("semantic").equals("WEIGHT")) weightSource = input.getAttribute("source").substring(1);
         }
-        if(jointSource==null && weightSource==null) return false;//not found
+        if(jointSource==null && weightSource==null) return null;//not found
 
         //load information from sources
         Map<String, Joint> joints = new HashMap<>();
@@ -437,9 +434,9 @@ public class ModelConverter {
 
         //build the armature hierarchy
         XmlNode visualScene = rootNode.getChild("library_visual_scenes");
-        if(visualScene == null) return false;
+        if(visualScene == null) return null;
         visualScene = visualScene.getChild("visual_scene");
-        if(visualScene==null) return false;
+        if(visualScene==null) return null;
 
         XmlNode armatureNode = visualScene.getChildWithAttribute("node","id","Armature");
         XmlNode root = armatureNode.getChild("node");
@@ -447,9 +444,48 @@ public class ModelConverter {
 
         Armature armature = new Armature(joints,rootJoint);
         armature.calculateInverseBindTransforms();
-        return true;
 
+        //write to the file
+        //joints
+        oos.writeChar('j');
+        int nJoints = armature.size();
+        oos.writeInt(nJoints);
+        for(int i = 0;i<nJoints;i++) {
+            //each joint
+            Joint joint = armature.getJoint(i);
+            oos.writeInt(joint.getName().length());
+            oos.writeChars(joint.getName());
+            Matrix4f inverseBindTransform = joint.getInverseBindTransform();
+            float[] matrixArray = new float[16];
+            inverseBindTransform.get(matrixArray);
+            for(float f : matrixArray) {
+                oos.writeFloat(f);
+            }
+        }
+        //hierarchy
+        oos.writeInt(rootJoint.getId());
+        oos.writeInt(-1);
+        writeJointHierarchy(oos,armature.getRootJoint());
+        oos.writeInt(-2);
+
+
+        return armature;
     }
+
+    /**
+     * Recursively write to a BMM file the hierarchy structure
+     */
+    private static void writeJointHierarchy(ObjectOutputStream oos, Joint joint) throws IOException {
+        for(Joint j2 : joint) {
+            oos.writeInt(j2.getId());
+            if(j2.nChildren()>0) {
+                oos.writeInt(-1);
+                writeJointHierarchy(oos,j2);
+                oos.writeInt(-2);
+            }
+        }
+    }
+
 
     /**
      * Recursively build the joint hierarchy
@@ -487,11 +523,13 @@ public class ModelConverter {
      * Each "pose" is one keyframe of the animation in the DAE file. These may not necessarily be in order or at useful timestamp values.
      * Each pose is given an ID which is not guaranteed to be in order of time.
      */
-    private static void loadPoses(ObjectOutputStream oos, XmlNode root, AnimatedModel object) throws IOException{
+    private static void loadPoses(ObjectOutputStream oos, XmlNode root, Armature armature) throws IOException{
         XmlNode node = root.getChild("library_animations");
         if(node==null) return;
 
         Map<Float, Integer> timestamps = new HashMap<>();//currently used timestamps with their respective pose ids
+        List<Pose> poses = new ArrayList<>();
+
         int id = 0;//current pose id
         //loop through all animations
         for(XmlNode animation : node.getChildren("animation")) {
@@ -502,7 +540,7 @@ public class ModelConverter {
             if(!split[1].equals("transform")) continue;
 
             String jointName = split[0];
-            Joint joint = object.getArmature().getJoint(jointName);
+            Joint joint = armature.getJoint(jointName);
             if(joint==null) {
                 System.err.println("Invalid joint name: " + jointName);
                 continue;
@@ -520,11 +558,11 @@ public class ModelConverter {
                 if(!timestamps.containsKey(timestamp)) {
                     timestamps.put(timestamp,id);
                     Pose pose = new Pose(id);
-                    object.addPose(pose);
+                    poses.add(pose);
                     posesToAddTo.add(pose);
                     id++;
                 }else{
-                    posesToAddTo.add(object.getPose(timestamps.get(timestamp)));
+                    posesToAddTo.add(poses.get(timestamps.get(timestamp)));
                 }
             }
             scan.close();
@@ -533,7 +571,7 @@ public class ModelConverter {
             XmlNode output =animation.getChildWithAttribute("source","id",outputSource);
             scan = new Scanner(output.getChild("float_array").getData());
             float[] floats = new float[16];
-            for(Pose pose : object.getPoses()) {
+            for(Pose pose : poses) {
                 for(int i = 0;i<16;i++) {
                     floats[i] = scan.nextFloat();
                 }
@@ -545,6 +583,34 @@ public class ModelConverter {
                 pose.addTransform(joint,matrix);
             }
             scan.close();
+        }
+
+        //save all poses to the file
+
+        oos.writeChar('p');
+        oos.writeInt(poses.size());
+        for(Pose pose : poses) {
+            //for each pose
+            int nJoints = pose.getJointTransforms().size();
+            oos.writeInt(nJoints);
+            for(JointTransform jointTransform : pose.getJointTransforms()) {
+                oos.writeInt(jointTransform.getJoint().getId());
+                //position
+                Vector3f pos = jointTransform.getPosition();
+                oos.writeFloat(pos.x);
+                oos.writeFloat(pos.y);
+                oos.writeFloat(pos.z);
+                //rotation
+                Vector4f rot = jointTransform.getRotation();
+                oos.writeFloat(rot.x);
+                oos.writeFloat(rot.y);
+                oos.writeFloat(rot.z);
+                oos.writeFloat(rot.w);
+                //matrix
+                float[] matrixArray = new float[16];
+                jointTransform.getMatrix().get(matrixArray);
+                for(float f : matrixArray) oos.writeFloat(f);
+            }
         }
     }
 }
