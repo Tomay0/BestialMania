@@ -69,8 +69,8 @@ public class PlayerSelect implements State, InputListener, ButtonListener {
             texts[i*3+1].addToRenderer(menu.getTextRender());
         }
 
-        startButton = new Button(memoryManager,inputHandler,this,x*2-60,y*2-50,"res/textures/ui/start.png","Start","start");
-        backButton = new Button(memoryManager,inputHandler,this, x*2-60,y*2+50,"res/textures/ui/quit.png","Back","back");
+        startButton = new Button(memoryManager,inputHandler,this,x*2-60,y*2-50,"res/textures/ui/start.bmt","Start","start");
+        backButton = new Button(memoryManager,inputHandler,this, x*2-60,y*2+50,"res/textures/ui/quit.bmt","Back","back");
 
         startButton.addToRenderer(menu.getGuiRender());
         backButton.addToRenderer(menu.getGuiRender());

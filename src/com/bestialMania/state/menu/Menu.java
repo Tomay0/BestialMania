@@ -63,7 +63,7 @@ public class Menu {
         guiRender = renderer.getWindowFramebuffer().createRenderer(guiShader);
         textRender = renderer.getWindowFramebuffer().createRenderer(textShader);
 
-        font = new Font(memoryManager,"res/fonts/test.fnt","res/fonts/test.png");
+        font = new Font(memoryManager,"res/fonts/test.fnt","res/fonts/test.bmt");
     }
 
     /**

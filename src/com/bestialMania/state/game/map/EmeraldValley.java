@@ -4,7 +4,7 @@ import com.bestialMania.collision.BoundingBox;
 import com.bestialMania.collision.CollisionLoader;
 import com.bestialMania.object.Object3D;
 import com.bestialMania.object.StaticObject;
-import com.bestialMania.rendering.Texture;
+import com.bestialMania.rendering.texture.Texture;
 import com.bestialMania.rendering.model.Model;
 import com.bestialMania.rendering.model.loader.ModelLoader;
 import com.bestialMania.rendering.shader.Shader;
@@ -32,7 +32,7 @@ public class EmeraldValley extends MapData{
 
     @Override
     public String getSkyboxTexture() {
-        return "res/textures/skyboxes/test/desertsky";
+        return "res/textures/skyboxes/desertsky/desertsky";
     }
 
     @Override
@@ -74,12 +74,12 @@ public class EmeraldValley extends MapData{
     public void loadObjects(Game game) {
         //SOME POLE OBJECT
         Model poleModel = ModelLoader.loadModel(game.getMemoryManager(),"res/models/pole.bmm");
-        Texture poleTexture = Texture.loadImageTexture3D(game.getMemoryManager(),"res/textures/concrete.png");
+        Texture poleTexture = Texture.loadImageTexture3D(game.getMemoryManager(),"res/textures/concrete.bmt");
         Matrix4f testObjectMatrix = new Matrix4f();
         testObjectMatrix.translate(2.0f,0,0.5f);
         testObjectMatrix.scale(3.0f,3.0f,3.0f);
         if(game.usesNormalMapping()) {
-            Texture poleNormalmap = Texture.loadImageTexture3D(game.getMemoryManager(), "res/textures/concrete_normal.png");
+            Texture poleNormalmap = Texture.loadImageTexture3D(game.getMemoryManager(), "res/textures/concrete_normal.bmt");
             Object3D object = new StaticObject(game, poleModel,testObjectMatrix,poleTexture, poleNormalmap,0.5f,10.0f);
             game.createObject(object,3,true);
         }else{
@@ -91,9 +91,9 @@ public class EmeraldValley extends MapData{
         Model planeModel = ModelLoader.loadModel(game.getMemoryManager(),"res/models/plane.bmm");
         Model planeModel2 = ModelLoader.loadModel(game.getMemoryManager(), "res/models/plane2.bmm");
         Matrix4f planeMatrix = new Matrix4f();
-        Texture planeTexture = Texture.loadImageTexture3D(game.getMemoryManager(),"res/textures/rocky.png");
+        Texture planeTexture = Texture.loadImageTexture3D(game.getMemoryManager(),"res/textures/rocky.bmt");
         if(game.usesNormalMapping()) {
-            Texture planeNormalmap = Texture.loadImageTexture3D(game.getMemoryManager(), "res/textures/rocky_normal.png");
+            Texture planeNormalmap = Texture.loadImageTexture3D(game.getMemoryManager(), "res/textures/rocky_normal.bmt");
             Object3D object = new StaticObject(game, planeModel,planeMatrix,planeTexture, planeNormalmap,0.1f,4.0f);
             Object3D object2 = new StaticObject(game, planeModel2,planeMatrix,planeTexture, planeNormalmap,0.1f,4.0f);
             game.createObject(object,3,true);
@@ -108,7 +108,7 @@ public class EmeraldValley extends MapData{
 
         //SOME WALL OBJECT
         Model wallModel = ModelLoader.loadModel(game.getMemoryManager(), "res/models/wall.bmm");
-        Texture wallTexture = Texture.loadImageTexture3D(game.getMemoryManager(),"res/textures/sexy.png");
+        Texture wallTexture = Texture.loadImageTexture3D(game.getMemoryManager(),"res/textures/sexy.bmt");
         Object3D wallObject = new StaticObject(game,wallModel,new Matrix4f(),wallTexture,0.5f,10.0f);
         game.createObject(wallObject,2,true);
         //CEILING
@@ -131,7 +131,7 @@ public class EmeraldValley extends MapData{
         stairMatrix.translate(-10,0,0);
         stairMatrix.scale(5,2,5);
         if(game.usesNormalMapping()) {
-            Texture stairsNormalmap = Texture.loadImageTexture3D(game.getMemoryManager(), "res/textures/concrete_normal.png");
+            Texture stairsNormalmap = Texture.loadImageTexture3D(game.getMemoryManager(), "res/textures/concrete_normal.bmt");
             Object3D object = new StaticObject(game, stairsModel,stairMatrix,poleTexture, stairsNormalmap,0.1f,4.0f);
             game.createObject(object,3,true);
         }

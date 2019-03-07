@@ -3,6 +3,7 @@ package com.bestialMania.rendering;
 import com.bestialMania.rendering.model.Model;
 import com.bestialMania.rendering.shader.Shader;
 import com.bestialMania.rendering.shader.Uniform;
+import com.bestialMania.rendering.texture.Texture;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,7 +16,7 @@ public class Renderer {
     private Shader shader;
     private List<Uniform> uniforms;
     private List<ShaderObject> objects;
-    private Map<Integer,Texture> textures;
+    private Map<Integer, Texture> textures;
 
     private int cull = GL_BACK;
 

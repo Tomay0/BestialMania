@@ -1,10 +1,9 @@
 package com.bestialMania;
 
 import com.bestialMania.rendering.Framebuffer;
-import com.bestialMania.rendering.Texture;
+import com.bestialMania.rendering.texture.Texture;
 import com.bestialMania.rendering.model.Model;
 import com.bestialMania.sound.Sound;
-import com.bestialMania.sound.SoundSource;
 
 import java.util.HashSet;
 import java.util.Set;

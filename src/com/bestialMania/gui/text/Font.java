@@ -1,7 +1,7 @@
 package com.bestialMania.gui.text;
 
 import com.bestialMania.MemoryManager;
-import com.bestialMania.rendering.Texture;
+import com.bestialMania.rendering.texture.Texture;
 
 import java.io.File;
 import java.util.HashMap;

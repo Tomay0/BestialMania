@@ -1,8 +1,11 @@
 package com.bestialMania;
 
+import com.bestialMania.collision.CollisionLoader;
 import com.bestialMania.rendering.model.loader.ModelConverter;
 import com.bestialMania.rendering.model.loader.ModelLoader;
+import com.bestialMania.rendering.texture.TextureImage;
 import com.bestialMania.state.State;
+import com.bestialMania.state.game.map.MapData;
 import com.bestialMania.state.menu.Menu;
 import org.lwjgl.glfw.*;
 import org.lwjgl.openal.AL;
@@ -108,8 +111,6 @@ public class Main {
                 AUDIO = false;
             }
         }
-
-
         //create the input handler for the window
         inputHandler = new InputHandler(window);
 
@@ -135,35 +136,32 @@ public class Main {
             alListenerfv(AL_ORIENTATION, orientation);
         }
 
-        /*
-        //Convert some of the files
-        Loader.convertOBJ("res/models/shrek.obj","res/models/shrek.bmm");
-
         //test the improved efficiency of the loading
-        MemoryManager mm = new MemoryManager();
-        double avg = 0;
-        for(int i = 0;i<10;i++) {
-            double timer = glfwGetTime();
-            Model model = Loader.loadOBJ(mm,"res/models/shrek.obj");
-            timer = glfwGetTime()-timer;
-            System.out.println(timer + "s");
-            avg+=timer;
-        }
-        avg/=10;
-        System.out.println("avg: " + avg + "s");
-        avg = 0;
-        for(int i = 0;i<10;i++) {
-            double timer = glfwGetTime();
-            Model model = Loader.loadModel(mm,"res/models/shrek.bmm");
-            timer = glfwGetTime()-timer;
-            System.out.println(timer + "s");
-            avg+=timer;
-        }
-        avg/=10;
-        System.out.println("avg: " + avg + "s");
+        /*try {
+            MemoryManager mm = new MemoryManager();
+            double avg = 0;
+            for(int i = 0;i<10;i++) {
+                double timer = glfwGetTime();
+                TextureImage image = TextureImage.loadImageJava("res/textures/concrete.png",true);
+                timer = glfwGetTime()-timer;
+                System.out.println(timer + "s");
+                avg+=timer;
+            }
+            avg/=10;
+            System.out.println("avg: " + avg + "s");
+            avg = 0;
+            for(int i = 0;i<10;i++) {
+                double timer = glfwGetTime();
+                TextureImage image = TextureImage.loadImage("res/textures/concrete.bmt");
+                timer = glfwGetTime()-timer;
+                System.out.println(timer + "s");
+                avg+=timer;
+            }
+            avg/=10;
+            System.out.println("avg: " + avg + "s");
 
-        mm.cleanUp();
-        */
+            mm.cleanUp();
+        }catch(Exception e) {}*/
     }
 
     /**
@@ -255,5 +253,97 @@ public class Main {
     public static void main(String[] args) {
         Main main = new Main();
         main.run();
+    }
+
+
+
+
+
+    public static void reloadAllFiles() {
+        try {
+            //MODELS
+            //look through all files in the "toConvert" folder
+            File dir = new File("toConvert/models");
+            for(File file : dir.listFiles()) {
+                String name = file.getName();
+                //OBJ
+                if(name.endsWith(".obj")) {
+                    String newName = name.replace(".obj",".bmm");
+                    ModelConverter.convertOBJ("toConvert/models/" + name,"res/models/" + newName);
+                }
+                //DAE
+                else if(name.endsWith(".dae")) {
+                    String newName = name.replace(".dae",".bmma");
+                    ModelConverter.convertDAE("toConvert/models/" + name, "res/models/" + newName);
+                }
+            }
+
+            //refresh all collisions
+            for(MapData mapData : Menu.MAPS) {
+                String fileName = mapData.getCollisions();
+                CollisionLoader loader = mapData.loadCollisions();
+                loader.saveToFile(fileName);
+            }
+
+            //refresh all textures
+            //regular textures
+            dir = new File("toConvert/textures/otherTextures");
+            for(File file : dir.listFiles()) {
+                String name = file.getName();
+                if(name.endsWith(".png")) {
+                    String newName = name.replace(".png",".bmt");
+                    TextureImage textureImage = TextureImage.loadImageJava(file.getPath(),true);
+                    textureImage.saveAsBMT("res/textures/" + newName);
+                }
+            }
+            //font textures
+            dir = new File("toConvert/textures/fontTextures");
+            for(File file : dir.listFiles()) {
+                String name = file.getName();
+                if(name.endsWith(".png")) {
+                    String newName = name.replace(".png",".bmt");
+                    TextureImage textureImage = TextureImage.loadImageJava(file.getPath(),true);
+                    textureImage.saveAsBMT("res/fonts/" + newName);
+                }
+            }
+            //font textures
+            dir = new File("toConvert/textures/fontTextures");
+            for(File file : dir.listFiles()) {
+                String name = file.getName();
+                if(name.endsWith(".png")) {
+                    String newName = name.replace(".png",".bmt");
+                    TextureImage textureImage = TextureImage.loadImageJava(file.getPath(),true);
+                    textureImage.saveAsBMT("res/fonts/" + newName);
+                }
+            }
+            //ui textures
+            dir = new File("toConvert/textures/uiTextures");
+            for(File file : dir.listFiles()) {
+                String name = file.getName();
+                if(name.endsWith(".png")) {
+                    String newName = name.replace(".png",".bmt");
+                    TextureImage textureImage = TextureImage.loadImageJava(file.getPath(),true);
+                    textureImage.saveAsBMT("res/textures/ui/" + newName);
+                }
+            }
+            //skybox textures
+            dir = new File("toConvert/textures/skyboxTextures");
+            for(File dir2 : dir.listFiles()) {
+                String name = dir2.getName();
+                for(File file : dir2.listFiles()) {
+                    String name2 = file.getName();
+                    if(name2.endsWith(".png")) {
+                        String newName = name2.replace(".png",".bmt");
+                        TextureImage textureImage = TextureImage.loadImageJava(file.getPath(),false);
+                        textureImage.saveAsBMT("res/textures/skyboxes/" + name + "/" + newName);
+                    }
+                }
+            }
+
+            System.out.println("Converted all files successfully!");
+        }catch(Exception e) {
+            System.err.println("Error when converting files");
+            e.printStackTrace();
+        }
     }
 }

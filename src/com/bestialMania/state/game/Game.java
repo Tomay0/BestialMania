@@ -4,6 +4,7 @@ import com.bestialMania.*;
 import com.bestialMania.collision.CollisionHandler;
 import com.bestialMania.collision.CollisionLoader;
 import com.bestialMania.rendering.model.loader.ModelLoader;
+import com.bestialMania.rendering.texture.Texture;
 import com.bestialMania.state.game.map.MapData;
 import com.bestialMania.animation.AnimatedModel;
 import com.bestialMania.object.AnimatedObject;
@@ -228,7 +229,7 @@ public class Game implements State, InputListener {
         renderer2D = masterRenderer.getWindowFramebuffer().createRenderer(shader2D);
 
         //create the beast you play as (JIMMY)
-        Texture jimmyTexture = Texture.loadImageTexture3D(memoryManager,"res/textures/jimmy_tex.png");
+        Texture jimmyTexture = Texture.loadImageTexture3D(memoryManager,"res/textures/jimmy_tex.bmt");
         AnimatedModel jimmy = ModelLoader.loadAnimatedModel(memoryManager,"res/models/jimmy.bmma");
 
         //Create a window, renderer and character for each player
@@ -324,7 +325,7 @@ public class Game implements State, InputListener {
      * Load the skybox
      */
     private void loadSkybox(String fileName) {
-        Texture skyboxTexture = Texture.loadCubemapTexture(memoryManager,fileName,"png");
+        Texture skyboxTexture = Texture.loadCubemapTexture(memoryManager,fileName);
         Model skyboxModel = new Skybox(memoryManager);
         for(Renderer renderer : rendererLists.get(0)) {
             ShaderObject object = renderer.createObject(skyboxModel);

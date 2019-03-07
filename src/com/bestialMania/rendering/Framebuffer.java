@@ -3,6 +3,7 @@ package com.bestialMania.rendering;
 import com.bestialMania.MemoryManager;
 import com.bestialMania.Settings;
 import com.bestialMania.rendering.shader.Shader;
+import com.bestialMania.rendering.texture.Texture;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 

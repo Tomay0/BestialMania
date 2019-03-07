@@ -8,7 +8,7 @@ import com.bestialMania.collision.CollisionHandler;
 import com.bestialMania.object.AnimatedObject;
 import com.bestialMania.rendering.Renderer;
 import com.bestialMania.rendering.ShaderObject;
-import com.bestialMania.rendering.Texture;
+import com.bestialMania.rendering.texture.Texture;
 import com.bestialMania.rendering.model.Model;
 import com.bestialMania.rendering.shader.UniformFloat;
 import com.bestialMania.sound.Sound;

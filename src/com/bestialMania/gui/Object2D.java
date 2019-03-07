@@ -5,6 +5,7 @@ import com.bestialMania.Settings;
 import com.bestialMania.rendering.*;
 import com.bestialMania.rendering.model.Rect2D;
 import com.bestialMania.rendering.shader.UniformMatrix4;
+import com.bestialMania.rendering.texture.Texture;
 import org.joml.Matrix4f;
 
 import java.util.HashMap;
