@@ -6,6 +6,7 @@ import com.bestialMania.object.AnimatedObject;
 import com.bestialMania.object.Object3D;
 import com.bestialMania.rendering.*;
 import com.bestialMania.rendering.shader.Shader;
+import com.bestialMania.rendering.texture.Texture;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
