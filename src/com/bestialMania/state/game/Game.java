@@ -111,26 +111,37 @@ public class Game implements State, InputListener {
 
         //shadow mapping stuff determined by the quality you choose
         //TODO: experiment with these settings later on in development, adding further enhancements and optimizations
-        switch(Settings.SHADOW_QUALITY) {
+        float r= 1;
+        switch(Settings.SHADOW_RESOLUTION) {
             case LOW:
                 shadowResolution = 1024;
-                shadowPCFCount = 1;
-                shadowPCFSpread = 0.65f;
                 break;
             case MEDIUM:
                 shadowResolution = 2048;
+                r = 2;
+                break;
+            default:
+                shadowResolution = 4096;
+                r = 4;
+                break;
+        }
+
+        switch(Settings.SHADOW_SOFTENING) {
+            case LOW://low=essentially off
+                shadowPCFCount = 1;
+                shadowPCFSpread = 0.8f*r;
+                break;
+            case MEDIUM:
                 shadowPCFCount = 2;
-                shadowPCFSpread = 0.65f;
+                shadowPCFSpread = 0.6f*r;
                 break;
             case HIGH:
-                shadowResolution = 2048;
                 shadowPCFCount = 4;
-                shadowPCFSpread = 0.45f;
+                shadowPCFSpread = 0.3f*r;
                 break;
             case ULTRA:
-                shadowResolution = 4096;
-                shadowPCFCount = 5;
-                shadowPCFSpread = 0.45f;
+                shadowPCFCount = 6;
+                shadowPCFSpread = 0.23f*r;
                 break;
         }
 
@@ -324,7 +335,7 @@ public class Game implements State, InputListener {
         //add to shadow casting renderers
         if(castsShadows) {
             if(object instanceof AnimatedObject) {
-                shadowRenderer.createShadowCastingAnimatedObject((AnimatedObject) object);
+                shadowRenderer.createShadowCastingAnimatedObject((AnimatedObject) object, ShadowRenderer.ShadowDistance.MIDDLE);
             }
             else {
                 shadowRenderer.createShadowCastingObject(object);

@@ -24,13 +24,25 @@ uniform vec3 lightColor;
 uniform float reflectivity;
 uniform float shineDamper;
 const vec3 ambient = vec3(0.4);
-
-
 /**
     Get the shadow amount for a specific shadow map
 */
 float getShadow(int shadowMap) {
+    //low settings
+    if(pcfCount==0) {
+        float shadowDepth;
+        if(shadowMap==0) shadowDepth = texture(shadowSampler0,shadowSpace[shadowMap].xy).r;
+        else if(shadowMap==1) shadowDepth = texture(shadowSampler1,shadowSpace[shadowMap].xy).r;
+        else shadowDepth = texture(shadowSampler2,shadowSpace[shadowMap].xy).r;
 
+        if(shadowSpace[shadowMap].z > shadowDepth ) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    //antialiasing
     float shadow = 0;
     for(float x = -pcfCount * pcfSpread; x <= pcfCount * pcfSpread;x+= pcfSpread) {
         for(float y = -pcfCount * pcfSpread; y <= pcfCount * pcfSpread;y+= pcfSpread) {
@@ -95,6 +107,7 @@ void main() {
 	float cosAlpha = dot(normalize(frag_cameraVec),reflected);
 	cosAlpha = clamp(cosAlpha-shadow,0,1);
 	vec3 specular = clamp(reflectivity * pow(cosAlpha,shineDamper),0,0.8) * lightColor;
+
 
     color = textureColor * vec4(diffuse,1.0) + vec4(specular,1.0);
 }

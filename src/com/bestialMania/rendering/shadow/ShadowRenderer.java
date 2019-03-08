@@ -13,6 +13,8 @@ import org.joml.Vector3f;
 import static org.lwjgl.opengl.GL11.GL_FRONT;
 
 public class ShadowRenderer {
+    public enum ShadowDistance {CLOSE,MIDDLE,FAR};
+
     //close shadows
     private Renderer[] closeRenderers;
     private Renderer[] closeAnimatedRenderers;
@@ -134,17 +136,37 @@ public class ShadowRenderer {
     /**
      * Create shadow casting object that is animated
      */
-    public void createShadowCastingAnimatedObject(AnimatedObject object) {
+    public void createShadowCastingAnimatedObject(AnimatedObject object, ShadowDistance maxShadowDistance) {
+        //close animated
         for(Renderer renderer : closeAnimatedRenderers) {
             ShaderObject so = object.createShaderObject(renderer);
             object.linkTransformsToShaderObject(so);
         }
-        for(Renderer renderer : midAnimatedRenderers) {
-            ShaderObject so = object.createShaderObject(renderer);
-            object.linkTransformsToShaderObject(so);
+        if(maxShadowDistance==ShadowDistance.CLOSE) {
+            //far and middle not animated
+            for(Renderer renderer : midRenderers) {
+                object.createShaderObject(renderer);
+            }
+            object.createShaderObject(farRenderer);
         }
-        ShaderObject so = object.createShaderObject(farAnimatedRenderer);
-        object.linkTransformsToShaderObject(so);
+        else {
+            //middle animated
+            for(Renderer renderer : midAnimatedRenderers) {
+                ShaderObject so = object.createShaderObject(renderer);
+                object.linkTransformsToShaderObject(so);
+            }
+
+            //make far renderer not animated
+            if(maxShadowDistance==ShadowDistance.MIDDLE) {
+                object.createShaderObject(farRenderer);
+            }
+            //all animated
+            else{
+                ShaderObject so = object.createShaderObject(farAnimatedRenderer);
+                object.linkTransformsToShaderObject(so);
+            }
+        }
+
 
     }
 

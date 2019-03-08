@@ -22,12 +22,12 @@ public class EmeraldValley extends MapData{
 
     @Override
     public Vector3f getLightDirection() {
-        return new Vector3f(-1.4f, -0.5f, 2.5f).normalize();
+        return new Vector3f(-1.4f, -2.5f, 2.5f).normalize();
     }
 
     @Override
     public Vector3f getLightColor() {
-        return new Vector3f(1.0f, 1.0f, 1.0f);
+        return new Vector3f(1.0f, 1.0f, 0.9f);
     }
 
     @Override
