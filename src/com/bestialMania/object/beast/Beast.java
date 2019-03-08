@@ -49,6 +49,7 @@ public class Beast extends AnimatedObject implements AnimationListener {
     private static final float DIVE_SPEED = 0.04f;//your y speed will be set to this when you dive, it will make you move with no yspeed for a certain amount of time until the yspeed gets below 0 again
     private static final float DIVE_MAX_SPEED_MODIFIER = 1.55f;//in addition to the run modifier, is slightly more than the slide speed modifier
     private static final float DIVE_SPEED_MODIFIER = 0.9f;//percentage of your velocity that gets added to your current velocity when diving. Less than max dive speed - 1
+    private static final float DIVE_MIN_HEIGHT = 0.2f;//you need to be at least this high above the ground to dive
 
     private static final float TERMINAL_VELOCITY = 0.5f;//fastest speed you can fall
 
@@ -219,9 +220,15 @@ public class Beast extends AnimatedObject implements AnimationListener {
         else if(this.running) this.speed*=RUN_MODIFIER;
 
         //walking/idle animations. Must be on ground for this to occur, however this does not occur while sliding or crouching.
-        if(onGround && !crouching && slidingFrames<=0 && ledgeGrabFrames==0) {
-            if(speed>0) playTransitionAnimation(2,0.3f,"walk");
-            else playTransitionAnimation(1,0.3f,null);
+        if(onGround && slidingFrames<=0 && ledgeGrabFrames==0) {
+            if(crouching) {
+                playTransitionAnimation(5,0.1f,null);
+
+            }else {
+                if(speed>0) playTransitionAnimation(2,0.3f,"walk");
+                else playTransitionAnimation(1,0.3f,null);
+
+            }
         }
     }
 
@@ -328,7 +335,7 @@ public class Beast extends AnimatedObject implements AnimationListener {
                 }
                 else {
                     //DIVE
-                    if(!diving && slidingFrames<=0) {
+                    if(!diving && slidingFrames<=0 && position.y-floorY>DIVE_MIN_HEIGHT) {
                         diving = true;
                         slidingFrames = 15;
 
@@ -358,16 +365,12 @@ public class Beast extends AnimatedObject implements AnimationListener {
 
                     }else return;
                 }
-            }else if(!onGround) return;
+            }else if(!onGround && diving) return;
         }
         //stop grabbing onto a ledge if you press crouch
         else if(ledgeGrabFrames>0 && crouch) ledgeGrabFrames = 0;
 
         this.crouching = crouch;
-        //crouching on ground animation
-        if(this.crouching && onGround && slidingFrames<=0) {
-            playTransitionAnimation(5,0.1f,null);
-        }
     }
 
     /**
@@ -402,6 +405,16 @@ public class Beast extends AnimatedObject implements AnimationListener {
                 //stick to the floor
                 position.y = floorY;
                 yspeed = 0;
+                //landing on the ground from a longjump/dive
+                if(diving || longJump) {
+                    diving = false;
+                    longJump = false;
+                    slidingFrames = 0;
+                    float currentSpeed = movementVector.length();
+                    if (currentSpeed > speed && speed>0) {
+                        movementVector.mul(speed/currentSpeed);
+                    }
+                }
             }
             //hitting the ceiling
             if(position.y+characterHeight>ceilY-0.0001f) {
@@ -450,7 +463,6 @@ public class Beast extends AnimatedObject implements AnimationListener {
 
         if (ledgeGrabFrames == 0) {
 
-
             /*
 
             ACCELERATION - LATERAL
@@ -480,14 +492,6 @@ public class Beast extends AnimatedObject implements AnimationListener {
                     accel *= MIDAIR_ACCELERATION_MODIFIER;
                     //diving or long jumping will slow your acceleration/deceleration even more
                     if (longJump || diving) accel *= LONG_JUMP_ACCELERATION_MODIFIER;
-                }
-                //if you have just landed on the ground from a dive, your speed will be immediately reduced to walking/running speed
-                else if (diving || longJump) {
-                    diving = false;
-                    longJump = false;
-                    slidingFrames = 0;
-                    float currentSpeed = movementVector.length();
-                    if (currentSpeed > speed) accel = currentSpeed - speed;
                 }
 
                 //change your xspeed

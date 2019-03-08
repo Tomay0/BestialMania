@@ -20,6 +20,8 @@ public abstract class MapData {
     public abstract void loadShaders(Game game);
     public abstract void loadObjects(Game game);
 
+    public BoundingBox getBoundingBox() {return boundingBox;}
+
     public abstract CollisionHandler loadCollisions();
 
 }

@@ -143,7 +143,6 @@ public class Player implements InputListener {
         float speed;//"speed" of the controller (Eg: smaller if you lightly push the left analog stick up
         Vector2f dir;//direction your controller is pointing RIGHT = POSITIVE X. DOWN = POSITIVE Y
         boolean running=false;//if you are running
-
         //JUMP
         if(jumpFrames>0) {
             jumpFrames++;
@@ -195,6 +194,7 @@ public class Player implements InputListener {
             rotatedDir.y = dir.x*yawSinus+dir.y*yawCosinus;
             beast.setDirection(rotatedDir);
         }else beast.setSpeed(0,false);
+
 
         //update the beast's physics
         beast.updatePhysics();
