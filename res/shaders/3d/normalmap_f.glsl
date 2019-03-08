@@ -1,14 +1,10 @@
 #version 330 core
 
-const int N_SHADOWMAPS = 3;
-const float SEAM_RATIO = 0.3;
-
-
 in vec2 frag_uv;
 in vec3 frag_lightDir;
 in vec3 frag_cameraVec;
 
-in vec3 shadowSpace[N_SHADOWMAPS];
+in vec3 shadowSpace[3];
 in float dist;
 
 out vec4 color;
@@ -21,7 +17,8 @@ uniform sampler2D shadowSampler2;
 uniform float pxSize;
 uniform int pcfCount;
 uniform float pcfSpread;
-uniform float shadowDist[N_SHADOWMAPS];
+uniform float pcfIncrAmount;
+uniform float shadowDist[4];
 
 uniform vec3 lightColor;
 uniform float reflectivity;
@@ -32,7 +29,7 @@ const vec3 ambient = vec3(0.4);
 /**
     Get the shadow amount for a specific shadow map
 */
-float getShadow(int shadowMap, float incrAmount) {
+float getShadow(int shadowMap) {
 
     float shadow = 0;
     for(float x = -pcfCount * pcfSpread; x <= pcfCount * pcfSpread;x+= pcfSpread) {
@@ -43,7 +40,7 @@ float getShadow(int shadowMap, float incrAmount) {
             else shadowDepth = texture(shadowSampler2,shadowSpace[shadowMap].xy + vec2(x,y) * pxSize).r;
 
             if(shadowSpace[shadowMap].z > shadowDepth ) {
-                shadow += incrAmount;
+                shadow += pcfIncrAmount;
             }
         }
     }
@@ -54,31 +51,31 @@ float getShadow(int shadowMap, float incrAmount) {
     Calculates the shadow amount by interpolating between all rendered shadow maps
 */
 float getShadow() {
-	float shadow = 0;
-	float incrAmount = 1.0/float((pcfCount*2.0 + 1.0)*(pcfCount*2.0 + 1.0));
-	for(int i = 0;i<N_SHADOWMAPS;i++) {
-		if(i<N_SHADOWMAPS-1) {
-			float boxLength = shadowDist[i];
-			if(i>0) boxLength -= shadowDist[i-1];
-			float seam = boxLength * SEAM_RATIO;
-
-			//is an interpolation of 2 shadow maps
-			float seamInterpolate = (shadowDist[i]-dist)/seam;
-			if (seamInterpolate >0 && seamInterpolate < 1) {
-				float shadow1 = getShadow(i, incrAmount);
-				float shadow2 = getShadow(i+1, incrAmount);
-				shadow = shadow2 * (1-seamInterpolate) + shadow1 * seamInterpolate;
-				break;
-			}
-		}
-		//no interpolation
-		if(dist < shadowDist[i]) {
-			shadow = getShadow(i, incrAmount);
-			break;
-		}
+    //close shadow box
+	if(dist<shadowDist[0]) {
+	    return getShadow(0);
 	}
+	//close-mid transition
+	else if(dist<shadowDist[1]) {
+        float t = (dist-shadowDist[0])/(shadowDist[1]-shadowDist[0]);
 
-	return shadow;
+        return (1-t) * getShadow(0) + t * getShadow(1);
+	}
+	//mid shadow box
+	else if(dist<shadowDist[2]) {
+	    return getShadow(1);
+
+	}
+	//mid-far transition
+	else if(dist<shadowDist[3]) {
+        float t = (dist-shadowDist[1])/(shadowDist[2]-shadowDist[1]);
+
+        return (1-t) * getShadow(1) + t * getShadow(2);
+	}
+	//far shadow box
+	else {
+        return getShadow(2);
+	}
 }
 
 

@@ -16,7 +16,7 @@ import java.util.Arrays;
 
 public class EmeraldValley extends MapData{
     public EmeraldValley() {
-        boundingBox = new BoundingBox(-32,-100,-32,32,100,32);
+        boundingBox = new BoundingBox(-32,-10,-32,32,20,32);
     }
 
 

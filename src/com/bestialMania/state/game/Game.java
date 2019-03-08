@@ -2,9 +2,6 @@ package com.bestialMania.state.game;
 
 import com.bestialMania.*;
 import com.bestialMania.collision.CollisionHandler;
-import com.bestialMania.collision.CollisionLoader;
-import com.bestialMania.rendering.model.loader.ModelLoader;
-import com.bestialMania.rendering.texture.Texture;
 import com.bestialMania.state.game.map.MapData;
 import com.bestialMania.animation.AnimatedModel;
 import com.bestialMania.object.AnimatedObject;
@@ -16,7 +13,6 @@ import com.bestialMania.rendering.*;
 import com.bestialMania.rendering.model.Model;
 import com.bestialMania.rendering.model.Skybox;
 import com.bestialMania.rendering.shader.Shader;
-import com.bestialMania.rendering.shadow.ShadowBox;
 import com.bestialMania.sound.Sound;
 import com.bestialMania.sound.SoundSource;
 import com.bestialMania.state.State;
@@ -29,7 +25,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE;
-import static org.lwjgl.opengl.GL30.*;
 
 /**
  * Test class reflecting the actual game.
@@ -44,7 +39,7 @@ public class Game implements State, InputListener {
     private MemoryManager memoryManager;
 
     private static final float MIN_DIST = 0.01f;
-    private static final float FAR_DIST = 80.0f;
+    private static final float FAR_DIST = 120.0f;
 
 
     //Shaders
@@ -73,10 +68,7 @@ public class Game implements State, InputListener {
 
     //shadow boxes
     private List<Float> shadowDistanceValues;
-    private Renderer[][] shadowRenderers;
-    private Renderer[][] shadowAnimatedRenderers;
-    private Texture[][] shadowTextures;
-    private ShadowBox[][] shadowBoxes;
+    private ShadowRenderer shadowRenderer;
 
     //collisions
     private CollisionHandler collisionHandler;
@@ -116,6 +108,11 @@ public class Game implements State, InputListener {
         //shadow mapping stuff determined by the quality you choose
         //TODO: experiment with these settings later on in development, adding further enhancements and optimizations
         switch(Settings.SHADOW_QUALITY) {
+            case LOW:
+                shadowResolution = 1024;
+                shadowPCFCount = 1;
+                shadowPCFSpread = 0.65f;
+                break;
             case MEDIUM:
                 shadowResolution = 2048;
                 shadowPCFCount = 2;
@@ -131,20 +128,13 @@ public class Game implements State, InputListener {
                 shadowPCFCount = 5;
                 shadowPCFSpread = 0.45f;
                 break;
-            default:
-                shadowResolution = 1024;
-                shadowPCFCount = 1;
-                shadowPCFSpread = 0.65f;
-                break;
         }
 
         //initialize shadow box stuff
-        shadowDistanceValues = Arrays.asList(MIN_DIST,FAR_DIST * 0.125f,FAR_DIST * 0.45f,FAR_DIST);//Currently works for triple shadow boxes, but potentially try 2 or 4 for different settings
+        float mid = 8;
+        float far = 30;
+        shadowDistanceValues = Arrays.asList(mid*0.7f, mid, mid+0.7f*(far-mid), far);//Currently works for triple shadow boxes, but potentially try 2 or 4 for different settings
 
-        shadowRenderers = new Renderer[controllers.size()][shadowDistanceValues.size()-1];
-        shadowAnimatedRenderers = new Renderer[controllers.size()][shadowDistanceValues.size()-1];
-        shadowTextures = new Texture[controllers.size()][shadowDistanceValues.size()-1];
-        shadowBoxes = new ShadowBox[controllers.size()][shadowDistanceValues.size()-1];
 
         //load floor
         collisionHandler = CollisionLoader.loadCollisionHandler(map.getCollisions());
@@ -153,6 +143,9 @@ public class Game implements State, InputListener {
         loadShaders();
         //load all map related shaders
         map.loadShaders(this);
+
+        //load the shadow renderer
+        shadowRenderer = new ShadowRenderer(memoryManager,masterRenderer,depthShader,animatedDepthShader,lightDir,map.getBoundingBox(),controllers.size(),shadowResolution);
 
         //load all player windows and renderers
         loadRenderersAndPlayers(controllers);
@@ -209,9 +202,10 @@ public class Game implements State, InputListener {
         if(shadow) {
             shader.setUniformFloat(shader.getUniformLocation("pxSize"),1.0f/(float)shadowResolution);
             shader.setUniformInt(shader.getUniformLocation("pcfCount"),shadowPCFCount);
+            shader.setUniformFloat(shader.getUniformLocation("pcfIncrAmount"), 1.0f/(4*shadowPCFCount*shadowPCFCount + 4*shadowPCFCount + 1));
             shader.setUniformFloat(shader.getUniformLocation("pcfSpread"),shadowPCFSpread);
-            for(int i = 0;i<shadowDistanceValues.size()-1;i++) {
-                shader.setUniformFloat(shader.getUniformLocation("shadowDist[" + i + "]"),shadowDistanceValues.get(i+1));
+            for(int i = 0;i<4;i++) {
+                shader.setUniformFloat(shader.getUniformLocation("shadowDist[" + i + "]"),shadowDistanceValues.get(i));
             }
         }
         RendererList rendererList = new RendererList(shader,shadow, viewMatrixDirOnly);
@@ -235,18 +229,8 @@ public class Game implements State, InputListener {
         //Create a window, renderer and character for each player
         for(int i = 0;i<controllers.size();i++) {
 
-            //create shadow box framebuffers
-            for(int j = 0;j<shadowDistanceValues.size()-1;j++) {
-                Framebuffer shadowFbo = Framebuffer.createDepthFramebuffer2D(memoryManager,shadowResolution,shadowResolution);
-                masterRenderer.addFramebuffer(shadowFbo);
-
-                //shadow map renderer
-                shadowRenderers[i][j] = shadowFbo.createRenderer(depthShader);
-                shadowRenderers[i][j].setCull(GL_FRONT);
-                shadowAnimatedRenderers[i][j] = shadowFbo.createRenderer(animatedDepthShader);
-                shadowAnimatedRenderers[i][j].setCull(GL_FRONT);
-                shadowTextures[i][j] = shadowFbo.getTexture(0);
-            }
+            //create shadow box renderers
+            shadowRenderer.createRenderers(i);
 
             //framebuffer
             Framebuffer fbo = createPlayerWindow();
@@ -296,25 +280,15 @@ public class Game implements State, InputListener {
      * TODO larger shadow box should cover the entire map
      */
     private void loadShadowboxes() {
-        float seamRatio = 0.3f;
+
+        float aspectRatio = (float)windowWidth/(float)windowHeight;
         for(int i = 0;i<players.size();i++) {
-            for(int j = 0;j<shadowDistanceValues.size()-1;j++) {
-                //calculate positions
-                float front = shadowDistanceValues.get(j);
-                if (j>0) front-=(shadowDistanceValues.get(j)-shadowDistanceValues.get(j-1)) * seamRatio;
-                float back = shadowDistanceValues.get(j+1);
-                //add to depth renderer
-                shadowBoxes[i][j] = new ShadowBox((float)windowWidth/(float)windowHeight,players.get(i).getViewMatrix(),lightDir,front,back);
-                shadowBoxes[i][j].linkToDepthRenderer(shadowRenderers[i][j]);
-                shadowBoxes[i][j].linkToDepthRenderer(shadowAnimatedRenderers[i][j]);
+            shadowRenderer.loadShadowBoxes(i,players.get(i).getViewMatrix(),0,shadowDistanceValues.get(1),shadowDistanceValues.get(0),shadowDistanceValues.get(3),aspectRatio);
 
-                //Shadow matrices to renderer
-                for(RendererList rendererList : rendererLists) {
-                    if(rendererList.receivesShadows()) {
-                        shadowBoxes[i][j].linkToRenderer(rendererList.getRenderer(i),j);
-                        rendererList.getRenderer(i).addTexture(2+j,shadowTextures[i][j]);
-
-                    }
+            //Shadow matrices to renderer
+            for(RendererList rendererList : rendererLists) {
+                if(rendererList.receivesShadows()) {
+                    shadowRenderer.linkToRenderer(rendererList.getRenderer(i),i);
                 }
             }
         }
@@ -346,11 +320,10 @@ public class Game implements State, InputListener {
         //add to shadow casting renderers
         if(castsShadows) {
             if(object instanceof AnimatedObject) {
-                AnimatedObject animatedObject = (AnimatedObject) object;
-                createShadowCastingAnimatedObject(animatedObject);
+                shadowRenderer.createShadowCastingAnimatedObject((AnimatedObject) object);
             }
             else {
-                createShadowCastingObject(object);
+                shadowRenderer.createShadowCastingObject(object);
             }
         }
         objects.add(object);
@@ -361,30 +334,6 @@ public class Game implements State, InputListener {
      */
     public void removeObject(Object3D object) {
         objects.remove(object);
-    }
-
-
-    /**
-     * Add an object to a shadow renderer
-     */
-    private void createShadowCastingObject(Object3D object) {
-        for(Renderer[] rendererArray : shadowRenderers) {
-            for(Renderer renderer : rendererArray) {
-                object.createShaderObject(renderer);
-            }
-        }
-    }
-
-    /**
-     * Add an animated object to a shadow renderer
-     */
-    private void createShadowCastingAnimatedObject(AnimatedObject object) {
-        for(Renderer[] rendererArray : shadowAnimatedRenderers) {
-            for(Renderer renderer : rendererArray) {
-                ShaderObject so = object.createShaderObject(renderer);
-                object.linkTransformsToShaderObject(so);
-            }
-        }
     }
 
     /**
@@ -434,11 +383,7 @@ public class Game implements State, InputListener {
             player.interpolate(frameInterpolation);
         }
         //update shadow boxes
-        for(ShadowBox[] shadowBoxArray : shadowBoxes) {
-            for(ShadowBox shadowBox : shadowBoxArray) {
-                shadowBox.update();
-            }
-        }
+        shadowRenderer.update();
         masterRenderer.render();
     }
 

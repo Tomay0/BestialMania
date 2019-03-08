@@ -21,6 +21,6 @@ public abstract class MapData {
 
     public abstract void loadShaders(Game game);
     public abstract void loadObjects(Game game);
-
     public abstract CollisionLoader loadCollisions();
+    public BoundingBox getBoundingBox() {return boundingBox;}
 }

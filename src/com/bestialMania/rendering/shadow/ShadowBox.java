@@ -1,6 +1,7 @@
 package com.bestialMania.rendering.shadow;
 
 import com.bestialMania.Settings;
+import com.bestialMania.collision.BoundingBox;
 import com.bestialMania.rendering.Renderer;
 import com.bestialMania.rendering.shader.UniformMatrix4;
 import org.joml.Matrix4f;
@@ -8,7 +9,7 @@ import org.joml.Vector3f;
 import org.joml.Vector4f;
 
 public class ShadowBox {
-    private static final Matrix4f BIAS_MATRIX = getBias();
+    public static final Matrix4f BIAS_MATRIX = getBias();
 
     private static Matrix4f getBias() {
         Matrix4f matrix = new Matrix4f();
@@ -18,14 +19,12 @@ public class ShadowBox {
         return matrix;
     }
 
-    private static final float OFFSET = 64;
+    public static final float OFFSET = 64;
 
     private Matrix4f viewMatrix, inverseViewMatrix, lightViewMatrix, inverseLightViewMatrix, shadowBoxMatrix, biasShadowBoxMatrix, transformationMatrix;
     private Vector4f[] frustumCorners;
     private Vector4f[] frustumCornersLightSpace = new Vector4f[8];
     private Vector4f worldCentre, worldCentreLightSpace;
-    private Matrix4f[] testMatrices = new Matrix4f[9];
-
     /**
      * Create a new shadow box
      */
@@ -74,9 +73,7 @@ public class ShadowBox {
         };
         for(int i = 0;i<8;i++){
             frustumCornersLightSpace[i]=new Vector4f();
-            testMatrices[i] = new Matrix4f();
         }
-        testMatrices[8] = new Matrix4f();
         worldCentre = new Vector4f();
         worldCentreLightSpace = new Vector4f(0,0,0,1);
     }
@@ -120,8 +117,6 @@ public class ShadowBox {
         float bl = maxZ - minZ;
         for (int i = 1; i < 8; i++) {
             frustumCornersLightSpace[i].mul(inverseLightViewMatrix);
-            testMatrices[i].identity();
-            testMatrices[i].translate(frustumCornersLightSpace[i].x,frustumCornersLightSpace[i].y,frustumCornersLightSpace[i].z);
         }
 
         //translation in world space to centre
@@ -130,9 +125,6 @@ public class ShadowBox {
         worldCentreLightSpace.z = (maxZ + minZ) / 2.0f;
 
         worldCentreLightSpace.mul(inverseLightViewMatrix, worldCentre);
-
-        testMatrices[8].identity();
-        testMatrices[8].translate(worldCentre.x,worldCentre.y,worldCentre.z);
 
         //calculate matrices
         shadowBoxMatrix.identity();
@@ -158,9 +150,5 @@ public class ShadowBox {
     public void linkToRenderer(Renderer renderer, int id) {
         renderer.addUniform(new UniformMatrix4(renderer.getShader(),"shadowMatrix[" + id + "]",biasShadowBoxMatrix));
 
-    }
-
-    public Matrix4f testMatrix(int i) {
-        return testMatrices[i];
     }
 }
