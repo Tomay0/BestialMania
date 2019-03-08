@@ -27,7 +27,7 @@ const vec3 ambient = vec3(0.4);
 /**
     Get the shadow amount for a specific shadow map
 */
-float getShadow(int shadowMap) {
+float getShadow(int shadowMap,float spreadScale) {
     //low settings
     if(pcfCount==0) {
         float shadowDepth;
@@ -44,8 +44,9 @@ float getShadow(int shadowMap) {
 
     //antialiasing
     float shadow = 0;
-    for(float x = -pcfCount * pcfSpread; x <= pcfCount * pcfSpread;x+= pcfSpread) {
-        for(float y = -pcfCount * pcfSpread; y <= pcfCount * pcfSpread;y+= pcfSpread) {
+    float spread = pcfSpread*spreadScale;
+    for(float x = -pcfCount * spread; x <= pcfCount * spread;x+= spread) {
+        for(float y = -pcfCount * spread; y <= pcfCount * spread;y+= spread) {
             float shadowDepth;
             if(shadowMap==0) shadowDepth = texture(shadowSampler0,shadowSpace[shadowMap].xy + vec2(x,y) * pxSize).r;
             else if(shadowMap==1) shadowDepth = texture(shadowSampler1,shadowSpace[shadowMap].xy + vec2(x,y) * pxSize).r;
@@ -65,28 +66,28 @@ float getShadow(int shadowMap) {
 float getShadow() {
     //close shadow box
 	if(dist<shadowDist[0]) {
-	    return getShadow(0);
+	    return getShadow(0,1.5);
 	}
 	//close-mid transition
 	else if(dist<shadowDist[1]) {
         float t = (dist-shadowDist[0])/(shadowDist[1]-shadowDist[0]);
 
-        return (1-t) * getShadow(0) + t * getShadow(1);
+        return (1-t) * getShadow(0,1.5) + t * getShadow(1,0.7);
 	}
 	//mid shadow box
 	else if(dist<shadowDist[2]) {
-	    return getShadow(1);
+	    return getShadow(1,0.7);
 
 	}
 	//mid-far transition
 	else if(dist<shadowDist[3]) {
         float t = (dist-shadowDist[1])/(shadowDist[2]-shadowDist[1]);
 
-        return (1-t) * getShadow(1) + t * getShadow(2);
+        return (1-t) * getShadow(1,0.7) + t * getShadow(2,0.5);
 	}
 	//far shadow box
 	else {
-        return getShadow(2);
+        return getShadow(2,0.5);
 	}
 }
 

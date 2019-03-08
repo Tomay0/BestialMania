@@ -111,37 +111,36 @@ public class Game implements State, InputListener {
 
         //shadow mapping stuff determined by the quality you choose
         //TODO: experiment with these settings later on in development, adding further enhancements and optimizations
-        float r= 1;
+        float spreadMultiplier= 1;
         switch(Settings.SHADOW_RESOLUTION) {
             case LOW:
                 shadowResolution = 1024;
                 break;
             case MEDIUM:
                 shadowResolution = 2048;
-                r = 2;
                 break;
             default:
                 shadowResolution = 4096;
-                r = 4;
+                spreadMultiplier = 2;
                 break;
         }
 
         switch(Settings.SHADOW_SOFTENING) {
             case LOW://low=essentially off
                 shadowPCFCount = 1;
-                shadowPCFSpread = 0.8f*r;
+                shadowPCFSpread = 0.8f*spreadMultiplier;
                 break;
             case MEDIUM:
                 shadowPCFCount = 2;
-                shadowPCFSpread = 0.6f*r;
+                shadowPCFSpread = 0.8f*spreadMultiplier;
                 break;
             case HIGH:
                 shadowPCFCount = 4;
-                shadowPCFSpread = 0.3f*r;
+                shadowPCFSpread = 0.56f*spreadMultiplier;
                 break;
             case ULTRA:
                 shadowPCFCount = 6;
-                shadowPCFSpread = 0.23f*r;
+                shadowPCFSpread = 0.42f*spreadMultiplier;
                 break;
         }
 
