@@ -8,7 +8,8 @@ in vec3 frag_cameraVec;
 in vec3 shadowSpace[3];
 in float dist;
 
-out vec4 color;
+layout(location=0)out vec4 color;
+layout(location=1)out vec4 glowColor;
 
 uniform sampler2D textureSampler;
 uniform sampler2D shadowSampler0;
@@ -110,4 +111,5 @@ void main() {
 	vec3 specular = clamp(reflectivity * pow(cosAlpha,shineDamper),0,0.8) * lightColor;
 
     color = textureColor * vec4(diffuse,1.0) + vec4(specular,1.0);
+    glowColor = vec4(0,0,0,1);
 }

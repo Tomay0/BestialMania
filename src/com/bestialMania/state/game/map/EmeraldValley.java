@@ -15,8 +15,19 @@ import org.joml.Vector3f;
 import java.util.Arrays;
 
 public class EmeraldValley extends MapData{
+    private Matrix4f cubeMatrix, poleMatrix,stairMatrix;
+
+
     public EmeraldValley() {
         boundingBox = new BoundingBox(-32,-10,-32,32,20,32);
+        poleMatrix = new Matrix4f();
+        poleMatrix.translate(2.0f,0,0.5f);
+        poleMatrix.scale(3.0f,3.0f,3.0f);
+        stairMatrix = new Matrix4f();
+        stairMatrix.translate(-10,0,0);
+        stairMatrix.scale(5,2,5);
+        cubeMatrix = new Matrix4f();
+        cubeMatrix.translate(-5,3,8);
     }
 
 
@@ -69,16 +80,17 @@ public class EmeraldValley extends MapData{
         generalShader.bindTextureUnits(Arrays.asList("textureSampler"));
         game.loadShader(generalShader,true,true,false,false);
 
-        //normalmap shader
-        if(game.usesNormalMapping()) {
-            Shader normalmapShader = new Shader("res/shaders/3d/normalmap_v.glsl","res/shaders/3d/normalmap_f.glsl");
-            normalmapShader.bindTextureUnits(Arrays.asList("textureSampler","normalSampler","shadowSampler0","shadowSampler1","shadowSampler2"));
-            game.loadShader(normalmapShader,true,true,true,false);
+        Shader normalmapShader = new Shader("res/shaders/3d/normalmap_v.glsl","res/shaders/3d/normalmap_f.glsl");
+        normalmapShader.bindTextureUnits(Arrays.asList("textureSampler","normalSampler","shadowSampler0","shadowSampler1","shadowSampler2"));
+        game.loadShader(normalmapShader,true,true,true,false);
 
-            Shader generalShader2 = new Shader("res/shaders/3d/general_shadow_v.glsl","res/shaders/3d/general_shadow_f.glsl");
-            generalShader2.bindTextureUnits(Arrays.asList("textureSampler","textureSampler2","shadowSampler0","shadowSampler1","shadowSampler2"));
-            game.loadShader(generalShader2,true,true,true,false);
-        }
+        Shader generalShader2 = new Shader("res/shaders/3d/general_shadow_v.glsl","res/shaders/3d/general_shadow_f.glsl");
+        generalShader2.bindTextureUnits(Arrays.asList("textureSampler","textureSampler2","shadowSampler0","shadowSampler1","shadowSampler2"));
+        game.loadShader(generalShader2,true,true,true,false);
+
+        Shader bloomShader = new Shader("res/shaders/3d/shadeless_v.glsl","res/shaders/3d/bloom_f.glsl");
+        bloomShader.bindTextureUnits(Arrays.asList("textureSampler"));
+        game.loadShader(bloomShader,false,true,false,false);
 
     }
 
@@ -90,15 +102,12 @@ public class EmeraldValley extends MapData{
         //SOME POLE OBJECT
         Model poleModel = ModelLoader.loadModel(game.getMemoryManager(),"res/models/pole.bmm");
         Texture poleTexture = Texture.loadImageTexture3D(game.getMemoryManager(),"res/textures/concrete.bmt");
-        Matrix4f testObjectMatrix = new Matrix4f();
-        testObjectMatrix.translate(2.0f,0,0.5f);
-        testObjectMatrix.scale(3.0f,3.0f,3.0f);
         if(game.usesNormalMapping()) {
             Texture poleNormalmap = Texture.loadImageTexture3D(game.getMemoryManager(), "res/textures/concrete_normal.bmt");
-            Object3D object = new StaticObject(game, poleModel,testObjectMatrix,poleTexture, poleNormalmap,0.5f,10.0f);
+            Object3D object = new StaticObject(game, poleModel,poleMatrix,poleTexture, poleNormalmap,0.5f,10.0f);
             game.createObject(object,3,true);
         }else{
-            Object3D object = new StaticObject(game, poleModel,testObjectMatrix,poleTexture,0.5f,10.0f);
+            Object3D object = new StaticObject(game, poleModel,poleMatrix,poleTexture,0.5f,10.0f);
             game.createObject(object,2,true);
         }
 
@@ -131,20 +140,8 @@ public class EmeraldValley extends MapData{
         Object3D ceilObject = new StaticObject(game,ceilModel,new Matrix4f(),wallTexture,0.5f,10.0f);
         game.createObject(ceilObject,2,true);
 
-        /*Model wallModel2 = Loader.loadOBJ(game.getMemoryManager(), "res/models/wall2.obj");
-        Object3D wallObject2 = new StaticObject(game,wallModel2,new Matrix4f(),wallTexture,0.5f,10.0f);
-        game.createObject(wallObject2,2,true);
-        Matrix4f wallMatrix = new Matrix4f();
-        wallMatrix.translate(-10,1.2f,-20);
-        Model wallModel3 = Loader.loadOBJ(game.getMemoryManager(), "res/models/wall3.obj");
-        Object3D wallObject3 = new StaticObject(game,wallModel3,wallMatrix,wallTexture,0.5f,10.0f);
-        game.createObject(wallObject3,2,true);*/
-
         //STAIRS
         Model stairsModel = ModelLoader.loadModel(game.getMemoryManager(),"res/models/stairs.bmm");
-        Matrix4f stairMatrix = new Matrix4f();
-        stairMatrix.translate(-10,0,0);
-        stairMatrix.scale(5,2,5);
         if(game.usesNormalMapping()) {
             Texture stairsNormalmap = Texture.loadImageTexture3D(game.getMemoryManager(), "res/textures/concrete_normal.bmt");
             Object3D object = new StaticObject(game, stairsModel,stairMatrix,poleTexture, stairsNormalmap,0.1f,4.0f);
@@ -154,6 +151,11 @@ public class EmeraldValley extends MapData{
             Object3D object = new StaticObject(game, stairsModel,stairMatrix,poleTexture,0.1f,4.0f);
             game.createObject(object,2,true);
         }
+        //cube
+        Texture pinkTex = Texture.loadImageTexture3D(game.getMemoryManager(),"res/textures/pink.bmt");
+        Model cubeModel = ModelLoader.loadModel(game.getMemoryManager(),"res/models/cube.bmm");
+        Object3D cube = new StaticObject(game,cubeModel,cubeMatrix,pinkTex,1.0f);
+        game.createObject(cube,5,false);
     }
 
     /**
@@ -167,20 +169,10 @@ public class EmeraldValley extends MapData{
         collisionLoader.loadFloors("toConvert/collisions/plane2.obj", new Matrix4f());
         collisionLoader.loadWalls("toConvert/collisions/wall.obj", new Matrix4f());
         collisionLoader.loadCeilings("toConvert/collisions/ceil.obj", new Matrix4f());
-        //collisionHandler.addWalls(TriangleLoader.loadTrianglesOBJ("toConvert/collisions/wall2.obj"));
-        Matrix4f testObjectMatrix = new Matrix4f();
-        testObjectMatrix.translate(2.0f,0,0.5f);
-        testObjectMatrix.scale(3.0f,3.0f,3.0f);
-        collisionLoader.loadWalls("toConvert/collisions/poleWall.obj",testObjectMatrix);
-
-        Matrix4f stairMatrix = new Matrix4f();
-        stairMatrix.translate(-10,0,0);
-        stairMatrix.scale(5,2,5);
+        collisionLoader.loadWalls("toConvert/collisions/poleWall.obj",poleMatrix);
         collisionLoader.loadFloors("toConvert/collisions/stairFloor.obj",stairMatrix);
         collisionLoader.loadWalls("toConvert/collisions/stairWalls.obj",stairMatrix);
-        //Matrix4f wallMatrix = new Matrix4f();
-        //wallMatrix.translate(-10,1.2f,-20);
-        //collisionHandler.addWalls(TriangleLoader.loadTrianglesOBJ("toConvert/collisions/wall3.obj",wallMatrix));
+        collisionLoader.autoLoadTriangleCollisionsOBJ("toConvert/collisions/cube.obj",cubeMatrix,0.1f);
         return collisionLoader;
     }
 

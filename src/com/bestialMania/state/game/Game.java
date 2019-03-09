@@ -12,9 +12,11 @@ import com.bestialMania.object.beast.Player;
 import com.bestialMania.rendering.*;
 import com.bestialMania.rendering.blur.BlurRenderer;
 import com.bestialMania.rendering.model.Model;
+import com.bestialMania.rendering.model.Rect2D;
 import com.bestialMania.rendering.model.Skybox;
 import com.bestialMania.rendering.model.loader.ModelLoader;
 import com.bestialMania.rendering.shader.Shader;
+import com.bestialMania.rendering.shader.UniformMatrix4;
 import com.bestialMania.rendering.shadow.ShadowRenderer;
 import com.bestialMania.rendering.texture.Texture;
 import com.bestialMania.sound.Sound;
@@ -30,6 +32,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE;
+import static org.lwjgl.opengl.GL30.*;
 
 /**
  * Test class reflecting the actual game.
@@ -221,7 +224,7 @@ public class Game implements State, InputListener {
         vBlurShader.setUniformFloat(vBlurShader.getUniformLocation("pxHeight"),1.0f/(float)windowHeight);
 
         colorShader = new Shader("res/shaders/gui_v.glsl","res/shaders/color_f.glsl");
-        colorShader.bindTextureUnits(Arrays.asList("textureSampler"));
+        colorShader.bindTextureUnits(Arrays.asList("textureSampler","bloomSampler"));
         colorShader.setUniformFloat(colorShader.getUniformLocation("contrast"),contrast);
         colorShader.setUniformFloat(colorShader.getUniformLocation("saturation"),saturation);
         colorShader.setUniformFloat(colorShader.getUniformLocation("brightness"),brightness);
@@ -287,21 +290,36 @@ public class Game implements State, InputListener {
             Framebuffer fbo = createPlayerWindow();
             masterRenderer.addFramebuffer(fbo);
 
-            //blur renderer
-            BlurRenderer blurRenderer = new BlurRenderer(masterRenderer,memoryManager,fbo.getTexture(0),hBlurShader,vBlurShader,colorShader,windowWidth,windowHeight);
+            //MOTION BLUR
+            BlurRenderer motionBlur = new BlurRenderer(masterRenderer,memoryManager,fbo.getTexture(0),hBlurShader,vBlurShader,windowWidth,windowHeight);
+
+            //BLOOM EFFECT
+            BlurRenderer bloom = new BlurRenderer(masterRenderer,memoryManager,fbo.getTexture(1),hBlurShader,vBlurShader,windowWidth/4,windowHeight/4);
+            bloom.setBlur(1f,1f);
+
+            //Combined FBO
+            Model rect = new Rect2D(memoryManager,-1,-1,1,1);
+            Framebuffer finalFbo = Framebuffer.createFramebuffer2D(memoryManager,windowWidth,windowHeight);
+            masterRenderer.addFramebuffer(finalFbo);
+            Renderer renderer = finalFbo.createRenderer(colorShader);
+            ShaderObject shaderObject = renderer.createObject(rect);
+            shaderObject.addTexture(0,motionBlur.getTexture());
+            shaderObject.addTexture(1,bloom.getTexture());
+            shaderObject.addUniform(new UniformMatrix4(colorShader,"modelMatrix", new Matrix4f()));
+
 
             //rectangle on screen as the splitscreen window
             Object2D sceneObject = new Object2D(memoryManager,
                     controllers.size()>2 && i%2==1 ? Settings.WIDTH/2 : 0,
                     (controllers.size()==2 && i==1) || i>1 ? Settings.HEIGHT/2 : 0,
-                    blurRenderer.getTexture());
+                    finalFbo.getTexture(0));
             sceneObject.addToRenderer(renderer2D);
 
 
 
             //the player object
             Beast beast = new Beast(this, i==0 ? jimmy : jimmy,jimmyTexture);
-            Player player = new Player(inputHandler,i+1,controllers.get(i),beast,blurRenderer);
+            Player player = new Player(inputHandler,i+1,controllers.get(i),beast,motionBlur);
 
             //create all renderers from the shaders
             for(RendererList rendererList : rendererLists) {
@@ -327,10 +345,10 @@ public class Game implements State, InputListener {
     private Framebuffer createPlayerWindow() {
         Framebuffer fbo;
         if(Settings.ANTIALIASING>0) {
-            fbo = Framebuffer.createMultisampledFramebuffer3Dto2D(memoryManager,windowWidth, windowHeight);
+            fbo = Framebuffer.createMultisampledFramebuffer(memoryManager,windowWidth, windowHeight,true,2,GL_RGBA,GL_RGBA,GL_UNSIGNED_INT,GL_LINEAR,GL_CLAMP_TO_EDGE,false);
 
         }else{
-            fbo = Framebuffer.createFramebuffer3Dto2D(memoryManager,windowWidth,windowHeight);
+            fbo = Framebuffer.createFramebuffer(memoryManager,windowWidth,windowHeight,true,2,GL_RGBA,GL_RGBA,GL_UNSIGNED_INT,GL_LINEAR,GL_CLAMP_TO_EDGE,false);
         }
         return fbo;
     }

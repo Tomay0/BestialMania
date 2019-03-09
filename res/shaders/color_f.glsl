@@ -5,7 +5,7 @@ in vec2 frag_uv;
 out vec4 color;
 
 uniform sampler2D textureSampler;
-//uniform sampler2D glowSampler;
+uniform sampler2D bloomSampler;
 
 uniform float contrast;
 uniform float brightness;
@@ -15,11 +15,10 @@ uniform float saturation;
 const vec3 luminanceWeights = vec3(0.299, 0.587, 0.114);
 
 void main() {
-	//vec4 sceneColor = texture(textureSampler,frag_uv);
-	//vec4 blurColor = texture(glowSampler, frag_uv);
+	vec4 sceneColor = texture(textureSampler,frag_uv);
+	vec4 blurColor = texture(bloomSampler, frag_uv);
 
-	//vec4 texColor = sceneColor + blurColor * glow;
-	vec4 texColor = texture(textureSampler,frag_uv);
+	vec4 texColor = sceneColor + blurColor;
 
 	float luminance = dot(texColor.rgb, luminanceWeights);
 	texColor = mix(vec4(luminance), texColor, saturation);

@@ -18,7 +18,7 @@ public class BlurRenderer {
     private UniformFloat hblurAmount;
     private UniformFloat vblurAmount;
 
-    public BlurRenderer(MasterRenderer masterRenderer, MemoryManager mm, Texture inTexture, Shader hBlurShader, Shader vBlurShader, Shader outShader, int width, int height) {
+    public BlurRenderer(MasterRenderer masterRenderer, MemoryManager mm, Texture inTexture, Shader hBlurShader, Shader vBlurShader, int width, int height) {
         //the model
         Model model = new Rect2D(mm,-1,-1,1,1);
 
@@ -42,15 +42,7 @@ public class BlurRenderer {
         vblurAmount = new UniformFloat(vBlurShader,"blur",0);
         vblurObject.addUniform(vblurAmount);
 
-        //out
-        Framebuffer outFbo = Framebuffer.createFramebuffer2D(mm,width,height);
-        masterRenderer.addFramebuffer(outFbo);
-        Renderer outRenderer = outFbo.createRenderer(outShader);
-        ShaderObject outObject = outRenderer.createObject(model);
-        outObject.addTexture(0,hblurFbo.getTexture(0));
-        outObject.addUniform(new UniformMatrix4(outShader,"modelMatrix",new Matrix4f()));
-
-        finalTexture = outFbo.getTexture(0);
+        finalTexture = vblurFbo.getTexture(0);
     }
     public Texture getTexture() {
         return finalTexture;

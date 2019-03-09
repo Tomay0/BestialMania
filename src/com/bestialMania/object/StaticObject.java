@@ -11,6 +11,20 @@ import org.joml.Matrix4f;
 public class StaticObject extends Object3D{
     protected Texture texture, normalTexture;
     protected float reflectivity, shineDamper;
+    protected boolean lighting = true, glowing = false;
+    protected float glow;
+    /**
+     * Simple glowing object with a texture
+     */
+    public StaticObject(Game game, Model model, Matrix4f modelMatrix, Texture texture, float glow) {
+        super(game,model,modelMatrix);
+        this.texture = texture;
+        this.normalTexture = null;
+        lighting = false;
+        glowing = true;
+        this.glow = glow;
+
+    }
     /**
      * Simple object with a reflectivity amount, shine damper and 1 texture
      */
@@ -20,7 +34,6 @@ public class StaticObject extends Object3D{
         this.normalTexture = null;
         this.reflectivity = reflectivity;
         this.shineDamper = shineDamper;
-        //t = 0;
     }
 
     /**
@@ -32,17 +45,10 @@ public class StaticObject extends Object3D{
         this.normalTexture = normalTexture;
         this.reflectivity = reflectivity;
         this.shineDamper = shineDamper;
-        //t = 0;
     }
 
     @Override
     public void update() {
-        /*t++;
-        System.out.println("YEET " + t);
-        if(t>200) {
-            removeObject();
-        }
-        */
     }
 
     @Override
@@ -53,8 +59,11 @@ public class StaticObject extends Object3D{
         ShaderObject shaderObject = createShaderObject(renderer);
         shaderObject.addTexture(0,texture);
         if(normalTexture!=null) shaderObject.addTexture(1,normalTexture);
-        shaderObject.addUniform(new UniformFloat(renderer.getShader(),"reflectivity",reflectivity));
-        shaderObject.addUniform(new UniformFloat(renderer.getShader(),"shineDamper",shineDamper));
+        if(lighting) {
+            shaderObject.addUniform(new UniformFloat(renderer.getShader(),"reflectivity",reflectivity));
+            shaderObject.addUniform(new UniformFloat(renderer.getShader(),"shineDamper",shineDamper));
+        }
+        if(glowing) shaderObject.addUniform(new UniformFloat(renderer.getShader(),"glow",glow));
         return shaderObject;
     }
 }

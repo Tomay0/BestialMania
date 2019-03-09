@@ -304,7 +304,7 @@ public class CollisionLoader {
                     float x = scan.nextFloat();
                     float y = scan.nextFloat();
                     float z = scan.nextFloat();
-                    Vector4f v = new Vector4f(x,y,z,1);
+                    Vector4f v = new Vector4f(x,y,z,0);
                     v.mul(matrix);
                     normals.add(new Vector3f(v.x,v.y,v.z));
                 }

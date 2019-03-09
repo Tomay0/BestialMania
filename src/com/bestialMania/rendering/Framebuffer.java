@@ -122,9 +122,11 @@ public class Framebuffer {
      * Enable draw buffers
      */
     private void genDrawBuffers(int nTextures) {
+        int[] buffers = new int[nTextures];
         for(int i = 0;i<nTextures;i++) {
-            glDrawBuffer(GL_COLOR_ATTACHMENT0+i);
+            buffers[i] = GL_COLOR_ATTACHMENT0+i;
         }
+        glDrawBuffers(buffers);
     }
 
     /**
