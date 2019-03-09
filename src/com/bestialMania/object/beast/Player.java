@@ -5,9 +5,9 @@ import com.bestialMania.Settings;
 import com.bestialMania.InputHandler;
 import com.bestialMania.rendering.Renderer;
 import com.bestialMania.rendering.ShaderObject;
+import com.bestialMania.rendering.blur.BlurRenderer;
 import com.bestialMania.rendering.shader.UniformFloat;
 import com.bestialMania.rendering.shader.UniformMatrix4;
-import com.bestialMania.state.game.RendererList;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
@@ -37,6 +37,7 @@ public class Player implements InputListener {
     private Matrix4f viewMatrix, viewDirMatrix;
 
     private UniformFloat alpha;
+    private BlurRenderer blurRenderer;
 
     /*
      * RENDERING STUFF
@@ -49,11 +50,12 @@ public class Player implements InputListener {
      * Handles the controlling of the beast with a controller or keyboard/mouse.
      * Also handles the camera.
      */
-    public Player(InputHandler inputHandler, int playerNum, int controller, Beast beast) {
+    public Player(InputHandler inputHandler, int playerNum, int controller, Beast beast, BlurRenderer blurRenderer) {
         this.inputHandler = inputHandler;
         this.playerNum = playerNum;
         this.controller = controller;
         this.beast = beast;
+        this.blurRenderer = blurRenderer;
         cameraYaw = 0;
         cameraPitch = 0.3f;
         cameraDist = 3;
@@ -137,6 +139,10 @@ public class Player implements InputListener {
             cameraMoveVec.y = rightAnalog.y * Settings.VERTICAL_CONTROLLER_CAMERA_SENSITIVITY;
             if(Math.abs(cameraMoveVec.x)< Settings.HORIZONTAL_CONTROLLER_CAMERA_SENSITIVITY*0.4f) cameraMoveVec.x = 0;
             if(Math.abs(cameraMoveVec.y)< Settings.VERTICAL_CONTROLLER_CAMERA_SENSITIVITY*0.4f) cameraMoveVec.y = 0;
+        }
+        //motion blur
+        if(Settings.MOTION_BLUR>0) {
+            blurRenderer.setBlur(Math.abs(cameraMoveVec.x*Settings.MOTION_BLUR),Math.abs(cameraMoveVec.y*Settings.MOTION_BLUR));
         }
 
         /*
@@ -261,6 +267,7 @@ public class Player implements InputListener {
 
         viewDirMatrix.identity();
         viewDirMatrix.lookAt(ORIGIN,dirVector,upVector);
+
     }
 
     /**

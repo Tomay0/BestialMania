@@ -20,11 +20,12 @@ public class Settings {
     public static boolean FULLSCREEN = true;
     public static boolean VSYNC = false;
     public static float FOV = (float)Math.toRadians(60);
+    public static float MOTION_BLUR = 3.0f;//0 to turn off. TODO make this behave like actual motion blur this is shit tbh
 
     //GRAPHICS SETTINGS
     public static int ANISOTROPIC_FILTERING = 2;//either off,2x,4x,8x,16x
     public static int ANTIALIASING = 4;//either off,2x,4x,8x
     public static GraphicsSetting TEXTURE_DETAIL = GraphicsSetting.HIGH;//LOW = no texture effects. HIGH = normal mapping TODO add more texture detail stuff
-    public static GraphicsSetting SHADOW_RESOLUTION = GraphicsSetting.HIGH;//LOW/MEDIUM/HIGH.
+    public static GraphicsSetting SHADOW_RESOLUTION = GraphicsSetting.HIGH;//LOW/MEDIUM/HIGH/ULTRA.
     public static GraphicsSetting SHADOW_SOFTENING = GraphicsSetting.HIGH;//LOW/MEDIUM/HIGH/ULTRA. Affects performance the most
 }

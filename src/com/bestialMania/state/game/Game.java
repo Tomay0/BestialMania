@@ -10,6 +10,7 @@ import com.bestialMania.object.Object3D;
 import com.bestialMania.object.beast.Beast;
 import com.bestialMania.object.beast.Player;
 import com.bestialMania.rendering.*;
+import com.bestialMania.rendering.blur.BlurRenderer;
 import com.bestialMania.rendering.model.Model;
 import com.bestialMania.rendering.model.Skybox;
 import com.bestialMania.rendering.model.loader.ModelLoader;
@@ -47,7 +48,7 @@ public class Game implements State, InputListener {
 
 
     //Shaders
-    private Shader shader2D, depthShader, animatedDepthShader;
+    private Shader shader2D, depthShader, animatedDepthShader, hBlurShader, vBlurShader, colorShader;
 
     //Sound Sources
     private SoundSource musicSource;
@@ -69,7 +70,6 @@ public class Game implements State, InputListener {
 
     //players in the game
     private List<Player> players = new ArrayList<>();
-    private List<Framebuffer> playerFbos = new ArrayList<>();//player framebuffers
 
     //shadow boxes
     private List<Float> shadowDistanceValues;
@@ -81,6 +81,7 @@ public class Game implements State, InputListener {
     //some variables
     private boolean normalMapping;
     private Vector3f lightDir, lightColor, ambient;
+    private float contrast,saturation,brightness;
     private Matrix4f projection;
     private int windowWidth,windowHeight;
     private int shadowResolution, shadowPCFCount;
@@ -106,13 +107,17 @@ public class Game implements State, InputListener {
         lightDir = map.getLightDirection();
         lightColor = map.getLightColor();
         ambient = map.getAmbientLight();
+
+        contrast = map.getContrast();
+        brightness = map.getBrightness();
+        saturation = map.getSaturation();
+
         projection = new Matrix4f();
         projection.perspective(Settings.FOV,(float)windowWidth/(float)windowHeight,MIN_DIST,FAR_DIST);
 
         normalMapping = Settings.TEXTURE_DETAIL!= Settings.GraphicsSetting.LOW;
 
         //shadow mapping stuff determined by the quality you choose
-        //TODO: experiment with these settings later on in development, adding further enhancements and optimizations
         switch(Settings.SHADOW_RESOLUTION) {
             case LOW:
                 shadowResolution = 1024;
@@ -120,8 +125,11 @@ public class Game implements State, InputListener {
             case MEDIUM:
                 shadowResolution = 2048;
                 break;
-            default:
+            case HIGH:
                 shadowResolution = 4096;
+                break;
+            case ULTRA:
+                shadowResolution = 8192;
                 break;
         }
         float spreadDist = 1;
@@ -203,6 +211,22 @@ public class Game implements State, InputListener {
         depthShader = new Shader("res/shaders/depth_v.glsl","res/shaders/depth_f.glsl");
         animatedDepthShader = new Shader("res/shaders/animated_depth_v.glsl","res/shaders/depth_f.glsl");
 
+        //blur shaders
+        hBlurShader = new Shader("res/shaders/blurh_v.glsl","res/shaders/blur_f.glsl");
+        hBlurShader.bindTextureUnits(Arrays.asList("textureSampler"));
+        hBlurShader.setUniformFloat(hBlurShader.getUniformLocation("pxWidth"),1.0f/(float)windowWidth);
+
+        vBlurShader = new Shader("res/shaders/blurv_v.glsl","res/shaders/blur_f.glsl");
+        vBlurShader.bindTextureUnits(Arrays.asList("textureSampler"));
+        vBlurShader.setUniformFloat(vBlurShader.getUniformLocation("pxHeight"),1.0f/(float)windowHeight);
+
+        colorShader = new Shader("res/shaders/gui_v.glsl","res/shaders/color_f.glsl");
+        colorShader.bindTextureUnits(Arrays.asList("textureSampler"));
+        colorShader.setUniformFloat(colorShader.getUniformLocation("contrast"),contrast);
+        colorShader.setUniformFloat(colorShader.getUniformLocation("saturation"),saturation);
+        colorShader.setUniformFloat(colorShader.getUniformLocation("brightness"),brightness);
+
+
         //skybox shader
         Shader skyboxShader = new Shader("res/shaders/3d/skybox_v.glsl","res/shaders/3d/skybox_f.glsl");
         skyboxShader.bindTextureUnits(Arrays.asList("samplerCube"));
@@ -263,23 +287,27 @@ public class Game implements State, InputListener {
             Framebuffer fbo = createPlayerWindow();
             masterRenderer.addFramebuffer(fbo);
 
+            //blur renderer
+            BlurRenderer blurRenderer = new BlurRenderer(masterRenderer,memoryManager,fbo.getTexture(0),hBlurShader,vBlurShader,colorShader,windowWidth,windowHeight);
+
             //rectangle on screen as the splitscreen window
             Object2D sceneObject = new Object2D(memoryManager,
                     controllers.size()>2 && i%2==1 ? Settings.WIDTH/2 : 0,
                     (controllers.size()==2 && i==1) || i>1 ? Settings.HEIGHT/2 : 0,
-                    fbo.getTexture(0));
+                    blurRenderer.getTexture());
             sceneObject.addToRenderer(renderer2D);
+
+
 
             //the player object
             Beast beast = new Beast(this, i==0 ? jimmy : jimmy,jimmyTexture);
-            Player player = new Player(inputHandler,i+1,controllers.get(i),beast);
+            Player player = new Player(inputHandler,i+1,controllers.get(i),beast,blurRenderer);
 
             //create all renderers from the shaders
             for(RendererList rendererList : rendererLists) {
                 rendererList.createRenderer(fbo,player);
             }
             this.players.add(player);
-            this.playerFbos.add(fbo);
         }
 
         //link all beast's to the renderers of the other players
@@ -310,7 +338,6 @@ public class Game implements State, InputListener {
 
     /**
      * Load the shadow boxes
-     * TODO larger shadow box should cover the entire map
      */
     private void loadShadowboxes() {
 

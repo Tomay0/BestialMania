@@ -313,6 +313,19 @@ public class Framebuffer {
     }
 
     /**
+     * Create a normal framebuffer with:
+     * - depth disabled
+     * - 1 texture
+     * - RGBA/UINT format
+     * - LINEAR filter
+     * - Clamp to edge
+     * - No mipmap
+     */
+    public static Framebuffer createFramebuffer2D(MemoryManager mm, int width, int height) {
+        return createFramebuffer(mm,width,height,false,1,GL_RGBA,GL_RGBA,GL_UNSIGNED_INT,GL_LINEAR,GL_CLAMP_TO_EDGE,false);
+    }
+
+    /**
      * Create a multisampled framebuffer with:
      * - depth enabled
      * - 1 texture

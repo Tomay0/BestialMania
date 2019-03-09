@@ -34,6 +34,14 @@ public class EmeraldValley extends MapData{
     public Vector3f getAmbientLight() {return new Vector3f(0.5f,0.5f,0.5f);}
 
     @Override
+    public float getBrightness() {return 1.2f;}
+    @Override
+    public float getContrast() {return 0.2f;}
+    @Override
+    public float getSaturation() {return 1.2f;}
+
+
+    @Override
     public String getSkyboxTexture() {
         return "res/textures/skyboxes/desertsky/desertsky";
     }
