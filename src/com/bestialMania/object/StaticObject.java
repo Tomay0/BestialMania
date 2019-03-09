@@ -49,11 +49,12 @@ public class StaticObject extends Object3D{
     public void interpolate(float interpolationAmount) {}
 
     @Override
-    public void linkToRenderer(Renderer renderer) {
+    public ShaderObject linkToRenderer(Renderer renderer) {
         ShaderObject shaderObject = createShaderObject(renderer);
         shaderObject.addTexture(0,texture);
         if(normalTexture!=null) shaderObject.addTexture(1,normalTexture);
         shaderObject.addUniform(new UniformFloat(renderer.getShader(),"reflectivity",reflectivity));
         shaderObject.addUniform(new UniformFloat(renderer.getShader(),"shineDamper",shineDamper));
+        return shaderObject;
     }
 }

@@ -69,6 +69,7 @@ public class Game implements State, InputListener {
 
     //players in the game
     private List<Player> players = new ArrayList<>();
+    private List<Framebuffer> playerFbos = new ArrayList<>();//player framebuffers
 
     //shadow boxes
     private List<Float> shadowDistanceValues;
@@ -79,7 +80,7 @@ public class Game implements State, InputListener {
 
     //some variables
     private boolean normalMapping;
-    private Vector3f lightDir, lightColor;
+    private Vector3f lightDir, lightColor, ambient;
     private Matrix4f projection;
     private int windowWidth,windowHeight;
     private int shadowResolution, shadowPCFCount;
@@ -104,6 +105,7 @@ public class Game implements State, InputListener {
 
         lightDir = map.getLightDirection();
         lightColor = map.getLightColor();
+        ambient = map.getAmbientLight();
         projection = new Matrix4f();
         projection.perspective(Settings.FOV,(float)windowWidth/(float)windowHeight,MIN_DIST,FAR_DIST);
 
@@ -111,7 +113,6 @@ public class Game implements State, InputListener {
 
         //shadow mapping stuff determined by the quality you choose
         //TODO: experiment with these settings later on in development, adding further enhancements and optimizations
-        float spreadMultiplier= 1;
         switch(Settings.SHADOW_RESOLUTION) {
             case LOW:
                 shadowResolution = 1024;
@@ -121,33 +122,33 @@ public class Game implements State, InputListener {
                 break;
             default:
                 shadowResolution = 4096;
-                spreadMultiplier = 2;
                 break;
         }
-
+        float spreadDist = 1;
         switch(Settings.SHADOW_SOFTENING) {
-            case LOW://low=essentially off
+            case LOW:
                 shadowPCFCount = 1;
-                shadowPCFSpread = 0.8f*spreadMultiplier;
+                spreadDist = 0.7f;
                 break;
             case MEDIUM:
                 shadowPCFCount = 2;
-                shadowPCFSpread = 0.8f*spreadMultiplier;
+                spreadDist = 0.9f;
                 break;
             case HIGH:
                 shadowPCFCount = 4;
-                shadowPCFSpread = 0.56f*spreadMultiplier;
+                spreadDist = 1.2f;
                 break;
             case ULTRA:
                 shadowPCFCount = 6;
-                shadowPCFSpread = 0.42f*spreadMultiplier;
+                spreadDist = 1.5f;
                 break;
         }
+        shadowPCFSpread = spreadDist/shadowPCFCount;
 
         //initialize shadow box stuff
-        float mid = 8;
-        float far = 30;
-        shadowDistanceValues = Arrays.asList(mid*0.7f, mid, mid+0.7f*(far-mid), far);//Currently works for triple shadow boxes, but potentially try 2 or 4 for different settings
+        float mid = 8.5f;
+        float far = 24;
+        shadowDistanceValues = Arrays.asList(mid*0.9f, mid, mid+0.8f*(far-mid), far);//Currently works for triple shadow boxes, but potentially try 2 or 4 for different settings
 
 
         //load floor
@@ -157,6 +158,10 @@ public class Game implements State, InputListener {
         loadShaders();
         //load all map related shaders
         map.loadShaders(this);
+        //your own beast's shader - do after everything else
+        Shader animatedShader2 = new Shader("res/shaders/3d/animated_v.glsl","res/shaders/3d/beast_f.glsl");
+        animatedShader2.bindTextureUnits(Arrays.asList("textureSampler","textureSampler2","shadowSampler0","shadowSampler1","shadowSampler2"));
+        loadShader(animatedShader2,true,true,true,false);
 
         //load the shadow renderer
         shadowRenderer = new ShadowRenderer(memoryManager,masterRenderer,depthShader,animatedDepthShader,lightDir,map.getBoundingBox(),controllers.size(),shadowResolution);
@@ -172,6 +177,13 @@ public class Game implements State, InputListener {
 
         //load objects from the map
         map.loadObjects(this);
+
+        //link your own beast's to its own renderer
+        for(int i = 0;i<players.size();i++) {
+            Player player = players.get(i);
+            Renderer renderer = rendererLists.get(rendererLists.size()-1).getRenderer(i);
+            player.linkToPlayerRenderer(renderer);
+        }
 
         //music
         Sound sound = new Sound(memoryManager,map.getMusic());
@@ -197,9 +209,9 @@ public class Game implements State, InputListener {
         loadShader(skyboxShader,false,true,false,true);
 
         //animated shader
-        Shader animatedShader = new Shader("res/shaders/3d/animated_v.glsl","res/shaders/3d/test_f.glsl");
-        animatedShader.bindTextureUnits(Arrays.asList("textureSampler"));
-        loadShader(animatedShader,true,true,false,false);
+        Shader animatedShader = new Shader("res/shaders/3d/animated_v.glsl","res/shaders/3d/general_shadow_f.glsl");
+        animatedShader.bindTextureUnits(Arrays.asList("textureSampler","textureSampler2","shadowSampler0","shadowSampler1","shadowSampler2"));
+        loadShader(animatedShader,true,true,true,false);
     }
 
     /**
@@ -209,12 +221,13 @@ public class Game implements State, InputListener {
         if(lighting) {
             shader.setUniformVector3f(shader.getUniformLocation("lightDirection"),lightDir);
             shader.setUniformVector3f(shader.getUniformLocation("lightColor"),lightColor);
+            shader.setUniformVector3f(shader.getUniformLocation("ambient"),ambient);
         }
         if(projection) {
             shader.setUniformMatrix4(shader.getUniformLocation("projectionMatrix"),this.projection);
         }
         if(shadow) {
-            shader.setUniformFloat(shader.getUniformLocation("pxSize"),1.0f/(float)shadowResolution);
+            //shader.setUniformFloat(shader.getUniformLocation("pxSize"),1.0f/(float)shadowResolution);
             shader.setUniformInt(shader.getUniformLocation("pcfCount"),shadowPCFCount);
             shader.setUniformFloat(shader.getUniformLocation("pcfIncrAmount"), 1.0f/(4*shadowPCFCount*shadowPCFCount + 4*shadowPCFCount + 1));
             shader.setUniformFloat(shader.getUniformLocation("pcfSpread"),shadowPCFSpread);
@@ -266,11 +279,17 @@ public class Game implements State, InputListener {
                 rendererList.createRenderer(fbo,player);
             }
             this.players.add(player);
+            this.playerFbos.add(fbo);
         }
 
-        //link all beast's to renderers
-        for(Player player : this.players) {
-            createObject(player.getBeast(),1,true);
+        //link all beast's to the renderers of the other players
+        for(int j = 0;j<controllers.size();j++) {
+            Beast b = players.get(j).getBeast();
+            for(int i = 0;i<controllers.size();i++) {
+                if(i!=j)b.linkToRenderer(rendererLists.get(1).getRenderer(i));
+            }
+            shadowRenderer.createShadowCastingAnimatedObject(b, ShadowRenderer.ShadowDistance.MIDDLE);
+            objects.add(b);
         }
     }
 

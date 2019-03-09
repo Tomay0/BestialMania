@@ -58,4 +58,6 @@ public class RendererList implements Iterable<Renderer>{
     public Renderer getRenderer(int id) {
         return renderers.get(id);
     }
+
+    public int size() {return renderers.size();}
 }

@@ -10,10 +10,9 @@ out vec4 color;
 uniform sampler2D textureSampler;
 
 uniform vec3 lightColor;
+uniform vec3 ambient;
 uniform float reflectivity;
 uniform float shineDamper;
-
-const vec3 ambient = vec3(0.4);
 
 void main() {
     vec4 textureColor = texture(textureSampler,frag_uv);

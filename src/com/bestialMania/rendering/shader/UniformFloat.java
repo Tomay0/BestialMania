@@ -1,6 +1,5 @@
 package com.bestialMania.rendering.shader;
 
-import static org.lwjgl.opengl.GL30.*;
 
 public class UniformFloat extends Uniform{
     private float value;

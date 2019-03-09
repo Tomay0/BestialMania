@@ -15,7 +15,7 @@ public abstract class Object3D {
     protected Model model;
     protected Game game;
 
-    private Map<ShaderObject, Renderer> shaderObjects = new HashMap<>();
+    private Map<Renderer, ShaderObject> shaderObjects = new HashMap<>();
 
     public Object3D(Game game, Model model, Matrix4f modelMatrix) {
         this.model = model;
@@ -31,7 +31,7 @@ public abstract class Object3D {
     public ShaderObject createShaderObject(Renderer renderer) {
         ShaderObject shaderObject = renderer.createObject(model);
         shaderObject.addUniform(new UniformMatrix4(renderer.getShader(),"modelMatrix",modelMatrix));
-        shaderObjects.put(shaderObject, renderer);
+        shaderObjects.put(renderer, shaderObject);
         return shaderObject;
     }
 
@@ -39,11 +39,18 @@ public abstract class Object3D {
      * Remove the object from all of its renderers
      */
     public void removeObject() {
-        for(ShaderObject shaderObject : shaderObjects.keySet()) {
-           Renderer renderer = shaderObjects.get(shaderObject);
+        for(Renderer renderer : shaderObjects.keySet()) {
+           ShaderObject shaderObject = shaderObjects.get(renderer);
            renderer.removeObject(shaderObject);
         }
         game.removeObject(this);
+    }
+
+    /**
+     * Get the shader object from a specified renderer
+     */
+    public ShaderObject getShaderObject(Renderer renderer) {
+        return shaderObjects.get(renderer);
     }
 
     /**
@@ -59,5 +66,5 @@ public abstract class Object3D {
     /**
      * Main renderer linking method for the object's major renderer
      */
-    public abstract void linkToRenderer(Renderer renderer);
+    public abstract ShaderObject linkToRenderer(Renderer renderer);
 }

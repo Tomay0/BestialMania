@@ -4,7 +4,10 @@ import com.bestialMania.InputListener;
 import com.bestialMania.Settings;
 import com.bestialMania.InputHandler;
 import com.bestialMania.rendering.Renderer;
+import com.bestialMania.rendering.ShaderObject;
+import com.bestialMania.rendering.shader.UniformFloat;
 import com.bestialMania.rendering.shader.UniformMatrix4;
+import com.bestialMania.state.game.RendererList;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
@@ -32,6 +35,8 @@ public class Player implements InputListener {
 
     private Vector3f cameraLocation,lookLocation,upVector, dirVector;
     private Matrix4f viewMatrix, viewDirMatrix;
+
+    private UniformFloat alpha;
 
     /*
      * RENDERING STUFF
@@ -229,6 +234,7 @@ public class Player implements InputListener {
 
         //calculate if the camera will be behind a wall
         float collision = beast.getCollisionHandler().getTriangleIntersection(lookLocation,cameraLocation);
+        float alpha = 1.0f;
         if(collision<1) {
             collision-=0.07f;
             if(collision<=0.001) collision = 0.001f;
@@ -239,9 +245,12 @@ public class Player implements InputListener {
             //
             // TODO add transparency when you get too close
             // float newDist = cameraDist*collision;
-            //if(newDist<0.3f) System.out.println("TOO CLOSE!");
+            if(collision<0.25f) {
+                alpha = (collision-0.05f)*5f;
+                if(alpha<0) alpha = 0;
+            }
         }
-
+        this.alpha.setValue(alpha);
 
         //change look to dir
         lookLocation.sub(cameraLocation,dirVector);
@@ -253,6 +262,17 @@ public class Player implements InputListener {
         viewDirMatrix.identity();
         viewDirMatrix.lookAt(ORIGIN,dirVector,upVector);
     }
+
+    /**
+     * Link to the renderer that is used to render the character in its own framebuffer
+     * Separate because an additional alpha value
+     */
+    public void linkToPlayerRenderer(Renderer renderer) {
+        ShaderObject shaderObject = beast.linkToRenderer(renderer);
+        alpha = new UniformFloat(renderer.getShader(),"alpha",1.0f);
+        shaderObject.addUniform(alpha);
+    }
+
 
 
     /**

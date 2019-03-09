@@ -27,8 +27,11 @@ public class EmeraldValley extends MapData{
 
     @Override
     public Vector3f getLightColor() {
-        return new Vector3f(1.0f, 1.0f, 0.9f);
+        return new Vector3f(1.0f, 1.0f, 0.8f);
     }
+
+    @Override
+    public Vector3f getAmbientLight() {return new Vector3f(0.5f,0.5f,0.5f);}
 
     @Override
     public String getSkyboxTexture() {
@@ -54,15 +57,19 @@ public class EmeraldValley extends MapData{
     @Override
     public void loadShaders(Game game) {
         //regular shader
-        Shader testShader = new Shader("res/shaders/3d/test_v.glsl","res/shaders/3d/test_f.glsl");
-        testShader.bindTextureUnits(Arrays.asList("textureSampler"));
-        game.loadShader(testShader,true,true,false,false);
+        Shader generalShader = new Shader("res/shaders/3d/general_v.glsl","res/shaders/3d/general_f.glsl");
+        generalShader.bindTextureUnits(Arrays.asList("textureSampler"));
+        game.loadShader(generalShader,true,true,false,false);
 
         //normalmap shader
         if(game.usesNormalMapping()) {
             Shader normalmapShader = new Shader("res/shaders/3d/normalmap_v.glsl","res/shaders/3d/normalmap_f.glsl");
             normalmapShader.bindTextureUnits(Arrays.asList("textureSampler","normalSampler","shadowSampler0","shadowSampler1","shadowSampler2"));
             game.loadShader(normalmapShader,true,true,true,false);
+
+            Shader generalShader2 = new Shader("res/shaders/3d/general_shadow_v.glsl","res/shaders/3d/general_shadow_f.glsl");
+            generalShader2.bindTextureUnits(Arrays.asList("textureSampler","textureSampler2","shadowSampler0","shadowSampler1","shadowSampler2"));
+            game.loadShader(generalShader2,true,true,true,false);
         }
 
     }
@@ -100,9 +107,9 @@ public class EmeraldValley extends MapData{
             game.createObject(object2,3,true);
         }
         else{
-            Object3D object = new StaticObject(game, planeModel,planeMatrix,planeTexture,0.1f,4.0f);
+            Object3D object1 = new StaticObject(game, planeModel,planeMatrix,planeTexture,0.1f,4.0f);
             Object3D object2 = new StaticObject(game, planeModel2,planeMatrix,planeTexture,0.1f,4.0f);
-            game.createObject(object,2,true);
+            game.createObject(object1,2,true);
             game.createObject(object2,2,true);
         }
 

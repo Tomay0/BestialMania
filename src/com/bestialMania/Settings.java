@@ -23,8 +23,8 @@ public class Settings {
 
     //GRAPHICS SETTINGS
     public static int ANISOTROPIC_FILTERING = 2;//either off,2x,4x,8x,16x
-    public static int ANTIALIASING = 4;//either off,2x,4x,8x,16x
+    public static int ANTIALIASING = 4;//either off,2x,4x,8x
     public static GraphicsSetting TEXTURE_DETAIL = GraphicsSetting.HIGH;//LOW = no texture effects. HIGH = normal mapping TODO add more texture detail stuff
-    public static GraphicsSetting SHADOW_RESOLUTION = GraphicsSetting.MEDIUM;//LOW/MEDIUM/HIGH
-    public static GraphicsSetting SHADOW_SOFTENING = GraphicsSetting.ULTRA;//LOW/MEDIUM/HIGH/ULTRA
+    public static GraphicsSetting SHADOW_RESOLUTION = GraphicsSetting.HIGH;//LOW/MEDIUM/HIGH.
+    public static GraphicsSetting SHADOW_SOFTENING = GraphicsSetting.HIGH;//LOW/MEDIUM/HIGH/ULTRA. Affects performance the most
 }

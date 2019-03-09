@@ -770,12 +770,13 @@ public class Beast extends AnimatedObject implements AnimationListener {
      * Add the model to the renderer
      */
     @Override
-    public void linkToRenderer(Renderer renderer) {
+    public ShaderObject linkToRenderer(Renderer renderer) {
         ShaderObject shaderObject = createShaderObject(renderer);
         linkTransformsToShaderObject(shaderObject);
         shaderObject.addTexture(0,texture);
         shaderObject.addUniform(new UniformFloat(renderer.getShader(),"reflectivity",0.2f));
         shaderObject.addUniform(new UniformFloat(renderer.getShader(),"shineDamper",5.0f));
+        return shaderObject;
     }
 
     /**

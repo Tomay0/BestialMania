@@ -15,6 +15,7 @@ public abstract class MapData {
 
     public abstract Vector3f getLightDirection();
     public abstract Vector3f getLightColor();
+    public abstract Vector3f getAmbientLight();
     public abstract String getSkyboxTexture();
     public abstract String getMusic();
     public abstract String getCollisions();

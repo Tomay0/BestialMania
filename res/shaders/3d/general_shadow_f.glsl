@@ -1,6 +1,7 @@
 #version 330 core
 
 in vec2 frag_uv;
+in vec3 frag_normal;
 in vec3 frag_lightDir;
 in vec3 frag_cameraVec;
 
@@ -10,7 +11,6 @@ in float dist;
 out vec4 color;
 
 uniform sampler2D textureSampler;
-uniform sampler2D normalSampler;
 uniform sampler2D shadowSampler0;
 uniform sampler2D shadowSampler1;
 uniform sampler2D shadowSampler2;
@@ -20,8 +20,8 @@ uniform float pcfSpread;
 uniform float pcfIncrAmount;
 uniform float shadowDist[4];
 
-uniform vec3 ambient;
 uniform vec3 lightColor;
+uniform vec3 ambient;
 uniform float reflectivity;
 uniform float shineDamper;
 
@@ -62,7 +62,6 @@ float getShadow(int shadowMap,float spreadScale) {
     return shadow;
 }
 
-
 /**
     Calculates the shadow amount by interpolating between all rendered shadow maps
 */
@@ -94,24 +93,21 @@ float getShadow() {
 	}
 }
 
-
 void main() {
-    float shadow = getShadow();
+    float shadow = getShadow(0,1.5);
 
     vec4 textureColor = texture(textureSampler,frag_uv);
-	vec3 normal = normalize(texture(normalSampler, frag_uv).rgb*2.0 - 1.0);
 
     //diffuse lighting
-    float cosTheta = dot(normal,-normalize(frag_lightDir));
+    float cosTheta = dot(normalize(frag_normal),-normalize(frag_lightDir));
     cosTheta = clamp(cosTheta-shadow,0,1);
     vec3 diffuse = ambient + cosTheta * lightColor;
 
     //specular lighting
-	vec3 reflected = reflect(normalize(frag_lightDir),normal);
+	vec3 reflected = reflect(normalize(frag_lightDir),normalize(frag_normal));
 	float cosAlpha = dot(normalize(frag_cameraVec),reflected);
 	cosAlpha = clamp(cosAlpha-shadow,0,1);
 	vec3 specular = clamp(reflectivity * pow(cosAlpha,shineDamper),0,0.8) * lightColor;
-
 
     color = textureColor * vec4(diffuse,1.0) + vec4(specular,1.0);
 }
