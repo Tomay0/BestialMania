@@ -313,7 +313,7 @@ public class Beast extends AnimatedObject implements AnimationListener {
                     if(slidingFrames<0) return;//if you press the crouch button while in the cooldown stage of the slide, the next frame that is not a cooldown and the crouch button is still pressed will initialize another slide
                     float speed = movementVector.length();
                     //slide only if you're going fast enough or you quickly change direction
-                    if((slidingFrames==0 && (speed>characterSpeed*0.9f || turnSpeed==FAST_TURN_SPEED)) || diving) {
+                    if((slidingFrames==0 && (speed>characterSpeed*0.1f || turnSpeed==FAST_TURN_SPEED)) || diving) {
                         slidingFrames = 15;//slide lasts for 15 frames, animation lasts an extra
                         diving = false;
 
@@ -787,6 +787,8 @@ public class Beast extends AnimatedObject implements AnimationListener {
             source.stop();
             source.cleanUp();
         }
+        walkingSound.stop();
+        walkingSound.cleanUp();
     }
 
     /**

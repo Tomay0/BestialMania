@@ -15,7 +15,7 @@ import org.joml.Vector3f;
 import java.util.Arrays;
 
 public class EmeraldValley extends MapData{
-    private Matrix4f cubeMatrix, poleMatrix,stairMatrix;
+    private Matrix4f cubeMatrix,cubeMatrix2, poleMatrix,stairMatrix;
 
 
     public EmeraldValley() {
@@ -28,6 +28,8 @@ public class EmeraldValley extends MapData{
         stairMatrix.scale(5,2,5);
         cubeMatrix = new Matrix4f();
         cubeMatrix.translate(-5,3,8);
+        cubeMatrix2 = new Matrix4f();
+        cubeMatrix2.translate(0,5,8);
     }
 
 
@@ -45,11 +47,11 @@ public class EmeraldValley extends MapData{
     public Vector3f getAmbientLight() {return new Vector3f(0.5f,0.5f,0.5f);}
 
     @Override
-    public float getBrightness() {return 1.3f;}
+    public float getBrightness() {return 1.35f;}
     @Override
-    public float getContrast() {return 0.1f;}
+    public float getContrast() {return 0.15f;}
     @Override
-    public float getSaturation() {return 1.2f;}
+    public float getSaturation() {return 1.15f;}
 
 
     @Override
@@ -156,6 +158,8 @@ public class EmeraldValley extends MapData{
         Model cubeModel = ModelLoader.loadModel(game.getMemoryManager(),"res/models/cube.bmm");
         Object3D cube = new StaticObject(game,cubeModel,cubeMatrix,pinkTex,1.0f);
         game.createObject(cube,5,false);
+        Object3D cube2 = new StaticObject(game,cubeModel,cubeMatrix2,pinkTex,1.0f);
+        game.createObject(cube2,5,false);
     }
 
     /**
@@ -173,6 +177,7 @@ public class EmeraldValley extends MapData{
         collisionLoader.loadFloors("toConvert/collisions/stairFloor.obj",stairMatrix);
         collisionLoader.loadWalls("toConvert/collisions/stairWalls.obj",stairMatrix);
         collisionLoader.autoLoadTriangleCollisionsOBJ("toConvert/collisions/cube.obj",cubeMatrix,0.1f);
+        collisionLoader.autoLoadTriangleCollisionsOBJ("toConvert/collisions/cube.obj",cubeMatrix2,0.1f);
         return collisionLoader;
     }
 
