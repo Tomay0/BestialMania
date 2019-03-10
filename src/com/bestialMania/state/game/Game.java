@@ -16,6 +16,8 @@ import com.bestialMania.rendering.model.Rect2D;
 import com.bestialMania.rendering.model.Skybox;
 import com.bestialMania.rendering.model.loader.ModelLoader;
 import com.bestialMania.rendering.shader.Shader;
+import com.bestialMania.rendering.shader.UniformFloat;
+import com.bestialMania.rendering.shader.UniformInt;
 import com.bestialMania.rendering.shader.UniformMatrix4;
 import com.bestialMania.rendering.shadow.ShadowRenderer;
 import com.bestialMania.rendering.texture.Texture;
@@ -294,8 +296,11 @@ public class Game implements State, InputListener {
             BlurRenderer motionBlur = new BlurRenderer(masterRenderer,memoryManager,fbo.getTexture(0),hBlurShader,vBlurShader,windowWidth,windowHeight);
 
             //BLOOM EFFECT
-            BlurRenderer bloom = new BlurRenderer(masterRenderer,memoryManager,fbo.getTexture(1),hBlurShader,vBlurShader,windowWidth/4,windowHeight/4);
-            bloom.setBlur(1f,1f);
+            BlurRenderer bloom = null;
+            if(Settings.BLOOM_EFFECT>0) {
+                bloom = new BlurRenderer(masterRenderer,memoryManager,fbo.getTexture(1),hBlurShader,vBlurShader,windowWidth/4,windowHeight/4);
+                bloom.setBlur(4f,4f);
+            }
 
             //Combined FBO
             Model rect = new Rect2D(memoryManager,-1,-1,1,1);
@@ -304,7 +309,10 @@ public class Game implements State, InputListener {
             Renderer renderer = finalFbo.createRenderer(colorShader);
             ShaderObject shaderObject = renderer.createObject(rect);
             shaderObject.addTexture(0,motionBlur.getTexture());
-            shaderObject.addTexture(1,bloom.getTexture());
+            if(bloom!=null) {
+                shaderObject.addTexture(1,bloom.getTexture());
+            }
+            shaderObject.addUniform(new UniformFloat(colorShader,"bloom",Settings.BLOOM_EFFECT));
             shaderObject.addUniform(new UniformMatrix4(colorShader,"modelMatrix", new Matrix4f()));
 
 
@@ -345,10 +353,10 @@ public class Game implements State, InputListener {
     private Framebuffer createPlayerWindow() {
         Framebuffer fbo;
         if(Settings.ANTIALIASING>0) {
-            fbo = Framebuffer.createMultisampledFramebuffer(memoryManager,windowWidth, windowHeight,true,2,GL_RGBA,GL_RGBA,GL_UNSIGNED_INT,GL_LINEAR,GL_CLAMP_TO_EDGE,false);
+            fbo = Framebuffer.createMultisampledFramebuffer(memoryManager,windowWidth, windowHeight,true,Settings.BLOOM_EFFECT>0 ? 2 : 1,GL_RGBA,GL_RGBA,GL_UNSIGNED_INT,GL_LINEAR,GL_CLAMP_TO_EDGE,false);
 
         }else{
-            fbo = Framebuffer.createFramebuffer(memoryManager,windowWidth,windowHeight,true,2,GL_RGBA,GL_RGBA,GL_UNSIGNED_INT,GL_LINEAR,GL_CLAMP_TO_EDGE,false);
+            fbo = Framebuffer.createFramebuffer(memoryManager,windowWidth,windowHeight,true,Settings.BLOOM_EFFECT>0 ? 2 : 1,GL_RGBA,GL_RGBA,GL_UNSIGNED_INT,GL_LINEAR,GL_CLAMP_TO_EDGE,false);
         }
         return fbo;
     }

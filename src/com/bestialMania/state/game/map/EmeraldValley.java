@@ -45,9 +45,9 @@ public class EmeraldValley extends MapData{
     public Vector3f getAmbientLight() {return new Vector3f(0.5f,0.5f,0.5f);}
 
     @Override
-    public float getBrightness() {return 1.2f;}
+    public float getBrightness() {return 1.3f;}
     @Override
-    public float getContrast() {return 0.2f;}
+    public float getContrast() {return 0.1f;}
     @Override
     public float getSaturation() {return 1.2f;}
 

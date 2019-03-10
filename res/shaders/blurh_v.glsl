@@ -12,6 +12,6 @@ void main() {
 	vec2 center = pos * 0.5 + 0.5;
 
 	for(int i = -10;i<=10;i++){
-		textureCoords[i+10] = center + vec2(pxWidth*i*blur,0);// + vec2(px * i, 0.0);
+		textureCoords[i+10] = center + vec2(pxWidth*i*blur,0);
 	}
 }

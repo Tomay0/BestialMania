@@ -2,7 +2,6 @@ package com.bestialMania;
 
 import com.bestialMania.collision.CollisionLoader;
 import com.bestialMania.rendering.model.loader.ModelConverter;
-import com.bestialMania.rendering.model.loader.ModelLoader;
 import com.bestialMania.rendering.texture.TextureImage;
 import com.bestialMania.state.State;
 import com.bestialMania.state.game.map.MapData;
@@ -20,7 +19,7 @@ import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.openal.ALC11.*;
 import static org.lwjgl.openal.AL11.*;
-import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL30.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
 public class Main {
@@ -124,7 +123,7 @@ public class Main {
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
         glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
         //some OpenAL settings
         if(AUDIO) {

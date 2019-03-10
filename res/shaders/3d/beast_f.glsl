@@ -113,5 +113,5 @@ void main() {
 
     color = textureColor * vec4(diffuse,textureColor.a) + vec4(specular,textureColor.a);
     color.a*=alpha;
-    glowColor = vec4(0,0,0,1);
+    glowColor = vec4(0,0,0,color.a);
 }

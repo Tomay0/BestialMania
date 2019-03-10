@@ -22,7 +22,6 @@ public class BlurRenderer {
         //the model
         Model model = new Rect2D(mm,-1,-1,1,1);
 
-
         //horizontal blur
         Framebuffer hblurFbo = Framebuffer.createFramebuffer2D(mm,width,height);
         masterRenderer.addFramebuffer(hblurFbo);
