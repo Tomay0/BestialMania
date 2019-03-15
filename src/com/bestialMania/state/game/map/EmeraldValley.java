@@ -15,7 +15,7 @@ import org.joml.Vector3f;
 import java.util.Arrays;
 
 public class EmeraldValley extends MapData{
-    private Matrix4f cubeMatrix,cubeMatrix2, poleMatrix,stairMatrix;
+    private Matrix4f cubeMatrix,cubeMatrix2, poleMatrix,stairMatrix,poolMatrix;
 
 
     public EmeraldValley() {
@@ -27,9 +27,11 @@ public class EmeraldValley extends MapData{
         stairMatrix.translate(-10,0,0);
         stairMatrix.scale(5,2,5);
         cubeMatrix = new Matrix4f();
-        cubeMatrix.translate(-5,3,8);
+        cubeMatrix.translate(-5,2.5f,8);
         cubeMatrix2 = new Matrix4f();
-        cubeMatrix2.translate(0,5,8);
+        cubeMatrix2.translate(0,3.8f,8);
+        poolMatrix = new Matrix4f();
+        poolMatrix.translate(-37,0,5);
     }
 
 
@@ -138,9 +140,9 @@ public class EmeraldValley extends MapData{
         Object3D wallObject = new StaticObject(game,wallModel,new Matrix4f(),wallTexture,0.5f,10.0f);
         game.createObject(wallObject,2,true);
         //CEILING
-        Model ceilModel = ModelLoader.loadModel(game.getMemoryManager(), "res/models/ceil.bmm");
-        Object3D ceilObject = new StaticObject(game,ceilModel,new Matrix4f(),wallTexture,0.5f,10.0f);
-        game.createObject(ceilObject,2,true);
+        //Model ceilModel = ModelLoader.loadModel(game.getMemoryManager(), "res/models/ceil.bmm");
+        //Object3D ceilObject = new StaticObject(game,ceilModel,new Matrix4f(),wallTexture,0.5f,10.0f);
+        //game.createObject(ceilObject,2,true);
 
         //STAIRS
         Model stairsModel = ModelLoader.loadModel(game.getMemoryManager(),"res/models/stairs.bmm");
@@ -160,6 +162,24 @@ public class EmeraldValley extends MapData{
         game.createObject(cube,5,false);
         Object3D cube2 = new StaticObject(game,cubeModel,cubeMatrix2,pinkTex,1.0f);
         game.createObject(cube2,5,false);
+
+        //pool
+        Model poolModel = ModelLoader.loadModel(game.getMemoryManager(),"res/models/pool.bmm");
+        if(game.usesNormalMapping()) {
+            Texture poolNormalmap = Texture.loadImageTexture3D(game.getMemoryManager(), "res/textures/concrete_normal.bmt");
+            Object3D object = new StaticObject(game, poolModel,poolMatrix,poleTexture, poolNormalmap,0.1f,4.0f);
+            game.createObject(object,3,true);
+        }
+        else{
+            Object3D object = new StaticObject(game, poolModel,poolMatrix,poleTexture,0.1f,4.0f);
+            game.createObject(object,2,true);
+        }
+
+        //water IN DEVELOPMENT
+        Model waterModel = ModelLoader.loadModel(game.getMemoryManager(),"res/models/water.bmm");
+        Object3D water = new StaticObject(game,waterModel,poolMatrix,pinkTex,0.4f);
+        game.createObject(water,5,false);
+
     }
 
     /**
@@ -172,12 +192,13 @@ public class EmeraldValley extends MapData{
         collisionLoader.loadFloors("toConvert/collisions/plane.obj", new Matrix4f());
         collisionLoader.loadFloors("toConvert/collisions/plane2.obj", new Matrix4f());
         collisionLoader.loadWalls("toConvert/collisions/wall.obj", new Matrix4f());
-        collisionLoader.loadCeilings("toConvert/collisions/ceil.obj", new Matrix4f());
-        collisionLoader.loadWalls("toConvert/collisions/poleWall.obj",poleMatrix);
+        //collisionLoader.loadCeilings("toConvert/collisions/ceil.obj", new Matrix4f());
         collisionLoader.loadFloors("toConvert/collisions/stairFloor.obj",stairMatrix);
         collisionLoader.loadWalls("toConvert/collisions/stairWalls.obj",stairMatrix);
+        collisionLoader.autoLoadTriangleCollisionsOBJ("toConvert/collisions/pole.obj",poleMatrix,0.1f);
         collisionLoader.autoLoadTriangleCollisionsOBJ("toConvert/collisions/cube.obj",cubeMatrix,0.1f);
         collisionLoader.autoLoadTriangleCollisionsOBJ("toConvert/collisions/cube.obj",cubeMatrix2,0.1f);
+        collisionLoader.autoLoadTriangleCollisionsOBJ("toConvert/collisions/pool.obj",poolMatrix,0.1f);
         return collisionLoader;
     }
 

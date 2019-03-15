@@ -160,7 +160,6 @@ public class Triangle {
 
         //there should be 2 intersections forming a line that the circle collides with at the specified y. Collision follows
         if(nIntersects<2) {
-            System.err.println("Error with wall intersection calculation");
             return null;
         }
         //Get the closest point to the line from the position
@@ -172,7 +171,6 @@ public class Triangle {
         float APdotAB = abx*apx + abz*apz;
         float ABsquare = abx*abx + abz*abz;
         if(ABsquare==0) {
-            System.err.println("Error with wall intersection calculation");
             return null;
         }
 
@@ -205,8 +203,7 @@ public class Triangle {
         float wy = position.z-cz;
         float len = (float)Math.sqrt(wx*wx+wy*wy);
         if(len==0) {
-            System.err.println("inside wall");
-            //somehow your character is in the exact middle of the wall, I won't make any collisions occur in this scenario
+            //you're in a wall
             return null;
         }
         float scale = (radius-len)/len;

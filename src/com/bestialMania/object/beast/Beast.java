@@ -34,8 +34,8 @@ public class Beast extends AnimatedObject implements AnimationListener {
     private static final float FAST_TURN_SPEED = 0.2f;//speed you turn when "fast turning"
     private static final float FAST_TURN_ANGLE = (float)Math.PI*0.6f;//you must turn at least this angle amount to do a "fast turn"
 
-    private static final float SPEED_JUMP_MULTIPLIER = 2.0f;//increasing this makes running increase your jump height much more.
     private static final float HIGH_JUMP_MODIFIER = 1.5f;//high jump modifier
+    private static final float MAX_JUMP_SPEED = 1.2f;//maximum speed you can jump at, multiplied by your character jump modifier
 
     private static final float RUN_MODIFIER = 1.5f;//running speed modifier
     private static final float CROUCH_MODIFIER = 0.5f;//crouch speed modifier
@@ -60,6 +60,7 @@ public class Beast extends AnimatedObject implements AnimationListener {
     private static final float LEDGE_GRAB_CLIMB_SPEED = 0.05f;//how fast you climb up onto a ledge
 
     private static final float LANDING_ANIMATION_HEIGHT = 0.7f;//you begin to do a landing animation at this height above ground
+
 
     //character constants, these depend on what beast you pick
     private float characterSpeed = 0.075f;
@@ -92,6 +93,7 @@ public class Beast extends AnimatedObject implements AnimationListener {
     private boolean crouching = false;
     private boolean diving = false;
     private boolean longJump = false;
+    private int ledgeCancel = 0;//5 when ledge grab should be cancelled. 5 frames not holding crouch to return to 0
     private int ledgeGrabFrames = 0;
     private int slidingFrames = 0;
     private boolean onGround;
@@ -237,23 +239,30 @@ public class Beast extends AnimatedObject implements AnimationListener {
      * returns true if you have jumped on that specific frame
      */
     public boolean jump() {
-        float speed = movementVector.length();
         if(!onGround) {
             if(diving) return false;//don't wall jump while diving
             //WALL JUMP
             if(wallPushVector.x!=0 || wallPushVector.y!=0) {
+                float speed = movementVector.length();
+                if(speed<=0) return false;
                 float x = wallPushVector.x;
                 float y = wallPushVector.y;
                 float len = (float)Math.sqrt(x*x+y*y);
                 x/=len;
                 y/=len;
-                float dot = x*movementVector.x + y*movementVector.y;
+
+                //move away from the wall at character normal speed
+                float mx = movementVector.x*characterSpeed/speed;
+                float my = movementVector.y*characterSpeed/speed;
+
+
+                float dot = x*mx + y*my;
                 if(Math.abs(dot/speed)<0.3) return false;//don't wall jump if you are really close to being parallel to the wall
                 dot*=-2;
                 x*=dot;
                 y*=dot;
-                movementVector.x+=x;
-                movementVector.y+=y;
+                movementVector.x=mx+x;
+                movementVector.y=my+y;
 
                 angleTarget = (float)Math.atan2(movementVector.x,movementVector.y);
                 midairTurn = false;
@@ -262,38 +271,30 @@ public class Beast extends AnimatedObject implements AnimationListener {
             }else return false;//midair so can't jump
 
         }
-        //stop climbing the ledge if you jump while climbing
+        //stop climbing the ledge if you jump while climbing and jump forwards
         else if(ledgeGrabFrames>0) {
             ledgeGrabFrames = 0;
             yspeed = 0;
-            //jump forward if 3/4 of your body is over the ledge
-            if(position.y+characterHeight/4.0f>grabY) {
-                movementVector.x = movementDirection.x*characterSpeed;
-                movementVector.y = movementDirection.y*characterSpeed;
 
-                angleTarget = (float)Math.atan2(movementVector.x,movementVector.y);
-            }
-            //otherwise, wall jump away
-            else {
-                movementVector.x = -intendedMovementVector.x*characterSpeed/LEDGE_GRAB_CLIMB_SPEED;
-                movementVector.y = -intendedMovementVector.y*characterSpeed/LEDGE_GRAB_CLIMB_SPEED;
-                angleTarget = (float)Math.atan2(movementVector.x,movementVector.y);
-            }
+            movementVector.x = movementDirection.x*characterSpeed;
+            movementVector.y = movementDirection.y*characterSpeed;
+
+            angleTarget = (float)Math.atan2(movementVector.x,movementVector.y);
         }
 
-        //jump
-        float speedMultiplier = 1;
-        speedMultiplier+=speed*speed*SPEED_JUMP_MULTIPLIER;
+        //jump speed
+        float jumpSpeed = characterJump;
 
         //LONG JUMP - you keep the speed you have from the slide - you will longjump if you jump during the slide cooldown
         if(slidingFrames!=0) {
-            speedMultiplier*=LONG_JUMP_HEIGHT_MODIFIER;
+            jumpSpeed*=LONG_JUMP_HEIGHT_MODIFIER;
             slidingFrames = 0;//stop sliding
             longJump = true;
         }
-        else if(crouching && slidingFrames==0) speedMultiplier*=HIGH_JUMP_MODIFIER;//HIGH JUMP
+        else if(crouching && slidingFrames==0) jumpSpeed*=HIGH_JUMP_MODIFIER;//HIGH JUMP
         if(yspeed<0) yspeed=0;
-        yspeed += characterJump*speedMultiplier;
+        yspeed += jumpSpeed;
+        if(yspeed>characterJump*MAX_JUMP_SPEED) yspeed = characterJump*MAX_JUMP_SPEED;
         onGround = false;
         playSound(jump);
 
@@ -307,6 +308,7 @@ public class Beast extends AnimatedObject implements AnimationListener {
     public void crouch(boolean crouch) {
         //initialize either a slide or a dive (can't do this while grabbing on a ledge)
         if(!crouching && crouch && ledgeGrabFrames==0) {
+            //only dive/slide when pointing in a direction
             if(speed>0) {
                 if(onGround) {
                     //SLIDE
@@ -365,10 +367,13 @@ public class Beast extends AnimatedObject implements AnimationListener {
 
                     }else return;
                 }
-            }else if(!onGround && diving) return;
+            }else if(!onGround && diving) return;//this is so if you press the slide button while diving and you haven't quite landed yet, you can still initiate a slide
         }
-        //stop grabbing onto a ledge if you press crouch
-        else if(ledgeGrabFrames>0 && crouch) ledgeGrabFrames = 0;
+        //cancel grab ledge. You only need to be off the ground and to press the crouch button to activate the cancel. Uncancels if you let go while not at a ledge
+        else if(!crouching && crouch && (!onGround || ledgeGrabFrames>0)) {
+            ledgeGrabFrames = 0;
+            ledgeCancel = 15;
+        }
 
         this.crouching = crouch;
     }
@@ -405,6 +410,7 @@ public class Beast extends AnimatedObject implements AnimationListener {
                 //stick to the floor
                 position.y = floorY;
                 yspeed = 0;
+                ledgeCancel = 0;
                 //landing on the ground from a longjump/dive
                 if(diving || longJump) {
                     diving = false;
@@ -590,27 +596,36 @@ public class Beast extends AnimatedObject implements AnimationListener {
             positionInterpolate.y += WALL_CLIMB_BIAS;//slight bias so you slide over the top of walls but not underneath
             collisionHandler.calculateWallPush(positionInterpolate, characterRadius, wallPushVector/*,1,0*/);//more tests seems to result in you getting pushed through walls sometimes
 
-            //Check if you can grab onto a ledge. Holding the crouch button will cancel it
-            if ((wallPushVector.x != 0 || wallPushVector.y != 0) && yspeed <= 0 && !onGround && !crouching) {
-                float dx = movementVector.x / movementSpeed;
-                float dz = movementVector.y / movementSpeed;
-                //check if in front of you there is a floor
-                positionInterpolate.x += dx * characterRadius * 2;
-                positionInterpolate.z += dz * characterRadius * 2;
-                positionInterpolate.y += characterHeight;
-                float frontY = collisionHandler.getFloorHeightAtLocation(positionInterpolate);
-                float dy = positionInterpolate.y - frontY;
-                if (dy > 0 && dy < characterHeight / 2.0f) {
-                    grabY = frontY;
-                    angleTarget = angleTarget2 = (float) Math.atan2(dx, dz);
-                    turnSpeed = FAST_TURN_SPEED;
-                    midairTurn = false;
-                    longJump = false;
-                    diving = false;
-                    onGround = true;
-                    ledgeGrabFrames = 1;
-                    intendedMovementVector.x = dx * LEDGE_GRAB_CLIMB_SPEED;
-                    intendedMovementVector.y = dz * LEDGE_GRAB_CLIMB_SPEED;
+            //Check if you can grab onto a ledge.
+            if ((wallPushVector.x != 0 || wallPushVector.y != 0) && yspeed <= 0 && !onGround) {
+                //don't initiate if you press the crouch button
+                if(ledgeCancel==0) {
+                    float dx = movementVector.x / movementSpeed;
+                    float dz = movementVector.y / movementSpeed;
+                    //check if in front of you there is a floor
+                    positionInterpolate.x += dx * characterRadius * 2;
+                    positionInterpolate.z += dz * characterRadius * 2;
+                    positionInterpolate.y += characterHeight;
+                    float frontY = collisionHandler.getFloorHeightAtLocation(positionInterpolate);
+                    float dy = positionInterpolate.y - frontY;
+                    if (dy > 0 && dy < characterHeight / 2.0f) {
+                        grabY = frontY;
+                        angleTarget = angleTarget2 = (float) Math.atan2(dx, dz);
+                        turnSpeed = FAST_TURN_SPEED;
+                        midairTurn = false;
+                        longJump = false;
+                        diving = false;
+                        onGround = true;
+                        ledgeGrabFrames = 1;
+                        intendedMovementVector.x = dx * LEDGE_GRAB_CLIMB_SPEED;
+                        intendedMovementVector.y = dz * LEDGE_GRAB_CLIMB_SPEED;
+                    }
+                }else ledgeCancel = 15;
+            }
+            else {
+                //cancel ledge cancel. 5 frames of not touching the ledge
+                if( !onGround && ledgeCancel>0 && !crouching) {
+                    ledgeCancel--;
                 }
             }
         }

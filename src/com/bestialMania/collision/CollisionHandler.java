@@ -190,7 +190,7 @@ public class CollisionHandler {
     }
 
     /**
-     * Returns an interpolation value of the closest triangle intersection to p1 of the line p1->p2
+     * Returns an interpolation value of the closest triangle intersection to p1 of the line p1 to p2
      * 0 = at p1, 1 = at p2 or no intersection
      */
     public float getTriangleIntersection(Vector3f p1, Vector3f p2) {

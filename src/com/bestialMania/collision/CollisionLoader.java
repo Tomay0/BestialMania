@@ -244,12 +244,12 @@ public class CollisionLoader {
                     Vector4f v = new Vector4f(x,y,z,1);
                     v.mul(matrix);
                     vertices.add(new Vector3f(v.x,v.y,v.z));
-                    if(x<minX) minX=x;
-                    if(y<minY) minY=y;
-                    if(z<minZ) minZ=z;
-                    if(x>maxX) maxX=x;
-                    if(y>maxY) maxY=y;
-                    if(z>maxZ) maxZ=z;
+                    if(v.x<minX) minX=v.x;
+                    if(v.y<minY) minY=v.y;
+                    if(v.z<minZ) minZ=v.z;
+                    if(v.x>maxX) maxX=v.x;
+                    if(v.y>maxY) maxY=v.y;
+                    if(v.z>maxZ) maxZ=v.z;
                 }
                 //faces
                 else if(head.equals("f")) {
@@ -293,12 +293,12 @@ public class CollisionLoader {
                     Vector4f v = new Vector4f(x,y,z,1);
                     v.mul(matrix);
                     vertices.add(new Vector3f(v.x,v.y,v.z));
-                    if(x<minX) minX=x;
-                    if(y<minY) minY=y;
-                    if(z<minZ) minZ=z;
-                    if(x>maxX) maxX=x;
-                    if(y>maxY) maxY=y;
-                    if(z>maxZ) maxZ=z;
+                    if(v.x<minX) minX=v.x;
+                    if(v.y<minY) minY=v.y;
+                    if(v.z<minZ) minZ=v.z;
+                    if(v.x>maxX) maxX=v.x;
+                    if(v.y>maxY) maxY=v.y;
+                    if(v.z>maxZ) maxZ=v.z;
                 }
                 else if(head.equals("vn")) {
                     float x = scan.nextFloat();
