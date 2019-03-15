@@ -3,39 +3,47 @@ package com.bestialMania.gui;
 import com.bestialMania.InputHandler;
 import com.bestialMania.InputListener;
 import com.bestialMania.MemoryManager;
+import com.bestialMania.gui.text.Font;
+import com.bestialMania.gui.text.Text;
+import com.bestialMania.rendering.Renderer;
 import org.joml.Vector2f;
+import org.joml.Vector3f;
 
-import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT;
 
-//TODO: Implement text on button
-public class Button extends Object2D implements InputListener {
-    private String textOnButton;
-    private String actionOnClick;//multiple buttons could be onscreen and could use the same listener, so use an action to distinguish different buttons
-    private ButtonListener listener;//something to catch the button's click event
-    private InputHandler inputHandler;//to get the mouse position
+public class Button implements InputListener {
+    private static final Vector3f DEFAULT_COLOR = new Vector3f(0,255,0);
+    private static final Vector3f HIGHLIGHT_COLOR = new Vector3f(255,255,255);
 
-
-    /**
-     *  Constructor for width and height being relative to texture
-     */
-    public Button(MemoryManager mm, InputHandler inputHandler, ButtonListener listener, int x, int y, String textureFileName, String textOnButton, String actionOnClick) {
-        super(mm,x,y,textureFileName);
-        this.textOnButton = textOnButton;
-        this.actionOnClick = actionOnClick;
-        this.inputHandler = inputHandler;
-        this.listener = listener;
-        inputHandler.addListener(this);
-    }
+    private String action;
+    private ButtonListener listener;
+    private InputHandler inputHandler;
+    private int x, y, width, height;
+    private Text text;
+    private Vector3f color;
 
     /**
-     *  Constructor for set width and height
+     * Create a Button that is only text
+     * @param mm Memory manager
+     * @param inputHandler Input handler
+     * @param listener listener to call when the button is pressed
+     * @param font Font of the button
+     * @param x Centre x position
+     * @param y Centre y position
+     * @param width Width of the button's bounding box
+     * @param text Text on the button
+     * @param action Action to call when the button is pressed
      */
-    public Button(MemoryManager mm, InputHandler inputHandler, ButtonListener listener, int x, int y, int width, int height, String textureFileName, String textOnButton, String actionOnClick){
-        super(mm,x,y,width,height,textureFileName);
-        this.textOnButton = textOnButton;
-        this.actionOnClick = actionOnClick;
-        this.inputHandler = inputHandler;
+    public Button(MemoryManager mm, InputHandler inputHandler, ButtonListener listener, Font font, int x, int y, int width, int fontSize, String text, String action) {
+        this.color = new Vector3f(DEFAULT_COLOR.x,DEFAULT_COLOR.y,DEFAULT_COLOR.z);
+        this.text = new Text(mm,text,font,fontSize,x,y-fontSize/4, Text.TextAlign.CENTER,color);
+        this.x = x-width/2;
+        this.y = y-fontSize/2;
+        this.width = width;
+        this.height = fontSize;
+        this.action = action;
         this.listener = listener;
+        this.inputHandler = inputHandler;
         inputHandler.addListener(this);
     }
 
@@ -53,19 +61,49 @@ public class Button extends Object2D implements InputListener {
         inputHandler.removeListener(this);
     }
 
-    //Mouse selection
+    /**
+     * Add text to the renderer
+     */
+    public void addToRenderer(Renderer renderer) {
+        text.addToRenderer(renderer);
+    }
+    /**
+     * Remove text from the renderer
+     */
+    public void removeFromRenderer(Renderer renderer) {
+        text.removeFromRenderer(renderer);
+    }
+
+    /**
+     * Update if the mouse is hovering over the text
+     */
+    public void update() {
+        if(mouseOn(inputHandler.getMousePosition())) {
+            color.x = HIGHLIGHT_COLOR.x;
+            color.y = HIGHLIGHT_COLOR.y;
+            color.z = HIGHLIGHT_COLOR.z;
+        }
+        else {
+            color.x = DEFAULT_COLOR.x;
+            color.y = DEFAULT_COLOR.y;
+            color.z = DEFAULT_COLOR.z;
+        }
+    }
+
+    /**
+     * Release left mouse button
+     */
     @Override
     public void mouseEvent(boolean pressed, int button) {
         if(!pressed && button==GLFW_MOUSE_BUTTON_LEFT) {
             if(mouseOn(inputHandler.getMousePosition())) {
-                listener.press(actionOnClick);
+                listener.press(action);
             }
         }
     }
 
-    //TODO allow selecting with keyboard/controller?
-    @Override
-    public void keyEvent(boolean pressed, int key) {}
     @Override
     public void controllerEvent(int controller, boolean pressed, int button) {}
+    @Override
+    public void keyEvent(boolean pressed, int key) { }
 }

@@ -22,7 +22,7 @@ import java.util.List;
 public class Menu {
 
     //Menu state enum, used for easy switching between menus.
-    public enum MenuState {PLAYER_SELECT,MAIN_MENU};
+    public enum MenuState {PLAYER_SELECT,MAIN_MENU,ONLINE_MENU};
 
     public static final MapData[] MAPS = {new EmeraldValley()};
 
@@ -101,6 +101,10 @@ public class Menu {
             case MAIN_MENU: {
                 main.setCurrentState(new MainMenu(this,inputHandler,renderer));
                 break;
+            }
+            //Online Menu
+            case ONLINE_MENU: {
+                main.setCurrentState(new OnlineMenu(this,inputHandler,renderer));
             }
             /*
             TODO add other menus as necessary. You can use the MenuSkeletonCode class for help on how to setup the class for this.

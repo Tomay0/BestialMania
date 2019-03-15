@@ -11,6 +11,9 @@ import com.bestialMania.MemoryManager;
 import com.bestialMania.state.State;
 import org.joml.Vector3f;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.lwjgl.glfw.GLFW.*;
 
 /**
@@ -21,26 +24,16 @@ import static org.lwjgl.glfw.GLFW.*;
  * - follow with character select or integrate a character select into this screen.
  * - Add in some sort of way of giving a name (At the moment just have Player1, Player2, etc)
  */
-public class PlayerSelect implements State, InputListener, ButtonListener {
-    private Menu menu;
-    private InputHandler inputHandler;
-    private MasterRenderer renderer;
-    private MemoryManager memoryManager;
+public class PlayerSelect extends SubMenu implements InputListener {
 
     //text objects
     private Text[] texts = new Text[12];
-
-    //button object
-    private Button startButton,backButton;
 
     /**
      * Initialize the player select screen
      */
     public PlayerSelect(Menu menu, InputHandler inputHandler, MasterRenderer renderer) {
-        this.menu = menu;
-        this.inputHandler = inputHandler;
-        this.renderer = renderer;
-        memoryManager = new MemoryManager();
+        super(menu,inputHandler,renderer);
         inputHandler.addListener(this);
 
         int x = Settings.WIDTH/4;
@@ -69,19 +62,21 @@ public class PlayerSelect implements State, InputListener, ButtonListener {
             texts[i*3+1].addToRenderer(menu.getTextRender());
         }
 
-        startButton = new Button(memoryManager,inputHandler,this,x*2-60,y*2-50,"res/textures/ui/start.bmt","Start","start");
-        backButton = new Button(memoryManager,inputHandler,this, x*2-60,y*2+50,"res/textures/ui/quit.bmt","Back","back");
+        Button startButton = new Button(memoryManager,inputHandler,this,menu.getFont(),x*2,y*2-50,200,60,"BEGIN","start");
+        Button backButton = new Button(memoryManager,inputHandler,this,menu.getFont(), x*2,y*2+50,200,60,"BACK","back");
+        buttons.add(startButton);
+        buttons.add(backButton);
 
-        startButton.addToRenderer(menu.getGuiRender());
-        backButton.addToRenderer(menu.getGuiRender());
+        for(Button button : buttons) {
+            button.addToRenderer(menu.getTextRender());
+        }
     }
 
     /**
      * Update the game
      */
     @Override
-    public void update() {
-
+    public void menuUpdate() {
         //check if any of the controllers have disconnected randomly
         for(int controller : menu.getConnectedPlayers()) {
             if(controller!=-1 && !inputHandler.isControllerActive(controller)) {
@@ -136,43 +131,16 @@ public class PlayerSelect implements State, InputListener, ButtonListener {
     }
 
     /**
-     * Render to the screen
-     */
-    @Override
-    public void render(float frameInterpolation) {
-        renderer.render();
-    }
-
-    /**
      * Remove all text and stuff
      */
     @Override
-    public void removeObjects() {
+    public void menuRemoveObjects() {
         for(int i = 0;i<12;i++) {
             texts[i].removeFromRenderer(menu.getTextRender());
         }
 
-        //remove buttons
-        startButton.removeFromRenderer(menu.getGuiRender());
-        backButton.removeFromRenderer(menu.getGuiRender());
-
-        //remove button listeners
-        startButton.removeListener();
-        backButton.removeListener();
-
         //remove this listener
         inputHandler.removeListener(this);
-
-        memoryManager.cleanUp();
-    }
-
-    /**
-     * Free memory
-     */
-    @Override
-    public void cleanUp() {
-        removeObjects();
-        menu.cleanUp();
     }
 
     @Override
@@ -195,8 +163,10 @@ public class PlayerSelect implements State, InputListener, ButtonListener {
     @Override
     public void press(String action) {
         if(action.equals("start")) {
+            if(menu.getConnectedPlayers().size()<2) return;//only play local if there's at least 2 players
             menu.startGame();
         }else if(action.equals("back")) {
+            menu.getConnectedPlayers().clear();
             menu.setCurrentState(Menu.MenuState.MAIN_MENU);
         }
     }
