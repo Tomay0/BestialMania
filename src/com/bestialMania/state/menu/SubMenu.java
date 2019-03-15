@@ -7,15 +7,15 @@ import com.bestialMania.gui.ButtonListener;
 import com.bestialMania.rendering.MasterRenderer;
 import com.bestialMania.state.State;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 public abstract class SubMenu implements State, ButtonListener {
     protected Menu menu;
     protected InputHandler inputHandler;
     protected MasterRenderer masterRenderer;
     protected MemoryManager memoryManager;
-    protected List<Button> buttons = new ArrayList<>();
+    protected Set<Button> buttons = new HashSet<>();
 
     /**
      * Create a new submenu

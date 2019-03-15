@@ -2,18 +2,14 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="87e0f8c4-2b2b-4e7d-b41f-2b173fd56138" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/com/bestialMania/server/Main.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../src/com/bestialMania/gui/TestButton.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../src/com/bestialMania/network/Client.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../src/com/bestialMania/state/menu/OnlineMenu.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../src/com/bestialMania/state/menu/SubMenu.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../res/collisions/emeraldValley.bmc" beforeDir="false" afterPath="$PROJECT_DIR$/../res/collisions/emeraldValley.bmc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../src/com/bestialMania/gui/Button.java" beforeDir="false" afterPath="$PROJECT_DIR$/../src/com/bestialMania/gui/Button.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../src/com/bestialMania/state/menu/MainMenu.java" beforeDir="false" afterPath="$PROJECT_DIR$/../src/com/bestialMania/state/menu/MainMenu.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../src/com/bestialMania/state/menu/Menu.java" beforeDir="false" afterPath="$PROJECT_DIR$/../src/com/bestialMania/state/menu/Menu.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../src/com/bestialMania/state/menu/MenuSkeletonCode.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../src/com/bestialMania/state/menu/PlayerSelect.java" beforeDir="false" afterPath="$PROJECT_DIR$/../src/com/bestialMania/state/menu/PlayerSelect.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/com/bestialMania/server/Client.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/com/bestialMania/server/Server.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../src/com/bestialMania/network/ServerListener.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/bestialMania/server/Main.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/com/bestialMania/network/Client.java" beforeDir="false" afterPath="$PROJECT_DIR$/../src/com/bestialMania/network/Client.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/com/bestialMania/state/menu/OnlineMenu.java" beforeDir="false" afterPath="$PROJECT_DIR$/../src/com/bestialMania/state/menu/OnlineMenu.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/com/bestialMania/state/menu/SubMenu.java" beforeDir="false" afterPath="$PROJECT_DIR$/../src/com/bestialMania/state/menu/SubMenu.java" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -32,36 +28,55 @@
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
         <counts>
-          <entry key="java" value="1" />
+          <entry key="java" value="2" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
-          <entry key="JAVA" value="1" />
+          <entry key="JAVA" value="2" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="java" value="90" />
+          <entry key="java" value="4746" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="JAVA" value="90" />
+          <entry key="JAVA" value="4746" />
         </counts>
       </usages-collector>
     </session>
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/src/com/bestialMania/server/Main.java">
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/com/bestialMania/server/Server.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="119">
-              <caret line="7" lean-forward="true" selection-start-line="7" selection-end-line="7" />
+            <state relative-caret-position="234">
+              <caret line="78" column="43" selection-start-line="78" selection-start-column="43" selection-end-line="78" selection-end-column="43" />
               <folding>
-                <element signature="e#97#98#0" expanded="true" />
-                <element signature="e#115#116#0" expanded="true" />
+                <element signature="imports" expanded="true" />
+                <element signature="e#661#662#0" expanded="true" />
+                <element signature="e#717#718#0" expanded="true" />
+                <element signature="e#3048#3049#0" expanded="true" />
+                <element signature="e#3095#3096#0" expanded="true" />
+                <element signature="e#3142#3143#0" expanded="true" />
+                <element signature="e#3170#3171#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/com/bestialMania/server/Client.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="1195">
+              <caret line="99" column="9" lean-forward="true" selection-start-line="99" selection-start-column="9" selection-end-line="99" selection-end-column="9" />
+              <folding>
+                <element signature="imports" expanded="true" />
+                <element signature="e#2685#2686#0" expanded="true" />
+                <element signature="e#2745#2746#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -83,10 +98,12 @@
     <option name="CHANGED_PATHS">
       <list>
         <option value="$PROJECT_DIR$/src/com/bestialMania/server/Main.java" />
+        <option value="$PROJECT_DIR$/src/com/bestialMania/server/Server.java" />
+        <option value="$PROJECT_DIR$/src/com/bestialMania/server/Client.java" />
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="7">
+  <component name="ProjectFrameBounds" extendedState="6">
     <option name="x" value="-8" />
     <option name="y" value="-8" />
     <option name="width" value="1936" />
@@ -105,6 +122,17 @@
               <item name="BestialManiaServer" type="b2602c69:ProjectViewProjectNode" />
               <item name="BestialManiaServer" type="462c0819:PsiDirectoryNode" />
             </path>
+            <path>
+              <item name="BestialManiaServer" type="b2602c69:ProjectViewProjectNode" />
+              <item name="BestialManiaServer" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="BestialManiaServer" type="b2602c69:ProjectViewProjectNode" />
+              <item name="BestialManiaServer" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="server" type="462c0819:PsiDirectoryNode" />
+            </path>
           </expand>
           <select />
         </subPane>
@@ -115,7 +143,7 @@
     </panes>
   </component>
   <component name="PropertiesComponent">
-    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1552627002671" />
+    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1552640754450" />
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -128,6 +156,15 @@
         </RuleState>
       </list>
     </option>
+  </component>
+  <component name="RunManager">
+    <configuration name="Server" type="Application" factoryName="Application">
+      <option name="MAIN_CLASS_NAME" value="com.bestialMania.server.Server" />
+      <module name="BestialManiaServer" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
   </component>
   <component name="SvnConfiguration">
     <configuration />
@@ -143,7 +180,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-8" y="-8" width="1936" height="1056" extended-state="7" />
+    <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info id="Image Layers" />
@@ -151,14 +188,15 @@
       <window_info id="UI Designer" />
       <window_info id="Capture Tool" />
       <window_info id="Favorites" side_tool="true" />
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.25" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.108208954" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info anchor="bottom" id="Version Control" />
       <window_info anchor="bottom" id="Terminal" />
       <window_info anchor="bottom" id="Event Log" side_tool="true" />
+      <window_info anchor="bottom" id="Messages" weight="0.32968238" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
-      <window_info anchor="bottom" id="Run" order="2" />
+      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.3373102" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -177,13 +215,30 @@
     <option name="myLimit" value="2678400000" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/src/com/bestialMania/server/Main.java">
+    <entry file="file://$PROJECT_DIR$/src/com/bestialMania/server/Server.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="119">
-          <caret line="7" lean-forward="true" selection-start-line="7" selection-end-line="7" />
+        <state relative-caret-position="234">
+          <caret line="78" column="43" selection-start-line="78" selection-start-column="43" selection-end-line="78" selection-end-column="43" />
           <folding>
-            <element signature="e#97#98#0" expanded="true" />
-            <element signature="e#115#116#0" expanded="true" />
+            <element signature="imports" expanded="true" />
+            <element signature="e#661#662#0" expanded="true" />
+            <element signature="e#717#718#0" expanded="true" />
+            <element signature="e#3048#3049#0" expanded="true" />
+            <element signature="e#3095#3096#0" expanded="true" />
+            <element signature="e#3142#3143#0" expanded="true" />
+            <element signature="e#3170#3171#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/com/bestialMania/server/Client.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1195">
+          <caret line="99" column="9" lean-forward="true" selection-start-line="99" selection-start-column="9" selection-end-line="99" selection-end-column="9" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="e#2685#2686#0" expanded="true" />
+            <element signature="e#2745#2746#0" expanded="true" />
           </folding>
         </state>
       </provider>
