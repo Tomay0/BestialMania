@@ -11,6 +11,9 @@ import java.util.Scanner;
 import java.util.Set;
 
 public class Server {
+    public static final int MAX_PLAYERS = 12;
+    public static final int MIN_PLAYERS = 2;
+
     private int currentClientId = 0;
 
     private ServerSocket socket;

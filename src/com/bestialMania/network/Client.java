@@ -1,6 +1,9 @@
 package com.bestialMania.network;
 
-import com.bestialMania.network.message.OutboundMessage;
+import com.bestialMania.network.message.inbound.InboundReadyMessage;
+import com.bestialMania.network.message.inbound.InfoMessage;
+import com.bestialMania.network.message.inbound.JoinMessage;
+import com.bestialMania.network.message.outbound.OutboundMessage;
 
 import java.io.*;
 import java.net.Socket;
@@ -10,7 +13,7 @@ import java.net.UnknownHostException;
 public class Client{
     private final String ip;
     private final int port;
-    private ServerListener listener;
+    private MessageQueue queue = new MessageQueue();
     private Socket socket;
     private DataInputStream inputStream;
     private DataOutputStream outputStream;
@@ -22,24 +25,22 @@ public class Client{
      * Open up a socket connection
      * @param ip IP address
      * @param port port
-     * @param listener listener object which handles server messages
      */
-    public Client(final String ip, final int port, ServerListener listener) {
+    public Client(final String ip, final int port) {
         this.ip = ip;
         this.port = port;
-        this.listener = listener;
 
         //open up a new thread and connect to the server
         new Thread(new Runnable() {
             public void run() {
                 //connect to the server
                 connect();
-                readInput();
+                if(connected) readInput();
                 //close the socket
                 if(socket!=null) {
                     try {
                         socket.close();
-                        System.out.println("Connection to server terminated");
+                        //System.out.println("Connection to server terminated");
                     }catch(IOException e) {
                         throw new Error(e);
                     }
@@ -62,24 +63,29 @@ public class Client{
     public int getId() {return id;}
 
     /**
+     * Get the message queue
+     */
+    public MessageQueue getQueue() {return queue;}
+
+    /**
      * Connect to the server
      */
     public void connect() {
         //connect to server
         try {
             socket = new Socket(ip,port);
-            listener.establishedConnection();
             inputStream = new DataInputStream(socket.getInputStream());
             outputStream = new DataOutputStream(socket.getOutputStream());
             connected = true;
-            System.out.println("Connected to server successfully");
+            queue.postMessage(new JoinMessage(true));
+            //System.out.println("Connected to server successfully");
         }catch(UnknownHostException e) {
             //System.err.println("Unknown host");
-            listener.lostConnection();
+            queue.postMessage(new JoinMessage(false));
         }catch(IOException e) {
             //System.err.println("Unhandled exception when trying to connect to the server.");
             //e.printStackTrace();
-            listener.lostConnection();
+            queue.postMessage(new JoinMessage(false));
         }
     }
 
@@ -109,10 +115,10 @@ public class Client{
      */
     public void readInput() {
         try {
+            //process input
             while(connected) {
                 char c = inputStream.readChar();
                 processInput(c);
-
             }
         }
         //EOFException occurs if the server closes
@@ -128,27 +134,35 @@ public class Client{
             System.err.println("Unhandled Exception when communicating with server...");
             e.printStackTrace();
         }
+        //disconnect
         finally {
-            listener.lostConnection();
+            queue.postMessage(new JoinMessage(false));
             connected = false;
         }
     }
 
+    /**
+     * Process an inbound message from the server and post to the message queue
+     */
     public void processInput(char c) throws IOException {
-        //Get the client's ID
+        //Server info
         if(c=='i') {
             int id = inputStream.readInt();
+            int maxPlayers = inputStream.readInt();
             this.id = id;
-            System.out.println("ID = " + id);
+            queue.postMessage(new InfoMessage(id,maxPlayers));
         }
         //Add/remove other players
         else if(c=='J') {
-            int newID = inputStream.readInt();
+            int id = inputStream.readInt();
             boolean join = inputStream.readBoolean();
-            if(listener!=null) {
-                if(join) listener.addClient(newID);
-                else listener.removeClient(newID);
-            }
+            queue.postMessage(new JoinMessage(id,join));
+        }
+        //Player selected everyone ready
+        else if(c=='r') {
+            int id = inputStream.readInt();
+            boolean ready = inputStream.readBoolean();
+            queue.postMessage(new InboundReadyMessage(id,ready));
         }
     }
 

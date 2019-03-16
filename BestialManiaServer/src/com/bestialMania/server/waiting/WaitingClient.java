@@ -7,14 +7,16 @@ public class WaitingClient implements ClientListener {
     //if the client has pressed the "everyone ready" button
     private boolean everyoneReady = false;
     private Client client;
+    private WaitingRoom waitingRoom;
 
     /**
      * Create a client for use in the waiting room
      * By default, they have not pressed the "everyone is ready" button.
      */
-    public WaitingClient(Client client) {
+    public WaitingClient(WaitingRoom waitingRoom, Client client) {
         client.setListener(this);
         everyoneReady = false;
+        this.waitingRoom = waitingRoom;
         this.client = client;
     }
 
@@ -34,5 +36,6 @@ public class WaitingClient implements ClientListener {
     @Override
     public void everyoneReady(boolean ready) {
         this.everyoneReady = ready;
+        waitingRoom.updateEveryoneReady(this);
     }
 }

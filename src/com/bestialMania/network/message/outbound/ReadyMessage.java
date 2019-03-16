@@ -1,4 +1,4 @@
-package com.bestialMania.network.message;
+package com.bestialMania.network.message.outbound;
 
 import java.io.DataOutputStream;
 import java.io.IOException;

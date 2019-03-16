@@ -10,6 +10,7 @@ import com.bestialMania.MemoryManager;
 import com.bestialMania.rendering.Renderer;
 import com.bestialMania.rendering.shader.Shader;
 import com.bestialMania.state.game.Game;
+import com.bestialMania.state.menu.online.OnlineWaitingMenu;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;

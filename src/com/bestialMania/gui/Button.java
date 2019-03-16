@@ -36,9 +36,9 @@ public class Button implements InputListener {
      */
     public Button(MemoryManager mm, InputHandler inputHandler, ButtonListener listener, Font font, int x, int y, int width, int fontSize, String text, String action) {
         this.color = new Vector3f(DEFAULT_COLOR.x,DEFAULT_COLOR.y,DEFAULT_COLOR.z);
-        this.text = new Text(mm,text,font,fontSize,x,y-fontSize/4, Text.TextAlign.CENTER,color);
+        this.text = new Text(mm,text,font,fontSize,x,y, Text.TextAlign.CENTER,color);
         this.x = x-width/2;
-        this.y = y-fontSize/2;
+        this.y = y-fontSize/4;
         this.width = width;
         this.height = fontSize;
         this.action = action;

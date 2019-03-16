@@ -49,6 +49,12 @@ public class ShaderObject {
     public void addTexture(int slot, Texture texture) {
         textures.put(slot,texture);
     }
+    /**
+     * Change the model
+     */
+    public void setModel(Model newModel) {
+        model = newModel;
+    }
 
     /**
      * Renders the object

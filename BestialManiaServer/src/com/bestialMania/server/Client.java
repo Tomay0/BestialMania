@@ -1,6 +1,6 @@
 package com.bestialMania.server;
 
-import com.bestialMania.server.message.IdMessage;
+import com.bestialMania.server.message.InfoMessage;
 import com.bestialMania.server.message.OutboundMessage;
 
 import java.io.*;
@@ -31,7 +31,7 @@ public class Client implements Runnable{
         outputStream = new DataOutputStream(socket.getOutputStream());
         System.out.println(clientName + ": connected");
         //tell the client their id
-        sendMessage(new IdMessage(this));
+        sendMessage(new InfoMessage(this,Server.MAX_PLAYERS));
     }
 
     /**

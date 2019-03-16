@@ -1,14 +1,14 @@
 package com.bestialMania.server.waiting;
 
 import com.bestialMania.server.Client;
+import com.bestialMania.server.Server;
 import com.bestialMania.server.message.JoinMessage;
+import com.bestialMania.server.message.ReadyMessage;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class WaitingRoom implements Runnable {
-    //NUMBER OF PLAYERS NEEDED TO BE ABLE TO START A GAME
-    private static final int MIN_PLAYERS = 1;
     //list of clients waiting to join a game
     private Map<Integer, WaitingClient> waitingClients = new HashMap<>();
 
@@ -31,9 +31,11 @@ public class WaitingRoom implements Runnable {
             wc.getClient().sendMessage(new JoinMessage(client,true));
             //give the new client a list of all currently joined clients
             client.sendMessage(new JoinMessage(wc.getClient(),true));
+            //tell the new client that this particular user has pressed "everyone ready"
+            if(wc.isEveryoneReady()) client.sendMessage(new ReadyMessage(wc.getClient(),true));
         }
 
-        WaitingClient waitingClient = new WaitingClient(client);
+        WaitingClient waitingClient = new WaitingClient(this,client);
         waitingClients.put(client.getId(),waitingClient);
     }
 
@@ -41,6 +43,7 @@ public class WaitingRoom implements Runnable {
      * When a client leaves
      */
     public void removeClient(Client client) {
+        if(!running) return;//prevent sending messages when removing clients due to server close
         waitingClients.remove(client.getId());
         //write a quit message
         for(WaitingClient wc : waitingClients.values()) {
@@ -84,7 +87,7 @@ public class WaitingRoom implements Runnable {
      */
     private void update() {
         //Check if all players have pressed the "Everyone is ready button"
-        boolean allReady = waitingClients.size()>=MIN_PLAYERS;
+        boolean allReady = waitingClients.size()>= Server.MIN_PLAYERS;
         for(WaitingClient client : waitingClients.values()) {
             if(!client.isEveryoneReady()) {
                 allReady = false;
@@ -92,6 +95,18 @@ public class WaitingRoom implements Runnable {
             }
         }
 
-        if(allReady) System.out.println("Everyone is ready!!");
+        if(allReady) System.out.println("Everyone is ready: TODO start game.");
+    }
+
+    /**
+     * When a waiting client presses the "everyone is ready" button
+     * @param client
+     */
+    public void updateEveryoneReady(WaitingClient client) {
+        for(WaitingClient wc : waitingClients.values()) {
+            if(wc.getClient().getId()!=client.getClient().getId()) {
+                wc.getClient().sendMessage(new ReadyMessage(client.getClient(),client.isEveryoneReady()));
+            }
+        }
     }
 }

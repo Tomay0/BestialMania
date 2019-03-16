@@ -16,10 +16,14 @@ import java.util.List;
 
 public class Text {
     private Model model;
-    private Texture texture;
     private Matrix4f matrix;
     private Vector3f color;
     private ShaderObject shaderObject;
+    private MemoryManager memoryManager;
+    private TextAlign align;
+    private float size;
+    private int x,y;
+    private Font font;
 
     public enum TextAlign {LEFT,CENTER,RIGHT};
     //public enum VerticalTextAlign {TOP,MIDDLE,BOTTOM};
@@ -36,8 +40,22 @@ public class Text {
      * @param color text colour (RGB from 0 to 1)
      */
     public Text(MemoryManager mm, String text, Font font, float size, int x, int y, TextAlign align, Vector3f color) {
-        texture = font.getTexture();
-        model = new Model(mm);
+        this.memoryManager = mm;
+        this.align = align;
+        this.size = size;
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        this.font = font;
+        matrix = new Matrix4f();
+        createTextModel(text);
+    }
+
+    /**
+     * Delete the model and change the text
+     */
+    private void createTextModel(String text) {
+        model = new Model(memoryManager);
         List<Vector2f> vertices = new ArrayList<>();
         List<Vector2f> uvs = new ArrayList<>();
 
@@ -83,7 +101,7 @@ public class Text {
         model.storeAttributeVector2f(1,uvs);
         model.setVertexCount(vertices.size());
 
-        matrix = new Matrix4f();
+        matrix.identity();
         switch(align) {
             case CENTER: {
                 matrix.translate((x-scale*cursor.x/2.0f)*xScale,-y*yScale,0);
@@ -99,15 +117,44 @@ public class Text {
             }
             default: break;
         }
-        this.color = color;
     }
+
+    /**
+     * Change the text
+     */
+    public void setText(String text) {
+        //delete old model
+        memoryManager.removeModel(model);
+        model.cleanUp();
+
+        //create new model
+        createTextModel(text);
+
+        if(shaderObject!=null) {
+            shaderObject.setModel(model);
+        }
+    }
+
+    /**
+     * Update the text's position
+     */
+    public void setPosition(int x, int y) {
+        float dx = x-this.x;
+        float dy = y-this.y;
+        dx*=2.0/Settings.WIDTH;
+        dy*=-2.0/Settings.HEIGHT;
+        this.x = x;
+        this.y = y;
+        matrix.translate(dx,dy,0);
+    }
+
 
     /**
      * Binds this object to a renderer
      */
     public void addToRenderer(Renderer renderer) {
         shaderObject  = renderer.createObject(model);
-        shaderObject.addTexture(0, texture);
+        shaderObject.addTexture(0, font.getTexture());
         shaderObject.addUniform(new UniformVector3f(renderer.getShader(),"color",color));
         shaderObject.addUniform(new UniformMatrix4(renderer.getShader(),"modelMatrix", matrix));
     }

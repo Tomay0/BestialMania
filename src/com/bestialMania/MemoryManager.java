@@ -39,6 +39,32 @@ public class MemoryManager {
      */
     public void addSound(Sound sound) {sounds.add(sound);}
 
+
+    /**
+     * Remove model
+     */
+    public void removeModel(Model model) {
+        models.remove(model);
+    }
+
+    /**
+     * Remove texture
+     */
+    public void removeTexture(Texture texture) {
+        textures.remove(texture);
+    }
+
+    /**
+     * Remove framebuffer
+     */
+    public void removeFramebuffer(Framebuffer framebuffer) {framebuffers.remove(framebuffer);}
+
+    /**
+     * Remove sound
+     */
+    public void removeSound(Sound sound) {sounds.remove(sound);}
+
+
     /**
      * Removes everything from memory
      */
