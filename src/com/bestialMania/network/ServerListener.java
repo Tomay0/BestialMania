@@ -10,4 +10,14 @@ public interface ServerListener {
      * Called when you lose connection with the server
      */
     void lostConnection();
+
+    /**
+     * Called when a new client joins
+     */
+    void addClient(int id);
+
+    /**
+     * Called when a client disconnects
+     */
+    void removeClient(int id);
 }

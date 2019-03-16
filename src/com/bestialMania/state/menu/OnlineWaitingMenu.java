@@ -9,6 +9,7 @@ import com.bestialMania.gui.ButtonListener;
 import com.bestialMania.gui.text.Text;
 import com.bestialMania.network.Client;
 import com.bestialMania.network.ServerListener;
+import com.bestialMania.network.message.ReadyMessage;
 import com.bestialMania.rendering.MasterRenderer;
 import com.bestialMania.state.State;
 import org.joml.Vector3f;
@@ -18,16 +19,16 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class OnlineMenu extends SubMenu implements ServerListener {
+public class OnlineWaitingMenu extends SubMenu implements ServerListener {
     private Text loadingText,loadingText2,failText;
     private Client client;
     private int serverMessage = 0;
     private boolean serverUpdate = false;//sets to true when the server sends a message that needs to be processed in the main thread
-    private Button retryButton;
+    private Button retryButton, readyButton, notReadyButton;
     /**
      * Setup the main menu
      */
-    public OnlineMenu(Menu menu, InputHandler inputHandler, MasterRenderer masterRenderer) {
+    public OnlineWaitingMenu(Menu menu, InputHandler inputHandler, MasterRenderer masterRenderer) {
         super(menu,inputHandler,masterRenderer);
 
         //loading text
@@ -38,13 +39,18 @@ public class OnlineMenu extends SubMenu implements ServerListener {
         Button backButton = new Button(memoryManager,inputHandler,this, menu.getFont(),
                 Settings.WIDTH/2, Settings.HEIGHT/2+50, 200, 60,
                 "BACK","back");
-        buttons.add(backButton);
+        addButton(backButton);
         retryButton = new Button(memoryManager,inputHandler,this,menu.getFont(),
                 Settings.WIDTH/2,Settings.HEIGHT/2-50,200,60,
                 "RETRY","retry");
+        readyButton = new Button(memoryManager,inputHandler,this,menu.getFont(),
+                Settings.WIDTH/2,Settings.HEIGHT/2-50,400,60,
+                "Everyone is ready","ready");
+        notReadyButton = new Button(memoryManager,inputHandler,this,menu.getFont(),
+                Settings.WIDTH/2,Settings.HEIGHT/2-50,200,60,
+                "Cancel","nready");
 
         connect();
-        linkButtonsToRenderers();
     }
 
     /**
@@ -68,13 +74,16 @@ public class OnlineMenu extends SubMenu implements ServerListener {
                 //established connection
                 loadingText.removeFromRenderer(menu.getTextRender());
                 loadingText2.addToRenderer(menu.getTextRender());
+                addButton(readyButton);
             }
             else if(serverMessage==2) {
                 //failed connection
+                removeButton(readyButton);
+                removeButton(notReadyButton);
                 loadingText.removeFromRenderer(menu.getTextRender());
+                loadingText2.removeFromRenderer(menu.getTextRender());
                 failText.addToRenderer(menu.getTextRender());
-                buttons.add(retryButton);
-                retryButton.addToRenderer(menu.getTextRender());
+                addButton(retryButton);
             }
 
             serverUpdate = false;
@@ -86,7 +95,6 @@ public class OnlineMenu extends SubMenu implements ServerListener {
        loadingText.removeFromRenderer(menu.getTextRender());
        failText.removeFromRenderer(menu.getTextRender());
        loadingText2.removeFromRenderer(menu.getTextRender());
-       if(!buttons.contains(retryButton)) retryButton.removeListener();
        client.disconnect();
     }
 
@@ -102,12 +110,21 @@ public class OnlineMenu extends SubMenu implements ServerListener {
         }
         else if(action.equals("retry")) {
             failText.removeFromRenderer(menu.getTextRender());
-            buttons.remove(retryButton);
-            retryButton.removeFromRenderer(menu.getTextRender());
+            removeButton(retryButton);
             connect();
         }
         else if(action.equals("back")) {
             menu.setCurrentState(Menu.MenuState.MAIN_MENU);
+        }
+        else if(action.equals("ready")) {
+            removeButton(readyButton);
+            addButton(notReadyButton);
+            client.sendMessage(new ReadyMessage(true));
+        }
+        else if(action.equals("nready")) {
+            removeButton(notReadyButton);
+            addButton(readyButton);
+            client.sendMessage(new ReadyMessage(false));
         }
     }
 
@@ -128,5 +145,15 @@ public class OnlineMenu extends SubMenu implements ServerListener {
     public void lostConnection() {
         serverMessage = 2;
         serverUpdate = true;
+    }
+
+    @Override
+    public void addClient(int id) {
+        System.out.println(id + " joined");
+    }
+
+    @Override
+    public void removeClient(int id) {
+        System.out.println(id + " left");
     }
 }

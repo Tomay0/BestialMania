@@ -26,7 +26,7 @@ public class Button implements InputListener {
      * Create a Button that is only text
      * @param mm Memory manager
      * @param inputHandler Input handler
-     * @param listener listener to call when the button is pressed
+     * @param listener Listener for when the button is clicked
      * @param font Font of the button
      * @param x Centre x position
      * @param y Centre y position
@@ -44,7 +44,6 @@ public class Button implements InputListener {
         this.action = action;
         this.listener = listener;
         this.inputHandler = inputHandler;
-        inputHandler.addListener(this);
     }
 
     /**
@@ -55,22 +54,17 @@ public class Button implements InputListener {
     }
 
     /**
-     * Remove the listener when this button is no longer in use
-     */
-    public void removeListener() {
-        inputHandler.removeListener(this);
-    }
-
-    /**
      * Add text to the renderer
      */
-    public void addToRenderer(Renderer renderer) {
+    public void add(Renderer renderer) {
+        inputHandler.addListener(this);
         text.addToRenderer(renderer);
     }
     /**
      * Remove text from the renderer
      */
-    public void removeFromRenderer(Renderer renderer) {
+    public void remove(Renderer renderer) {
+        inputHandler.removeListener(this);
         text.removeFromRenderer(renderer);
     }
 

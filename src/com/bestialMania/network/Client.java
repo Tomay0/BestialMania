@@ -1,5 +1,7 @@
 package com.bestialMania.network;
 
+import com.bestialMania.network.message.OutboundMessage;
+
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
@@ -13,6 +15,9 @@ public class Client{
     private DataInputStream inputStream;
     private DataOutputStream outputStream;
     private boolean connected = false;
+    private int id = -1;
+
+
     /**
      * Open up a socket connection
      * @param ip IP address
@@ -44,6 +49,19 @@ public class Client{
     }
 
     /**
+     * Returns if the client is currently connected to the server
+     * Becomes false if you exit out or there is an error with connection
+     */
+    public boolean isConnected() {
+        return connected;
+    }
+
+    /**
+     * Get the client's ID
+     */
+    public int getId() {return id;}
+
+    /**
      * Connect to the server
      */
     public void connect() {
@@ -66,14 +84,6 @@ public class Client{
     }
 
     /**
-     * Returns if the client is currently connected to the server
-     * Becomes false if you exit out or there is an error with connection
-     */
-    public boolean isConnected() {
-        return connected;
-    }
-
-    /**
      * Disconnect by stopping the connected loop and closing the socket
      */
     public void disconnect() {
@@ -88,15 +98,10 @@ public class Client{
     }
 
     /**
-     * Send a string of data to the server
+     * Send a message to the server
      */
-    public void sendData(String data) {
-        try {
-            outputStream.writeUTF(data);
-            outputStream.flush();
-        }catch(IOException e) {
-            throw new Error(e);
-        }
+    public void sendMessage(OutboundMessage message) {
+        message.send(outputStream);
     }
 
     /**
@@ -105,8 +110,9 @@ public class Client{
     public void readInput() {
         try {
             while(connected) {
-                String data = (String) inputStream.readUTF();
-                System.out.println("Server: " + data);
+                char c = inputStream.readChar();
+                processInput(c);
+
             }
         }
         //EOFException occurs if the server closes
@@ -123,7 +129,26 @@ public class Client{
             e.printStackTrace();
         }
         finally {
+            listener.lostConnection();
             connected = false;
+        }
+    }
+
+    public void processInput(char c) throws IOException {
+        //Get the client's ID
+        if(c=='i') {
+            int id = inputStream.readInt();
+            this.id = id;
+            System.out.println("ID = " + id);
+        }
+        //Add/remove other players
+        else if(c=='J') {
+            int newID = inputStream.readInt();
+            boolean join = inputStream.readBoolean();
+            if(listener!=null) {
+                if(join) listener.addClient(newID);
+                else listener.removeClient(newID);
+            }
         }
     }
 

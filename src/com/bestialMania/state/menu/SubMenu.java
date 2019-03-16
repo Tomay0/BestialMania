@@ -15,7 +15,7 @@ public abstract class SubMenu implements State, ButtonListener {
     protected InputHandler inputHandler;
     protected MasterRenderer masterRenderer;
     protected MemoryManager memoryManager;
-    protected Set<Button> buttons = new HashSet<>();
+    private Set<Button> buttons = new HashSet<>();
 
     /**
      * Create a new submenu
@@ -28,10 +28,19 @@ public abstract class SubMenu implements State, ButtonListener {
     }
 
     /**
-     * Link all buttons to the text renderer
+     * Add a button
      */
-    public void linkButtonsToRenderers() {
-        for(Button button : buttons) button.addToRenderer(menu.getTextRender());
+    public void addButton(Button button) {
+        buttons.add(button);
+        button.add(menu.getTextRender());
+    }
+
+    /**
+     * Remove a button
+     */
+    public void removeButton(Button button) {
+        buttons.remove(button);
+        button.remove(menu.getTextRender());
     }
 
     /**
@@ -65,8 +74,7 @@ public abstract class SubMenu implements State, ButtonListener {
         menuRemoveObjects();
         //remove buttons
         for(Button button : buttons) {
-            button.removeFromRenderer(menu.getTextRender());
-            button.removeListener();
+            button.remove(menu.getTextRender());
         }
 
         //delete submenu memory stuff

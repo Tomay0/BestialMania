@@ -1,5 +1,8 @@
 package com.bestialMania.server;
 
+import com.bestialMania.server.message.IdMessage;
+import com.bestialMania.server.message.OutboundMessage;
+
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
@@ -9,22 +12,39 @@ public class Client implements Runnable{
     private Socket socket;
     private DataInputStream inputStream;
     private DataOutputStream outputStream;
+    private int id;
     private String clientName;
-
+    private ClientListener listener = null;
     /**
      * Create a client
      * @param server Server connected to
+     * @param id The client's ID as given by the server
      * @param socket Socket object for the client
      */
-    public Client(Server server, Socket socket) throws IOException{
+    public Client(Server server, int id, Socket socket) throws IOException{
         this.server = server;
         this.socket = socket;
+        this.id = id;
         //test name for the client
-        clientName = "CLIENT " + socket.getPort();
+        clientName = "C"+id;
         inputStream = new DataInputStream(socket.getInputStream());
         outputStream = new DataOutputStream(socket.getOutputStream());
         System.out.println(clientName + ": connected");
+        //tell the client their id
+        sendMessage(new IdMessage(this));
     }
+
+    /**
+     * Set the listener which handles inbound messages from the client
+     */
+    public void setListener(ClientListener listener) {
+        this.listener = listener;
+    }
+
+    /**
+     * Get the client's ID
+     */
+    public int getId() {return id;}
 
     /**
      * Repeatedly check the input from the client
@@ -33,10 +53,9 @@ public class Client implements Runnable{
     public void run() {
         try {
             //repeatedly process inputs from the client
-            String data = (String)inputStream.readUTF();
             while(true) {
-                processInput(data);
-                data = (String) inputStream.readUTF();
+                char c = inputStream.readChar();
+                processInput(c);
             }
         }
         //disconnect occurs when EOFException is thrown
@@ -75,7 +94,7 @@ public class Client implements Runnable{
     }
 
     /**
-     * Close the socket
+     * Close the socket when the client disconnects
      */
     public void closeSocket() throws IOException{
         socket.close();
@@ -84,19 +103,20 @@ public class Client implements Runnable{
     /**
      * Process a message from the client
      */
-    private void processInput(String data) {
-        System.out.println(clientName + ": " + data);
+    private void processInput(char c)  throws IOException{
+        switch(c) {
+            //Client pressing "Everyone is ready" button
+            case 'r':
+                boolean ready = inputStream.readBoolean();
+                if(listener!=null)listener.everyoneReady(ready);
+                break;
+        }
     }
 
     /**
-     * Send a string of data to the client
+     * Send a message to the client
      */
-    public void sendData(String data) {
-        try {
-            outputStream.writeUTF(data);
-            outputStream.flush();
-        }catch(IOException e) {
-            throw new Error(e);
-        }
+    public void sendMessage(OutboundMessage message) {
+        message.send(outputStream);
     }
 }

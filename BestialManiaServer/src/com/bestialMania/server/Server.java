@@ -1,5 +1,7 @@
 package com.bestialMania.server;
 
+import com.bestialMania.server.waiting.WaitingRoom;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -9,9 +11,12 @@ import java.util.Scanner;
 import java.util.Set;
 
 public class Server {
+    private int currentClientId = 0;
+
     private ServerSocket socket;
     private boolean running = true;
     private Set<Client> connectedClients = new HashSet<>();
+    private WaitingRoom waitingRoom;
 
 
     /**
@@ -21,13 +26,19 @@ public class Server {
         try {
             socket = new ServerSocket(6969);
             System.out.println("Server started successfully");
-            //look for clients to join to the server
+
+            //thread for connecting new clients to the server
             new Thread(new Runnable() {
                 public void run() {
                     connectClients();
                 }
             }).start();
 
+            //thread for the waiting room
+            waitingRoom = new WaitingRoom();
+            new Thread(waitingRoom).start();
+
+            //main thread used for reading commands
             readInput();
 
         }catch(IOException e) {
@@ -44,8 +55,10 @@ public class Server {
             try {
                 //add a new client to the list
                 Socket clientSocket = socket.accept();
-                Client client = new Client(this, clientSocket);
+                Client client = new Client(this, currentClientId, clientSocket);
+                currentClientId++;
                 connectedClients.add(client);
+                waitingRoom.addClient(client);
                 new Thread(client).start();
             }
             //usually occurs if you terminate the server
@@ -74,11 +87,6 @@ public class Server {
             if(input.equalsIgnoreCase("exit")) {
                 running = false;
             }
-            else {
-                for(Client client : connectedClients) {
-                    client.sendData(input);
-                }
-            }
         }
         terminateServer();
     }
@@ -88,10 +96,12 @@ public class Server {
      */
     public void terminateServer() {
         try {
+            System.out.println("Server terminated");
             //close all client sockets
             for(Client client : connectedClients) {
                 client.closeSocket();
             }
+            waitingRoom.terminate();
             //close server socket
             socket.close();
         }catch(IOException e) {
@@ -104,6 +114,7 @@ public class Server {
      */
     public void disconnect(Client client) {
         connectedClients.remove(client);
+        waitingRoom.removeClient(client);
     }
 
 

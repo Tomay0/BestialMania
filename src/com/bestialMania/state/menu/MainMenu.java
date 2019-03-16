@@ -18,34 +18,32 @@ public class MainMenu extends SubMenu {
         Button tutorialButton = new Button(memoryManager,inputHandler,this, menu.getFont(),
                 Settings.WIDTH/2, y, 200, 60,
                 "TUTORIAL","tutorial");
-        buttons.add(tutorialButton);
+        addButton(tutorialButton);
 
         y+=80;
         Button localButton = new Button(memoryManager,inputHandler,this, menu.getFont(),
                 Settings.WIDTH/2, y, 200, 60,
                 "LOCAL","local");
-        buttons.add(localButton);
+        addButton(localButton);
 
         y+=80;
         Button onlineButton = new Button(memoryManager,inputHandler,this, menu.getFont(),
                 Settings.WIDTH/2, y, 200, 60,
                 "ONLINE","online");
-        buttons.add(onlineButton);
+        addButton(onlineButton);
 
         y+=80;
         Button quitButton = new Button(memoryManager,inputHandler,this, menu.getFont(),
                 Settings.WIDTH/2, y, 200, 60,
                 "QUIT","quit");
-        buttons.add(quitButton);
+        addButton(quitButton);
 
 
         //collision update button - development purposes only
         Button collisionsButton = new Button(memoryManager,inputHandler,this, menu.getFont(),
                 Settings.WIDTH-200,Settings.HEIGHT-160, 200, 30,
                 "Convert Resources","rf");
-        buttons.add(collisionsButton);
-
-        linkButtonsToRenderers();
+       addButton(collisionsButton);
     }
 
     @Override
@@ -67,7 +65,7 @@ public class MainMenu extends SubMenu {
             menu.setCurrentState(Menu.MenuState.PLAYER_SELECT);
         }
         else if(action.equals("online")) {
-            menu.setCurrentState(Menu.MenuState.ONLINE_MENU);
+            menu.setCurrentState(Menu.MenuState.ONLINE_WAITING_MENU);
         }
         else if(action.equals("quit")) {
             menu.quitGame();

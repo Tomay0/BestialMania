@@ -64,12 +64,8 @@ public class PlayerSelect extends SubMenu implements InputListener {
 
         Button startButton = new Button(memoryManager,inputHandler,this,menu.getFont(),x*2,y*2-50,200,60,"BEGIN","start");
         Button backButton = new Button(memoryManager,inputHandler,this,menu.getFont(), x*2,y*2+50,200,60,"BACK","back");
-        buttons.add(startButton);
-        buttons.add(backButton);
-
-        for(Button button : buttons) {
-            button.addToRenderer(menu.getTextRender());
-        }
+        addButton(startButton);
+        addButton(backButton);
     }
 
     /**

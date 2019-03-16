@@ -12,13 +12,13 @@ public class Settings {
     public static float VERTICAL_MOUSE_SENSITIVITY = 0.005f;
     public static float HORIZONTAL_CONTROLLER_CAMERA_SENSITIVITY = 0.05f;//>mouse sensitivity
     public static float VERTICAL_CONTROLLER_CAMERA_SENSITIVITY = 0.05f;//>mouse sensitivity
-    public static boolean AUTOMATIC_RUNNING = true;//tap the run button to run instead of holding constantly to run
+    public static boolean AUTOMATIC_RUNNING = false;//tap the run button to run instead of holding constantly to run
 
     //DISPLAY SETTINGS
     public static int WIDTH = 1600;//This will automatically be changed to your monitor's resolution if fullscreen is on
     public static int HEIGHT = 900;
-    public static boolean FULLSCREEN = true;
-    public static boolean VSYNC = false;
+    public static boolean FULLSCREEN = false;
+    public static boolean VSYNC = true;
     public static float FOV = (float)Math.toRadians(60);
     public static float MOTION_BLUR = 3.0f;//0 to turn off. TODO make this behave like actual motion blur this is shit tbh
 
